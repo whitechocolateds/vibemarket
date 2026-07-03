@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Order } from '@/lib/types';
-import { formatPrice } from '@/lib/shopify';
+import { formatPrice } from '@/lib/format';
 import StatusBadge, { STATUS_LABELS } from '@/components/admin/StatusBadge';
 import styles from '@/app/admin/admin.module.css';
 
@@ -23,12 +23,14 @@ export default function AdminOrderDetailPage() {
   const id = params.id as string;
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetch(`/api/admin/orders?id=${id}`)
       .then((r) => r.json())
       .then((json) => setOrder(json.data ?? null))
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -48,6 +50,7 @@ export default function AdminOrderDetailPage() {
   };
 
   if (loading) return <div className={styles.empty}>Učitavanje...</div>;
+  if (error) return <div className={styles.empty}>Greška pri učitavanju porudžbine</div>;
   if (!order) return <div className={styles.empty}>Porudžbina nije pronađena</div>;
 
   const { customerInfo: c } = order;
@@ -93,7 +96,7 @@ export default function AdminOrderDetailPage() {
                       className={styles.orderItemImg}
                     />
                   ) : (
-                    <div className={styles.orderItemImg}>🛍️</div>
+                    <div className={styles.orderItemImg}>◆</div>
                   )}
                   <div style={{ flex: 1 }}>
                     <strong style={{ fontSize: '0.875rem' }}>{item.title}</strong>

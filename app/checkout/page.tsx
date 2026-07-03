@@ -3,21 +3,17 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
+import { motion, AnimatePresence } from 'framer-motion';
+import { User, MapPin, Wallet, ShieldCheck, Truck, PackageCheck, PackageOpen } from 'lucide-react';
 import { useCartStore } from '@/lib/cart';
-import { formatPrice } from '@/lib/shopify';
+import { formatPrice } from '@/lib/format';
 import { OrderForm } from '@/lib/types';
+import Reveal from '@/components/motion/Reveal';
 import styles from './page.module.css';
 
 const INITIAL_FORM: OrderForm = {
-  firstName: '',
-  lastName: '',
-  email: '',
-  phone: '',
-  address: '',
-  city: '',
-  postalCode: '',
-  note: '',
+  firstName: '', lastName: '', email: '', phone: '',
+  address: '', city: '', postalCode: '', note: '',
   paymentMethod: 'pouzeće',
 };
 
@@ -30,7 +26,6 @@ function validateForm(form: OrderForm): FormErrors {
   if (!form.email.trim()) errors.email = 'Email je obavezan';
   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errors.email = 'Email nije ispravan';
   if (!form.phone.trim()) errors.phone = 'Telefon je obavezan';
-  else if (!/^[\d\s\+\-\(\)]{6,15}$/.test(form.phone)) errors.phone = 'Telefon nije ispravan';
   if (!form.address.trim()) errors.address = 'Adresa je obavezna';
   if (!form.city.trim()) errors.city = 'Grad je obavezan';
   if (!form.postalCode.trim()) errors.postalCode = 'Poštanski broj je obavezan';
@@ -52,33 +47,26 @@ export default function CheckoutPage() {
       <div className={styles.page}>
         <div className="container">
           <div className="empty-state">
-            <div className="empty-state-icon">🛒</div>
-            <h3>Vaša korpa je prazna</h3>
-            <p>Dodajte proizvode u korpu pre naručivanja</p>
-            <Link href="/products" className="btn btn-primary" style={{ marginTop: '16px' }}>
-              Istraži proizvode
-            </Link>
+            <PackageOpen size={40} strokeWidth={1} style={{ margin: '0 auto var(--space-4)', opacity: 0.4 }} />
+            <h3>Korpa je prazna</h3>
+            <p>Dodajte artikle pre naručivanja</p>
+            <Link href="/products" className="btn btn-primary" style={{ marginTop: 16 }}>Kolekcija</Link>
           </div>
         </div>
       </div>
     );
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
-    if (errors[name as keyof OrderForm]) {
-      setErrors((prev) => ({ ...prev, [name]: undefined }));
-    }
+    if (errors[name as keyof OrderForm]) setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const validationErrors = validateForm(form);
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
+    if (Object.keys(validationErrors).length > 0) { setErrors(validationErrors); return; }
 
     setSubmitting(true);
     try {
@@ -87,14 +75,12 @@ export default function CheckoutPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ items, customerInfo: form, totalPrice: grandTotal }),
       });
-
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-
       clearCart();
       router.push(`/orders/${data.orderId}?name=${encodeURIComponent(form.firstName)}`);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Greška pri slanju porudžbine');
+      alert(err instanceof Error ? err.message : 'Greška pri slanju');
     } finally {
       setSubmitting(false);
     }
@@ -103,225 +89,124 @@ export default function CheckoutPage() {
   return (
     <div className={styles.page}>
       <div className="container">
-        {/* Header */}
-        <div className={styles.pageHeader}>
-          <Link href="/products" className={styles.backLink}>
-            ← Nazad na kupovinu
-          </Link>
-          <h1 className={styles.pageTitle}>Naruči</h1>
-          <p className={styles.pageSubtitle}>Dostavićemo vašu porudžbinu za 1-3 radna dana</p>
-        </div>
+        <Link href="/products" className={styles.back}>← Nazad</Link>
+        <h1 className={styles.title}>Plaćanje</h1>
+        <p className={styles.subtitle}>Dostava za 1–3 radna dana · Plaćanje pouzećem</p>
 
         <div className={styles.layout}>
-          {/* Form */}
-          <form onSubmit={handleSubmit} className={styles.form} id="checkout-form">
-            {/* Personal Info */}
-            <div className={styles.section}>
-              <h2 className={styles.sectionTitle}>
-                <span className={styles.stepNum}>1</span>
-                Lični podaci
-              </h2>
+          <form onSubmit={handleSubmit} className={styles.form}>
+            <Reveal className={styles.section}>
+              <h2 className={styles.sectionTitle}><User size={18} /> Podaci</h2>
               <div className={styles.formGrid}>
                 <div className="form-group">
-                  <label className="form-label" htmlFor="firstName">Ime *</label>
-                  <input
-                    id="firstName" name="firstName" type="text"
-                    className={`input ${errors.firstName ? 'error' : ''}`}
-                    placeholder="Vaše ime"
-                    value={form.firstName} onChange={handleChange}
-                  />
+                  <label className="form-label" htmlFor="firstName">Ime</label>
+                  <input id="firstName" name="firstName" className={`input ${errors.firstName ? 'error' : ''}`} value={form.firstName} onChange={handleChange} />
                   {errors.firstName && <span className="form-error">{errors.firstName}</span>}
                 </div>
                 <div className="form-group">
-                  <label className="form-label" htmlFor="lastName">Prezime *</label>
-                  <input
-                    id="lastName" name="lastName" type="text"
-                    className={`input ${errors.lastName ? 'error' : ''}`}
-                    placeholder="Vaše prezime"
-                    value={form.lastName} onChange={handleChange}
-                  />
+                  <label className="form-label" htmlFor="lastName">Prezime</label>
+                  <input id="lastName" name="lastName" className={`input ${errors.lastName ? 'error' : ''}`} value={form.lastName} onChange={handleChange} />
                   {errors.lastName && <span className="form-error">{errors.lastName}</span>}
                 </div>
                 <div className="form-group">
-                  <label className="form-label" htmlFor="email">Email *</label>
-                  <input
-                    id="email" name="email" type="email"
-                    className={`input ${errors.email ? 'error' : ''}`}
-                    placeholder="vasa@email.com"
-                    value={form.email} onChange={handleChange}
-                  />
+                  <label className="form-label" htmlFor="email">Email</label>
+                  <input id="email" name="email" type="email" className={`input ${errors.email ? 'error' : ''}`} value={form.email} onChange={handleChange} />
                   {errors.email && <span className="form-error">{errors.email}</span>}
                 </div>
                 <div className="form-group">
-                  <label className="form-label" htmlFor="phone">Telefon *</label>
-                  <input
-                    id="phone" name="phone" type="tel"
-                    className={`input ${errors.phone ? 'error' : ''}`}
-                    placeholder="+381 60 123 4567"
-                    value={form.phone} onChange={handleChange}
-                  />
+                  <label className="form-label" htmlFor="phone">Telefon</label>
+                  <input id="phone" name="phone" type="tel" className={`input ${errors.phone ? 'error' : ''}`} value={form.phone} onChange={handleChange} />
                   {errors.phone && <span className="form-error">{errors.phone}</span>}
                 </div>
               </div>
-            </div>
+            </Reveal>
 
-            {/* Shipping Address */}
-            <div className={styles.section}>
-              <h2 className={styles.sectionTitle}>
-                <span className={styles.stepNum}>2</span>
-                Adresa dostave
-              </h2>
-              <div className={styles.formGridFull}>
-                <div className="form-group">
-                  <label className="form-label" htmlFor="address">Ulica i broj *</label>
-                  <input
-                    id="address" name="address" type="text"
-                    className={`input ${errors.address ? 'error' : ''}`}
-                    placeholder="Ulica Ilije Garašanina 1"
-                    value={form.address} onChange={handleChange}
-                  />
-                  {errors.address && <span className="form-error">{errors.address}</span>}
-                </div>
+            <Reveal delay={0.08} className={styles.section}>
+              <h2 className={styles.sectionTitle}><MapPin size={18} /> Adresa</h2>
+              <div className="form-group" style={{ marginBottom: 16 }}>
+                <label className="form-label" htmlFor="address">Ulica i broj</label>
+                <input id="address" name="address" className={`input ${errors.address ? 'error' : ''}`} value={form.address} onChange={handleChange} />
+                {errors.address && <span className="form-error">{errors.address}</span>}
               </div>
               <div className={styles.formGrid}>
                 <div className="form-group">
-                  <label className="form-label" htmlFor="city">Grad *</label>
-                  <input
-                    id="city" name="city" type="text"
-                    className={`input ${errors.city ? 'error' : ''}`}
-                    placeholder="Beograd"
-                    value={form.city} onChange={handleChange}
-                  />
+                  <label className="form-label" htmlFor="city">Grad</label>
+                  <input id="city" name="city" className={`input ${errors.city ? 'error' : ''}`} value={form.city} onChange={handleChange} />
                   {errors.city && <span className="form-error">{errors.city}</span>}
                 </div>
                 <div className="form-group">
-                  <label className="form-label" htmlFor="postalCode">Poštanski broj *</label>
-                  <input
-                    id="postalCode" name="postalCode" type="text"
-                    className={`input ${errors.postalCode ? 'error' : ''}`}
-                    placeholder="11000"
-                    value={form.postalCode} onChange={handleChange}
-                  />
+                  <label className="form-label" htmlFor="postalCode">Poštanski broj</label>
+                  <input id="postalCode" name="postalCode" className={`input ${errors.postalCode ? 'error' : ''}`} value={form.postalCode} onChange={handleChange} />
                   {errors.postalCode && <span className="form-error">{errors.postalCode}</span>}
                 </div>
               </div>
-              <div className="form-group">
-                <label className="form-label" htmlFor="note">Napomena (opciono)</label>
-                <textarea
-                  id="note" name="note"
-                  className="textarea"
-                  placeholder="Posebne napomene za dostavu..."
-                  value={form.note} onChange={handleChange}
-                  rows={3}
-                />
+              <div className="form-group" style={{ marginTop: 16 }}>
+                <label className="form-label" htmlFor="note">Napomena</label>
+                <textarea id="note" name="note" className="textarea" rows={2} value={form.note} onChange={handleChange} />
               </div>
-            </div>
+            </Reveal>
 
-            {/* Payment */}
-            <div className={styles.section}>
-              <h2 className={styles.sectionTitle}>
-                <span className={styles.stepNum}>3</span>
-                Način plaćanja
-              </h2>
-              <div className={styles.paymentOption}>
-                <div className={styles.paymentCheck}>✓</div>
-                <div className={styles.paymentInfo}>
-                  <strong>💳 Plaćanje pouzećem</strong>
-                  <p>Platite kuriru gotovinom pri preuzimanju paketa.</p>
-                </div>
+            <Reveal delay={0.16} className={styles.section}>
+              <h2 className={styles.sectionTitle}><Wallet size={18} /> Plaćanje</h2>
+              <div className={styles.payment}>
+                <strong>Plaćanje pouzećem</strong>
+                <p>Platite kuriru gotovinom pri preuzimanju paketa.</p>
               </div>
-            </div>
+            </Reveal>
 
-            {/* Mobile Order Summary */}
             <div className={styles.mobileSummary}>
-              <div className={styles.summaryRow}>
-                <span>Proizvodi ({totalItems})</span>
-                <span>{formatPrice(totalPrice)}</span>
-              </div>
-              <div className={styles.summaryRow}>
-                <span>Dostava</span>
-                <span>{shippingCost === 0 ? '🎉 Besplatna' : formatPrice(shippingCost)}</span>
-              </div>
-              <div className={`${styles.summaryRow} ${styles.summaryTotal}`}>
-                <span>Ukupno:</span>
-                <span>{formatPrice(grandTotal)}</span>
-              </div>
+              <div className={styles.summaryRow}><span>Proizvodi</span><span>{formatPrice(totalPrice)}</span></div>
+              <div className={styles.summaryRow}><span>Dostava</span><span>{shippingCost === 0 ? 'Besplatna' : formatPrice(shippingCost)}</span></div>
+              <div className={`${styles.summaryRow} ${styles.summaryTotal}`}><span>Ukupno</span><span>{formatPrice(grandTotal)}</span></div>
             </div>
 
-            <button
+            <motion.button
               type="submit"
+              whileTap={{ scale: 0.98 }}
               className={`btn btn-primary btn-full ${styles.submitBtn}`}
               disabled={submitting}
-              id="submit-order-btn"
             >
-              {submitting ? (
-                <><div className="loader" style={{ width: 18, height: 18 }} /> Slanje...</>
-              ) : (
-                `Potvrdi porudžbinu · ${formatPrice(grandTotal)}`
-              )}
-            </button>
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.span key={submitting ? 'sending' : 'idle'} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  {submitting ? 'Slanje...' : `Potvrdi · ${formatPrice(grandTotal)}`}
+                </motion.span>
+              </AnimatePresence>
+            </motion.button>
           </form>
 
-          {/* Order Summary Sidebar */}
-          <div className={styles.summary}>
-            <div className={styles.summaryCard}>
-              <h3 className={styles.summaryTitle}>Pregled porudžbine</h3>
-
+          <aside className={styles.summary}>
+            <Reveal delay={0.1} className={styles.summaryCard}>
+              <h3 className={styles.summaryTitle}>Pregled</h3>
               <div className={styles.summaryItems}>
                 {items.map((item) => (
                   <div key={item.id} className={styles.summaryItem}>
-                    <div className={styles.summaryItemImg}>
-                      {item.image ? (
-                        <Image
-                          src={item.image.url}
-                          alt={item.title}
-                          fill
-                          sizes="56px"
-                          style={{ objectFit: 'cover' }}
-                        />
-                      ) : <span>🛍️</span>}
-                      <span className={styles.itemQtyBadge}>{item.quantity}</span>
+                    <div className={styles.imgWrap}>
+                      {item.image ? <img src={item.image.url} alt="" className={styles.summaryImg} /> : <div className={styles.summaryImg} />}
+                      <span className={styles.qtyBadge}>{item.quantity}</span>
                     </div>
-                    <div className={styles.summaryItemInfo}>
+                    <div className={styles.itemInfo}>
                       <p>{item.title}</p>
                       {item.variantTitle && <p className={styles.itemVariant}>{item.variantTitle}</p>}
                     </div>
-                    <p className={styles.summaryItemPrice}>{formatPrice(item.price * item.quantity)}</p>
+                    <span className={styles.itemPrice}>{formatPrice(item.price * item.quantity)}</span>
                   </div>
                 ))}
               </div>
-
               <div className={styles.divider} />
-
-              <div className={styles.summaryRows}>
-                <div className={styles.summaryRow}>
-                  <span>Proizvodi</span>
-                  <span>{formatPrice(totalPrice)}</span>
-                </div>
-                <div className={styles.summaryRow}>
-                  <span>Dostava</span>
-                  <span className={shippingCost === 0 ? styles.free : ''}>
-                    {shippingCost === 0 ? '🎉 Besplatna' : formatPrice(shippingCost)}
-                  </span>
-                </div>
-                {shippingCost > 0 && (
-                  <p className={styles.freeShippingHint}>
-                    Dodajte još {formatPrice(5000 - totalPrice)} za besplatnu dostavu
-                  </p>
-                )}
-                <div className={`${styles.summaryRow} ${styles.summaryTotal}`}>
-                  <strong>Ukupno:</strong>
-                  <strong>{formatPrice(grandTotal)}</strong>
-                </div>
+              <div className={styles.summaryRow}><span>Proizvodi</span><span>{formatPrice(totalPrice)}</span></div>
+              <div className={styles.summaryRow}>
+                <span>Dostava</span>
+                <span className={shippingCost === 0 ? styles.free : ''}>{shippingCost === 0 ? 'Besplatna' : formatPrice(shippingCost)}</span>
               </div>
-
-              <div className={styles.trustBadges}>
-                <p>🔒 Sigurna porudžbina</p>
-                <p>🚀 Dostava 1-3 radna dana</p>
-                <p>💳 Plaćanje pouzećem</p>
+              {shippingCost > 0 && <p className={styles.hint}>Još {formatPrice(5000 - totalPrice)} do besplatne dostave</p>}
+              <div className={`${styles.summaryRow} ${styles.summaryTotal}`}><span>Ukupno</span><span>{formatPrice(grandTotal)}</span></div>
+              <div className={styles.trust}>
+                <span><ShieldCheck size={14} /> Sigurna porudžbina</span>
+                <span><Truck size={14} /> Dostava 1–3 dana</span>
+                <span><PackageCheck size={14} /> Plaćanje pouzećem</span>
               </div>
-            </div>
-          </div>
+            </Reveal>
+          </aside>
         </div>
       </div>
     </div>

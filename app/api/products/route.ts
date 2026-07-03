@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getProducts, getProduct, getCollections, isShopifyConfigured } from '@/lib/shopify';
 import { MOCK_COLLECTIONS } from '@/lib/mockData';
 import { getAllProducts, getProductByHandle } from '@/lib/productStore';
 
@@ -12,25 +11,12 @@ export async function GET(req: NextRequest) {
 
   try {
     if (type === 'collections') {
-      if (!isShopifyConfigured()) {
-        return NextResponse.json({ data: MOCK_COLLECTIONS });
-      }
-      const collections = await getCollections();
-      return NextResponse.json({ data: collections });
+      return NextResponse.json({ data: MOCK_COLLECTIONS });
     }
 
     if (type === 'product' && handle) {
-      if (isShopifyConfigured()) {
-        const product = await getProduct(handle);
-        if (product) return NextResponse.json({ data: product });
-      }
-      const local = await getProductByHandle(handle);
-      return NextResponse.json({ data: local ?? null });
-    }
-
-    if (isShopifyConfigured()) {
-      const products = await getProducts(first, query);
-      return NextResponse.json({ data: products });
+      const product = await getProductByHandle(handle);
+      return NextResponse.json({ data: product ?? null });
     }
 
     let products = await getAllProducts();
@@ -43,7 +29,7 @@ export async function GET(req: NextRequest) {
     }
     return NextResponse.json({ data: products.slice(0, first) });
   } catch (error) {
-    console.error('Shopify API error:', error);
+    console.error('Products API error:', error);
     return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 });
   }
 }

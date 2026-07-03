@@ -1,44 +1,173 @@
 .card {
   display: block;
   text-decoration: none;
-  border-radius: var(--radius-xl);
+}
+
+.imageWrap {
+  position: relative;
+  aspect-ratio: 3/4;
   overflow: hidden;
-  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+  margin-bottom: var(--space-4);
+}
+
+.imageWrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
   border: 1px solid var(--border-subtle);
-  transition: all var(--transition-base);
-  animation: fadeInUp 0.45s ease both;
-  position: relative;
-  cursor: pointer;
-  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition-base);
+  pointer-events: none;
 }
 
-.card:hover {
+.card:hover .imageWrap::after {
   border-color: var(--border-accent);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-4px);
-}
-
-.imageWrapper {
-  position: relative;
-  aspect-ratio: 1;
-  overflow: hidden;
-  background: var(--bg-surface);
 }
 
 .image {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  transition: transform 0.5s ease;
+  transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card:hover .image { transform: scale(1.05); }
 
-.imagePlaceholder {
+/* ─── Spotlight (featured hero card) ────────────────────────────────────── */
+.spotlightMotion { height: 100%; }
+
+.spotlightCard {
+  position: relative;
+  display: block;
+  height: 100%;
+  min-height: 460px;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  text-decoration: none;
+  box-shadow: var(--shadow-lg);
+}
+
+.spotlightImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.spotlightScrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(20, 16, 10, 0.05) 0%, rgba(20, 16, 10, 0.05) 45%, rgba(20, 16, 10, 0.82) 100%);
+}
+
+.spotlightTop {
+  position: absolute;
+  top: var(--space-5);
+  left: var(--space-5);
+  right: var(--space-5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 1;
+}
+
+.spotlightFeatured {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--radius-full);
+  background: rgba(253, 251, 247, 0.92);
+  backdrop-filter: blur(6px);
+  color: var(--champagne-dark);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.spotlightBadge {
+  padding: 7px 12px;
+  border-radius: var(--radius-full);
+  background: rgba(20, 16, 10, 0.55);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.spotlightContent {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  padding: var(--space-8) var(--space-6) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.spotlightVendor {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--champagne-light);
+}
+
+.spotlightTitle {
+  font-family: 'Prata', serif;
+  font-size: clamp(1.3rem, 2vw, 1.75rem);
+  font-weight: 400;
+  color: #fff;
+  line-height: 1.25;
+  margin-bottom: 4px;
+}
+
+.spotlightBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-top: 10px;
+}
+
+.spotlightPrice {
+  font-family: 'Prata', serif;
+  font-size: 1.35rem;
+  color: #fff;
+}
+
+.spotlightCompare {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.55);
+  text-decoration: line-through;
+  margin-left: 8px;
+}
+
+.spotlightCard .addBtn {
+  width: auto;
+  padding: 12px 20px !important;
+}
+
+@media (max-width: 768px) {
+  .spotlightCard { min-height: 340px; }
+  .spotlightBottom { flex-direction: column; align-items: flex-start; gap: var(--space-3); }
+  .spotlightCard .addBtn { width: 100%; }
+}
+
+.placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
   height: 100%;
-  font-size: 3rem;
-  opacity: 0.2;
+  font-size: 2rem;
+  opacity: 0.15;
 }
 
 .badges {
@@ -47,10 +176,9 @@
   left: var(--space-3);
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 4px;
+  z-index: 1;
 }
-
-.badge { font-size: 0.65rem !important; }
 
 .quickAdd {
   position: absolute;
@@ -58,39 +186,39 @@
   left: 0;
   right: 0;
   padding: var(--space-4);
-  background: linear-gradient(to top, rgba(255, 255, 255, 0.98) 0%, transparent 100%);
   transform: translateY(100%);
-  transition: transform 0.3s ease;
+  transition: transform var(--transition-base);
 }
 
 .card:hover .quickAdd { transform: translateY(0); }
 
 .addBtn {
   width: 100%;
-  font-size: 0.8rem !important;
-  padding: 10px 16px !important;
-  border-radius: var(--radius-full) !important;
+  font-size: 0.68rem !important;
+  padding: 12px !important;
+  letter-spacing: 0.14em !important;
 }
 
-.info {
-  padding: var(--space-4) var(--space-4) var(--space-5);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
+.addBtnInner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
+
+.info { display: flex; flex-direction: column; gap: 6px; }
 
 .vendor {
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: var(--accent-primary);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  color: var(--champagne);
 }
 
 .title {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 0.92rem;
-  font-weight: 600;
+  font-family: 'Prata', serif;
+  font-size: 1rem;
+  font-weight: 400;
   color: var(--text-primary);
   line-height: 1.35;
   display: -webkit-box;
@@ -103,28 +231,20 @@
   display: flex;
   align-items: baseline;
   gap: var(--space-2);
-  flex-wrap: wrap;
-  margin-top: var(--space-1);
+  margin-top: 4px;
 }
 
-.availability {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.72rem;
+.stock {
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--color-success);
   font-weight: 600;
 }
 
-.dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--color-success);
-  flex-shrink: 0;
-}
-
 .unavailable {
-  font-size: 0.72rem;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--text-muted);
 }

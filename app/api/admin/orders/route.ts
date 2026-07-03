@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/adminApi';
+import { requireAdmin } from '@/lib/adminAuth';
 import { getAllOrders, getOrderById, updateOrderStatus } from '@/lib/orderStore';
 import { Order } from '@/lib/types';
 

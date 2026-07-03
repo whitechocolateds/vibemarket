@@ -5,9 +5,9 @@ import { usePathname, useRouter } from 'next/navigation';
 import styles from '@/app/admin/admin.module.css';
 
 const links = [
-  { href: '/admin', label: 'Pregled', icon: '📊' },
-  { href: '/admin/orders', label: 'Porudžbine', icon: '📦' },
-  { href: '/admin/products', label: 'Proizvodi', icon: '🛍️' },
+  { href: '/admin', label: 'Pregled', icon: '◆' },
+  { href: '/admin/orders', label: 'Porudžbine', icon: '◇' },
+  { href: '/admin/products', label: 'Proizvodi', icon: '○' },
 ];
 
 export default function AdminSidebar() {
@@ -49,7 +49,7 @@ export default function AdminSidebar() {
 
       <div className={styles.sidebarFooter}>
         <Link href="/">← Prodavnica</Link>
-        <button type="button" onClick={handleLogout}>🚪 <span>Odjavi se</span></button>
+        <button type="button" onClick={handleLogout}>✕ <span>Odjavi se</span></button>
       </div>
     </aside>
   );

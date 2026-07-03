@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { useSearchParams, useParams } from 'next/navigation';
+import { motion } from 'framer-motion';
+import { PackageCheck, Truck, Home } from 'lucide-react';
 import styles from './order.module.css';
 
 export default function OrderConfirmClient() {
@@ -11,101 +13,76 @@ export default function OrderConfirmClient() {
   const name = searchParams.get('name') ?? 'korisniče';
 
   const steps = [
-    { icon: '📦', label: 'Paket se pakuje', active: true },
-    { icon: '🚛', label: 'Preuzeto od kurira', active: false },
-    { icon: '🏠', label: 'Dostavljeno', active: false },
+    { icon: PackageCheck, label: 'Pakovanje', active: true },
+    { icon: Truck, label: 'Kurir', active: false },
+    { icon: Home, label: 'Dostava', active: false },
   ];
 
   return (
     <div className={styles.page}>
       <div className="container">
-        <div className={styles.card}>
-          {/* Success icon */}
-          <div className={styles.successIcon}>
-            <div className={styles.checkCircle}>
-              <svg width="40" height="40" fill="none" stroke="white" strokeWidth="3" viewBox="0 0 24 24">
-                <polyline points="20 6 9 17 4 12" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-            <div className={styles.successRing} />
+        <motion.div
+          className={styles.card}
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <div className={styles.icon}>
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <motion.path
+                d="M6 14.5L11.5 20L22 8"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 0.6, delay: 0.3, ease: 'easeOut' }}
+              />
+            </svg>
+          </div>
+          <h1 className={styles.title}>Hvala, {name}</h1>
+          <p className={styles.subtitle}>Vaša porudžbina je primljena i biće obrađena u najkraćem roku.</p>
+
+          <div className={styles.orderBox}>
+            <p className={styles.orderLabel}>Broj porudžbine</p>
+            <p className={styles.orderNum}>#{orderId}</p>
           </div>
 
-          <h1 className={styles.title}>Hvala, {name}! 🎉</h1>
-          <p className={styles.subtitle}>Vaša porudžbina je uspešno primljena i biće obrađena uskoro.</p>
-
-          {/* Order number */}
-          <div className={styles.orderInfo}>
-            <div className={styles.orderNumberBox}>
-              <span className={styles.orderLabel}>Broj porudžbine</span>
-              <strong className={styles.orderNumber} id="order-number">#{orderId}</strong>
-            </div>
-          </div>
-
-          {/* Delivery info */}
-          <div className={styles.deliveryCard}>
-            <div className={styles.deliveryHeader}>
-              <span>🚀</span>
-              <div>
-                <p className={styles.deliveryTitle}>Očekivano vreme dostave</p>
-                <p className={styles.deliveryTime}>1-3 radna dana</p>
-              </div>
-            </div>
-            <div className={styles.deliverySteps}>
-              {steps.map((step, i) => (
-                <div key={i} className={styles.stepWrapper}>
-                  <div className={`${styles.step} ${step.active ? styles.stepActive : ''}`}>
-                    <span className={styles.stepIcon}>{step.icon}</span>
-                    <span className={styles.stepLabel}>{step.label}</span>
-                  </div>
-                  {i < steps.length - 1 && (
-                    <div className={`${styles.stepLine} ${step.active ? styles.stepLineActive : ''}`} />
-                  )}
+          <div className={styles.delivery}>
+            <h3>Praćenje dostave</h3>
+            <div className={styles.steps}>
+              {steps.map((s, i) => (
+                <div key={i} className={`${styles.step} ${s.active ? styles.stepActive : ''}`}>
+                  <span className={styles.stepIcon}><s.icon size={22} strokeWidth={1.5} /></span>
+                  {s.label}
                 </div>
               ))}
             </div>
+            <p style={{ marginTop: 16, fontSize: '0.85rem', color: 'var(--color-success)' }}>
+              Očekivano: 1–3 radna dana
+            </p>
           </div>
 
-          {/* What's next */}
-          <div className={styles.nextSteps}>
-            <h3>Šta sledi?</h3>
-            <ul className={styles.nextList}>
-              <li>
-                <span className={styles.nextIcon}>📱</span>
-                <span>Pozvaćemo vas radi potvrde porudžbine</span>
-              </li>
-              <li>
-                <span className={styles.nextIcon}>📦</span>
-                <span>Paket će biti spreman za slanje u roku od 24h</span>
-              </li>
-              <li>
-                <span className={styles.nextIcon}>🚛</span>
-                <span>Kurir će dostaviti paket na vašu adresu</span>
-              </li>
-              <li>
-                <span className={styles.nextIcon}>💳</span>
-                <span>Plaćanje kuriru pri preuzimanju (pouzeće)</span>
-              </li>
+          <div className={styles.next}>
+            <h3>Šta sledi</h3>
+            <ul>
+              <li>Pozvaćemo vas radi potvrde</li>
+              <li>Paket se priprema u roku od 24h</li>
+              <li>Kurir dostavlja na vašu adresu</li>
+              <li>Plaćate pouzećem pri preuzimanju</li>
             </ul>
           </div>
 
-          {/* Actions */}
           <div className={styles.actions}>
-            <Link href="/products" className="btn btn-primary btn-lg" id="continue-shopping-btn">
-              Nastavi kupovinu
-            </Link>
-            <Link href="/" className="btn btn-secondary btn-lg" id="go-home-btn">
-              Početna stranica
-            </Link>
+            <Link href="/products" className="btn btn-primary btn-lg">Nastavi kupovinu</Link>
+            <Link href="/" className="btn btn-outline btn-lg">Početna</Link>
           </div>
 
-          {/* Support */}
           <p className={styles.support}>
-            Imate pitanje? Kontaktirajte nas na{' '}
-            <a href="mailto:podrska@vibemarket.rs" className={styles.supportLink}>
-              podrska@vibemarket.rs
-            </a>
+            Pitanja? <a href="mailto:podrska@vibemarket.rs">podrska@vibemarket.rs</a>
           </p>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

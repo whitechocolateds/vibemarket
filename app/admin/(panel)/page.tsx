@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { getAdminStats } from '@/lib/orderStore';
-import { formatPrice } from '@/lib/shopify';
+import { formatPrice } from '@/lib/format';
 import StatusBadge from '@/components/admin/StatusBadge';
 import styles from '../admin.module.css';
 

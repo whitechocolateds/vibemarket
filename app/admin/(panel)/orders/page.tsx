@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Order } from '@/lib/types';
-import { formatPrice } from '@/lib/shopify';
+import { formatPrice } from '@/lib/format';
 import StatusBadge, { STATUS_LABELS } from '@/components/admin/StatusBadge';
 import styles from '../../admin.module.css';
 
@@ -18,11 +18,13 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [filter, setFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     fetch('/api/admin/orders')
       .then((r) => r.json())
       .then((json) => setOrders(json.data ?? []))
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -62,6 +64,8 @@ export default function AdminOrdersPage() {
       <div className={styles.card}>
         {loading ? (
           <div className={styles.empty}>Učitavanje...</div>
+        ) : error ? (
+          <div className={styles.empty}>Greška pri učitavanju porudžbina</div>
         ) : filtered.length === 0 ? (
           <div className={styles.empty}>Nema porudžbina</div>
         ) : (

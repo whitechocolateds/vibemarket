@@ -13,11 +13,13 @@ export default function EditProductPage() {
   const id = params.id as string;
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     fetch(`/api/admin/products?id=${id}`)
       .then((r) => r.json())
       .then((json) => setProduct(json.data ?? null))
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -34,6 +36,7 @@ export default function EditProductPage() {
   };
 
   if (loading) return <div className={styles.empty}>Učitavanje...</div>;
+  if (error) return <div className={styles.empty}>Greška pri učitavanju proizvoda</div>;
   if (!product) return <div className={styles.empty}>Proizvod nije pronađen</div>;
 
   return (

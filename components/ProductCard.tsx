@@ -1,30 +1,34 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Plus, Check, Sparkles } from 'lucide-react';
 import { Product } from '@/lib/types';
 import { useCartStore } from '@/lib/cart';
-import { formatPrice, getProductPrice } from '@/lib/shopify';
+import { formatPrice, getProductPrice } from '@/lib/format';
 import styles from './ProductCard.module.css';
 
 interface Props {
   product: Product;
   index?: number;
+  spotlight?: boolean;
 }
 
-export default function ProductCard({ product, index = 0 }: Props) {
+export default function ProductCard({ product, spotlight = false }: Props) {
   const { addItem } = useCartStore();
   const { price, compareAtPrice } = getProductPrice(product);
+  const [added, setAdded] = useState(false);
+  const [hovered, setHovered] = useState(false);
 
   const discountPercent =
     compareAtPrice && compareAtPrice > price
       ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
       : null;
 
-  const isNew = product.tags.includes('novo');
-  const isBestseller = product.tags.includes('bestseller');
+  const secondImage = product.images?.[1];
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const variant = product.variants[0];
@@ -39,71 +43,128 @@ export default function ProductCard({ product, index = 0 }: Props) {
       compareAtPrice: compareAtPrice ?? undefined,
       image: product.featuredImage,
     });
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1600);
   };
 
-  return (
-    <Link
-      href={`/products/${product.handle}`}
-      className={styles.card}
-      style={{ animationDelay: `${index * 50}ms` }}
-      id={`product-card-${product.handle}`}
+  const addButton = (
+    <button
+      className={`btn btn-primary btn-sm ${styles.addBtn}`}
+      onClick={handleAdd}
+      disabled={!product.availableForSale}
     >
-      {/* Image */}
-      <div className={styles.imageWrapper}>
-        {product.featuredImage ? (
-          <Image
-            src={product.featuredImage.url}
-            alt={product.featuredImage.altText ?? product.title}
-            fill
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className={styles.image}
-          />
+      <AnimatePresence mode="wait" initial={false}>
+        {added ? (
+          <motion.span key="ok" className={styles.addBtnInner} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }}>
+            <Check size={14} /> Dodato
+          </motion.span>
         ) : (
-          <div className={styles.imagePlaceholder}><span>🛍️</span></div>
+          <motion.span key="add" className={styles.addBtnInner} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }}>
+            <Plus size={14} /> {product.availableForSale ? 'Dodaj u korpu' : 'Rasprodato'}
+          </motion.span>
         )}
+      </AnimatePresence>
+    </button>
+  );
 
-        {/* Badges */}
-        <div className={styles.badges}>
-          {discountPercent && (
-            <span className={`badge badge-dark ${styles.badge}`}>−{discountPercent}%</span>
+  if (spotlight) {
+    return (
+      <motion.div whileHover={{ y: -6 }} transition={{ type: 'spring', stiffness: 300, damping: 22 }} className={styles.spotlightMotion}>
+        <Link
+          href={`/products/${product.handle}`}
+          className={styles.spotlightCard}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+        >
+          {product.featuredImage ? (
+            <img
+              src={product.featuredImage.url}
+              alt={product.featuredImage.altText ?? product.title}
+              className={styles.spotlightImg}
+              style={{ transform: hovered ? 'scale(1.06)' : 'scale(1)' }}
+            />
+          ) : (
+            <div className={styles.placeholder}>◆</div>
           )}
-          {isNew && !discountPercent && (
-            <span className={`badge badge-gold ${styles.badge}`}>Novo</span>
+          <div className={styles.spotlightScrim} />
+
+          <div className={styles.spotlightTop}>
+            <span className={styles.spotlightFeatured}><Sparkles size={12} /> Izdvojeno</span>
+            {discountPercent && <span className={styles.spotlightBadge}>−{discountPercent}%</span>}
+          </div>
+
+          <div className={styles.spotlightContent}>
+            <span className={styles.spotlightVendor}>{product.vendor}</span>
+            <h3 className={styles.spotlightTitle}>{product.title}</h3>
+            <div className={styles.spotlightBottom}>
+              <div className={styles.priceRow}>
+                <span className={styles.spotlightPrice}>{formatPrice(price)}</span>
+                {compareAtPrice && <span className={styles.spotlightCompare}>{formatPrice(compareAtPrice)}</span>}
+              </div>
+              {addButton}
+            </div>
+          </div>
+        </Link>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div
+      whileHover={{ y: -6 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 22 }}
+    >
+      <Link
+        href={`/products/${product.handle}`}
+        className={styles.card}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        <div className={styles.imageWrap}>
+          {product.featuredImage ? (
+            <>
+              <img
+                src={product.featuredImage.url}
+                alt={product.featuredImage.altText ?? product.title}
+                className={styles.image}
+                loading="lazy"
+                style={{ opacity: hovered && secondImage ? 0 : 1 }}
+              />
+              {secondImage && (
+                <img
+                  src={secondImage.url}
+                  alt=""
+                  className={styles.image}
+                  loading="lazy"
+                  style={{ position: 'absolute', inset: 0, opacity: hovered ? 1 : 0 }}
+                />
+              )}
+            </>
+          ) : (
+            <div className={styles.placeholder}>◆</div>
           )}
-          {isBestseller && (
-            <span className={`badge badge-dark ${styles.badge}`}>★ Popular</span>
+          <div className={styles.badges}>
+            {discountPercent && <span className="badge badge-dark">−{discountPercent}%</span>}
+            {product.tags.includes('novo') && !discountPercent && (
+              <span className="badge badge-gold">Novo</span>
+            )}
+          </div>
+          <div className={styles.quickAdd}>{addButton}</div>
+        </div>
+        <div className={styles.info}>
+          <span className={styles.vendor}>{product.vendor}</span>
+          <h3 className={styles.title}>{product.title}</h3>
+          <div className={styles.priceRow}>
+            <span className="price">{formatPrice(price)}</span>
+            {compareAtPrice && <span className="price-compare">{formatPrice(compareAtPrice)}</span>}
+          </div>
+          {product.availableForSale ? (
+            <span className={styles.stock}>Na stanju</span>
+          ) : (
+            <span className={styles.unavailable}>Nije dostupno</span>
           )}
         </div>
-
-        {/* Quick add overlay */}
-        <div className={styles.quickAdd}>
-          <button
-            className={`btn btn-primary btn-sm ${styles.addBtn}`}
-            onClick={handleAddToCart}
-            disabled={!product.availableForSale}
-            id={`add-to-cart-${product.handle}`}
-          >
-            {product.availableForSale ? 'Dodaj u korpu' : 'Nije dostupno'}
-          </button>
-        </div>
-      </div>
-
-      {/* Info */}
-      <div className={styles.info}>
-        <p className={styles.vendor}>{product.vendor || 'VibeMarket'}</p>
-        <h3 className={styles.title}>{product.title}</h3>
-        <div className={styles.priceRow}>
-          <span className="price">{formatPrice(price)}</span>
-          {compareAtPrice && (
-            <span className="price-compare">{formatPrice(compareAtPrice)}</span>
-          )}
-        </div>
-        {product.availableForSale ? (
-          <span className={styles.availability}><span className={styles.dot} />Na stanju</span>
-        ) : (
-          <span className={styles.unavailable}>Nije dostupno</span>
-        )}
-      </div>
-    </Link>
+      </Link>
+    </motion.div>
   );
 }

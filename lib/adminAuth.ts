@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from 'crypto';
 import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
 
 const COOKIE_NAME = 'admin_session';
 const SESSION_MS = 7 * 24 * 60 * 60 * 1000;
@@ -65,6 +66,14 @@ export async function getSessionToken(): Promise<string | undefined> {
 export async function isAdminAuthenticated(): Promise<boolean> {
   const token = await getSessionToken();
   return verifySessionToken(token);
+}
+
+export async function requireAdmin(): Promise<NextResponse | null> {
+  const token = await getSessionToken();
+  if (!verifySessionToken(token)) {
+    return NextResponse.json({ error: 'Neautorizovan pristup' }, { status: 401 });
+  }
+  return null;
 }
 
 export { COOKIE_NAME };

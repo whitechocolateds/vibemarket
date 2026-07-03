@@ -16,7 +16,7 @@ export default function StoreChrome({ children }: { children: React.ReactNode })
   return (
     <>
       <Header />
-      <main style={{ minHeight: 'calc(100vh - var(--header-height))' }}>{children}</main>
+      <main style={{ paddingTop: 'var(--header-height)', minHeight: '100vh' }}>{children}</main>
       <Footer />
       <CartSidebar />
     </>

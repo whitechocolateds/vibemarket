@@ -1,15 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import { AnimatePresence, motion, useInView } from 'framer-motion';
+import { Truck, Wallet, ShieldCheck, Check } from 'lucide-react';
 import { Product, ProductVariant } from '@/lib/types';
 import { useCartStore } from '@/lib/cart';
-import { formatPrice } from '@/lib/shopify';
+import { formatPrice } from '@/lib/format';
+import Accordion from '@/components/motion/Accordion';
+import Reveal from '@/components/motion/Reveal';
 import styles from './product.module.css';
 
 interface Props {
   product: Product;
+}
+
+function splitDescriptionSections(html: string): { title: string; content: string }[] {
+  const parts = html.split(/<h3>(.*?)<\/h3>/);
+  const sections = [{ title: 'O proizvodu', content: parts[0] ?? '' }];
+  for (let i = 1; i < parts.length; i += 2) {
+    sections.push({ title: parts[i], content: parts[i + 1] ?? '' });
+  }
+  return sections;
 }
 
 export default function ProductDetailClient({ product }: Props) {
@@ -18,6 +30,8 @@ export default function ProductDetailClient({ product }: Props) {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+  const ctaRef = useRef<HTMLDivElement>(null);
+  const ctaInView = useInView(ctaRef, { margin: '-100px 0px 0px 0px' });
 
   const price = parseFloat(selectedVariant.price.amount);
   const compareAtPrice = selectedVariant.compareAtPrice
@@ -47,102 +61,96 @@ export default function ProductDetailClient({ product }: Props) {
     openCart();
   };
 
-  // Group options
   const optionNames = Array.from(new Set(product.variants.flatMap((v) => v.selectedOptions.map((o) => o.name))));
+
+  const accordionItems = product.descriptionHtml
+    ? splitDescriptionSections(product.descriptionHtml).map((s) => ({
+        title: s.title,
+        content: <div dangerouslySetInnerHTML={{ __html: s.content }} />,
+      }))
+    : product.description
+      ? [{ title: 'O proizvodu', content: <p>{product.description}</p> }]
+      : [];
 
   return (
     <div className={styles.page}>
       <div className="container">
-        {/* Breadcrumb */}
         <nav className={styles.breadcrumb}>
           <Link href="/">Početna</Link>
-          <span>/</span>
-          <Link href="/products">Proizvodi</Link>
-          <span>/</span>
+          <span>·</span>
+          <Link href="/products">Kolekcija</Link>
+          <span>·</span>
           <span>{product.title}</span>
         </nav>
 
         <div className={styles.layout}>
-          {/* Images */}
           <div className={styles.gallery}>
-            <div className={styles.mainImage}>
-              {images[selectedImage] ? (
-                <Image
-                  src={images[selectedImage].url}
-                  alt={images[selectedImage].altText ?? product.title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  className={styles.mainImg}
-                  priority
-                />
-              ) : (
-                <div className={styles.noImage}>🛍️</div>
-              )}
+            <motion.div
+              className={styles.mainImage}
+              whileHover={{ scale: 1.02 }}
+              transition={{ duration: 0.4 }}
+            >
+              <AnimatePresence mode="wait">
+                {images[selectedImage] ? (
+                  <motion.img
+                    key={selectedImage}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.25 }}
+                    src={images[selectedImage].url}
+                    alt={images[selectedImage].altText ?? product.title}
+                    className={styles.mainImg}
+                  />
+                ) : (
+                  <div className={styles.noImage}>◇</div>
+                )}
+              </AnimatePresence>
               {discountPercent && (
-                <span className={`badge badge-orange ${styles.discountBadge}`}>-{discountPercent}%</span>
+                <span className={`badge badge-gold ${styles.discountBadge}`}>−{discountPercent}%</span>
               )}
-            </div>
-
-            {/* Thumbnails */}
+            </motion.div>
             {images.length > 1 && (
               <div className={styles.thumbnails}>
                 {images.map((img, i) => (
                   <button
                     key={i}
+                    type="button"
                     className={`${styles.thumb} ${selectedImage === i ? styles.thumbActive : ''}`}
                     onClick={() => setSelectedImage(i)}
+                    aria-label={`Prikaži sliku ${i + 1}`}
                   >
-                    <Image
-                      src={img.url}
-                      alt={img.altText ?? `${product.title} ${i + 1}`}
-                      fill
-                      sizes="80px"
-                      className={styles.thumbImg}
-                    />
+                    <img src={img.url} alt="" className={styles.thumbImg} />
                   </button>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Product Info */}
           <div className={styles.info}>
-            <div className={styles.infoTop}>
-              <p className={styles.vendor}>{product.vendor}</p>
-              <h1 className={styles.title}>{product.title}</h1>
+            <span className={styles.vendor}>{product.vendor}</span>
+            <h1 className={styles.title}>{product.title}</h1>
 
-              {/* Price */}
-              <div className={styles.priceBlock}>
-                <span className={styles.price}>{formatPrice(price)}</span>
-                {compareAtPrice && (
-                  <span className="price-compare">{formatPrice(compareAtPrice)}</span>
-                )}
-                {discountPercent && (
-                  <span className="price-discount">Uštedite {discountPercent}%</span>
-                )}
-              </div>
-
-              {/* Availability */}
-              {selectedVariant.availableForSale ? (
-                <div className={styles.available}>
-                  <span className={styles.availDot} />
-                  Na stanju {selectedVariant.quantityAvailable !== undefined && `(${selectedVariant.quantityAvailable} dostupno)`}
-                </div>
-              ) : (
-                <div className={styles.unavailable}>Nije dostupno</div>
-              )}
+            <div className={styles.priceBlock}>
+              <span className={styles.price}>{formatPrice(price)}</span>
+              {compareAtPrice && <span className="price-compare">{formatPrice(compareAtPrice)}</span>}
+              {discountPercent && <span className="price-discount">Ušteda {discountPercent}%</span>}
             </div>
 
-            {/* Variants */}
+            {selectedVariant.availableForSale ? (
+              <span className={styles.available}>● Na stanju</span>
+            ) : (
+              <span className={styles.unavailable}>Nije dostupno</span>
+            )}
+
             {optionNames.map((optName) => {
               if (optName === 'Title') return null;
               const values = Array.from(new Set(
-                product.variants
-                  .flatMap((v) => v.selectedOptions.filter((o) => o.name === optName).map((o) => o.value))
+                product.variants.flatMap((v) => v.selectedOptions.filter((o) => o.name === optName).map((o) => o.value))
               ));
               return (
                 <div key={optName} className={styles.optionGroup}>
-                  <p className={styles.optionLabel}>{optName}:</p>
+                  <p className={styles.optionLabel}>{optName}</p>
                   <div className={styles.optionValues}>
                     {values.map((val) => {
                       const variant = product.variants.find((v) =>
@@ -154,6 +162,7 @@ export default function ProductDetailClient({ product }: Props) {
                       return (
                         <button
                           key={val}
+                          type="button"
                           className={`${styles.optionBtn} ${isSelected ? styles.optionSelected : ''} ${!variant?.availableForSale ? styles.optionDisabled : ''}`}
                           onClick={() => variant && setSelectedVariant(variant)}
                           disabled={!variant?.availableForSale}
@@ -167,68 +176,51 @@ export default function ProductDetailClient({ product }: Props) {
               );
             })}
 
-            {/* Quantity */}
             <div className={styles.qtyRow}>
-              <p className={styles.optionLabel}>Količina:</p>
+              <p className={styles.optionLabel}>Količina</p>
               <div className="qty-control">
-                <button className="qty-btn" onClick={() => setQuantity(Math.max(1, quantity - 1))}>−</button>
+                <button type="button" className="qty-btn" onClick={() => setQuantity(Math.max(1, quantity - 1))}>−</button>
                 <span className="qty-value">{quantity}</span>
-                <button className="qty-btn" onClick={() => setQuantity(quantity + 1)}>+</button>
+                <button type="button" className="qty-btn" onClick={() => setQuantity(quantity + 1)}>+</button>
               </div>
             </div>
 
-            {/* Add to Cart */}
-            <div className={styles.ctaButtons}>
-              <button
+            <div className={styles.ctaButtons} ref={ctaRef}>
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.97 }}
                 className={`btn btn-primary btn-full ${styles.addBtn}`}
                 onClick={handleAddToCart}
                 disabled={!selectedVariant.availableForSale}
-                id={`add-to-cart-detail-${product.handle}`}
               >
-                {added ? (
-                  <>✓ Dodato u korpu</>
-                ) : selectedVariant.availableForSale ? (
-                  <>
-                    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" strokeLinecap="round" strokeLinejoin="round" />
-                      <line x1="3" y1="6" x2="21" y2="6" />
-                      <path d="M16 10a4 4 0 0 1-8 0" />
-                    </svg>
-                    Dodaj u korpu
-                  </>
-                ) : (
-                  'Nije dostupno'
-                )}
-              </button>
-              <Link href="/checkout" className={`btn btn-secondary btn-full ${styles.buyBtn}`} id="buy-now-btn">
-                Kupi odmah →
-              </Link>
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.span
+                    key={added ? 'ok' : 'add'}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
+                  >
+                    {added && <Check size={16} />}
+                    {added ? 'Dodato u korpu' : selectedVariant.availableForSale ? 'Dodaj u korpu' : 'Rasprodato'}
+                  </motion.span>
+                </AnimatePresence>
+              </motion.button>
+              <Link href="/checkout" className="btn btn-outline btn-full">Kupi odmah</Link>
             </div>
 
-            {/* Perks */}
             <div className={styles.perks}>
-              <div className={styles.perk}><span>💳</span> Plaćanje pouzećem</div>
-              <div className={styles.perk}><span>🚀</span> Dostava 1-3 radna dana</div>
-              <div className={styles.perk}><span>🔒</span> Sigurna kupovina</div>
+              <div className={styles.perk}><Truck size={18} /><strong>Dostava</strong>1–3 radna dana</div>
+              <div className={styles.perk}><Wallet size={18} /><strong>Plaćanje</strong>Pouzećem</div>
+              <div className={styles.perk}><ShieldCheck size={18} /><strong>Garancija</strong>Zadovoljstvo</div>
             </div>
 
-            {/* Description */}
-            {product.descriptionHtml ? (
-              <div className={styles.description}>
-                <h3>Opis proizvoda</h3>
-                <div
-                  className={styles.descriptionHtml}
-                  dangerouslySetInnerHTML={{ __html: product.descriptionHtml }}
-                />
-              </div>
-            ) : product.description ? (
-              <div className={styles.description}>
-                <h3>Opis proizvoda</h3>
-                <p>{product.description}</p>
-              </div>
-            ) : null}
+            {accordionItems.length > 0 && (
+              <Reveal>
+                <Accordion items={accordionItems} />
+              </Reveal>
+            )}
 
-            {/* Tags */}
             {product.tags.length > 0 && (
               <div className={styles.tags}>
                 {product.tags.map((tag) => (
@@ -239,6 +231,31 @@ export default function ProductDetailClient({ product }: Props) {
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {!ctaInView && (
+          <motion.div
+            className={styles.stickyBar}
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          >
+            <div className={styles.stickyInfo}>
+              <span className={styles.stickyTitle}>{product.title}</span>
+              <span className={styles.stickyPrice}>{formatPrice(price)}</span>
+            </div>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleAddToCart}
+              disabled={!selectedVariant.availableForSale}
+            >
+              {selectedVariant.availableForSale ? 'Dodaj u korpu' : 'Rasprodato'}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

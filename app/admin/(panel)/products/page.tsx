@@ -4,19 +4,22 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Product } from '@/lib/types';
-import { formatPrice } from '@/lib/shopify';
+import { formatPrice } from '@/lib/format';
 import styles from '../../admin.module.css';
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
 
   const load = () => {
     setLoading(true);
+    setError(false);
     fetch('/api/admin/products')
       .then((r) => r.json())
       .then((json) => setProducts(json.data ?? []))
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   };
 
@@ -50,6 +53,8 @@ export default function AdminProductsPage() {
       <div className={styles.card}>
         {loading ? (
           <div className={styles.empty}>Učitavanje...</div>
+        ) : error ? (
+          <div className={styles.empty}>Greška pri učitavanju proizvoda</div>
         ) : products.length === 0 ? (
           <div className={styles.empty}>
             <p>Nema proizvoda</p>
@@ -86,7 +91,7 @@ export default function AdminProductsPage() {
                             className={styles.productThumb}
                           />
                         ) : (
-                          <div className={styles.productThumb}>🛍️</div>
+                          <div className={styles.productThumb}>◆</div>
                         )}
                         <div>
                           <Link href={`/admin/products/${product.id}/edit`} className={styles.tableLink}>
@@ -106,16 +111,17 @@ export default function AdminProductsPage() {
                     </td>
                     <td>
                       <div className={styles.actions}>
-                        <Link href={`/products/${product.handle}`} className={styles.iconBtn} title="Pogledaj u prodavnici" target="_blank">
+                        <Link href={`/products/${product.handle}`} className={styles.iconBtn} title="Pogledaj u prodavnici" aria-label="Pogledaj u prodavnici" target="_blank">
                           ↗
                         </Link>
-                        <Link href={`/admin/products/${product.id}/edit`} className={styles.iconBtn} title="Izmeni">
+                        <Link href={`/admin/products/${product.id}/edit`} className={styles.iconBtn} title="Izmeni" aria-label="Izmeni proizvod">
                           ✎
                         </Link>
                         <button
                           type="button"
                           className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
                           title="Obriši"
+                          aria-label="Obriši proizvod"
                           disabled={deleting === product.id}
                           onClick={() => handleDelete(product.id, product.title)}
                         >

@@ -124,23 +124,3 @@ export interface ProductInput {
   availableForSale: boolean;
 }
 
-export interface ShopifyCheckoutInput {
-  lineItems: {
-    variantId: string;
-    quantity: number;
-  }[];
-  customAttributes?: {
-    key: string;
-    value: string;
-  }[];
-  note?: string;
-  shippingAddress?: {
-    firstName: string;
-    lastName: string;
-    address1: string;
-    city: string;
-    zip: string;
-    phone: string;
-    country: string;
-  };
-}

@@ -1,6 +1,6 @@
 import { Product, Collection } from './types';
 
-// ─── Mock Data for development (when Shopify is not configured) ───────────────
+// ─── Seed podaci (inicijalni katalog) ───────────────────────────────────────
 
 export const MOCK_COLLECTIONS: Collection[] = [
   { id: 'col-1', handle: 'elektronika', title: 'Elektronika' },
@@ -27,7 +27,7 @@ export const MOCK_PRODUCTS: Product[] = [
 <li><strong>Materijal:</strong> kvalitetna, izdržljiva plastika</li>
 <li><strong>Proizvođač:</strong> Megaplast, Srbija</li>
 </ul>
-<p>Izrađena je od plastike koja ne zadržava mirise, lako se čisti i otporna je na hladnoću — led sporije topi i ostaje svež duže vreme. Lagana je, jednostavna za prenošenje i stabilna za korišćenje na stolovima, šankovima ili napolju.</p>
+<p>Izrađena je od plastike koja ne zadržava mirise, lako se čisti i otporna je na hladnoću - led sporije topi i ostaje svež duže vreme. Lagana je, jednostavna za prenošenje i stabilna za korišćenje na stolovima, šankovima ili napolju.</p>
 <h3>Idealna za</h3>
 <ul>
 <li>Rođendanske proslave, slave i porodična okupljanja</li>

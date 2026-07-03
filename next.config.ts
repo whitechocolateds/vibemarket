@@ -5,16 +5,6 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'cdn.shopify.com',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: '**.myshopify.com',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
         hostname: 'images.unsplash.com',
         pathname: '/**',
       },
@@ -23,18 +13,12 @@ const nextConfig: NextConfig = {
         hostname: 'plastikaonline.rs',
         pathname: '/wp-content/uploads/**',
       },
-    ],
-  },
-  async headers() {
-    return [
       {
-        source: '/api/:path*',
-        headers: [
-          { key: 'Access-Control-Allow-Origin', value: '*' },
-          { key: 'Access-Control-Allow-Methods', value: 'GET, POST, OPTIONS' },
-        ],
+        protocol: 'https',
+        hostname: '*.public.blob.vercel-storage.com',
+        pathname: '/**',
       },
-    ];
+    ],
   },
 };
 

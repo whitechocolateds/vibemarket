@@ -7,23 +7,9 @@ interface Props {
   params: Promise<{ handle: string }>;
 }
 
-async function getProductData(handle: string) {
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/shopify?type=product&handle=${handle}`, {
-      next: { revalidate: 60 },
-    });
-    if (!res.ok) throw new Error('Failed');
-    const json = await res.json();
-    return json.data;
-  } catch {
-    return getProductByHandle(handle);
-  }
-}
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { handle } = await params;
-  const product = await getProductData(handle);
+  const product = await getProductByHandle(handle);
   if (!product) return { title: 'Proizvod nije pronađen' };
 
   return {
@@ -39,7 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProductDetailPage({ params }: Props) {
   const { handle } = await params;
-  const product = await getProductData(handle);
+  const product = await getProductByHandle(handle);
 
   if (!product) notFound();
 

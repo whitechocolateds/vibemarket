@@ -95,7 +95,7 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
 
       <div className={`${styles.card} ${styles.formGridFull}`} style={{ padding: 'var(--space-6)' }}>
         <div className={styles.formGrid}>
-          <div className="form-group formGridFull">
+          <div className={`form-group ${styles.formGridFull}`}>
             <label className="form-label" htmlFor="title">Naziv proizvoda *</label>
             <input id="title" name="title" className="input" value={form.title} onChange={handleChange} required />
           </div>
@@ -117,7 +117,7 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
             <input id="vendor" name="vendor" className="input" value={form.vendor} onChange={handleChange} />
           </div>
 
-          <div className="form-group formGridFull">
+          <div className={`form-group ${styles.formGridFull}`}>
             <label className="form-label" htmlFor="description">Opis *</label>
             <textarea
               id="description"
@@ -150,22 +150,22 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
             <input id="productType" name="productType" className="input" value={form.productType} onChange={handleChange} />
           </div>
 
-          <div className="form-group formGridFull">
+          <div className={`form-group ${styles.formGridFull}`}>
             <label className="form-label" htmlFor="imageUrl">Glavna slika (URL) *</label>
             <input id="imageUrl" name="imageUrl" className="input" value={form.imageUrl} onChange={handleChange} placeholder="https://..." required />
           </div>
 
-          <div className="form-group formGridFull">
+          <div className={`form-group ${styles.formGridFull}`}>
             <label className="form-label" htmlFor="extraImages">Dodatne slike (URL, jedna po liniji)</label>
             <textarea id="extraImages" className="textarea" rows={3} value={extraImages} onChange={(e) => setExtraImages(e.target.value)} />
           </div>
 
-          <div className="form-group formGridFull">
+          <div className={`form-group ${styles.formGridFull}`}>
             <label className="form-label" htmlFor="tags">Tagovi (odvojeni zarezom)</label>
             <input id="tags" className="input" value={tagsStr} onChange={(e) => setTagsStr(e.target.value)} placeholder="novo, bestseller, elektronika" />
           </div>
 
-          <div className="form-group formGridFull">
+          <div className={`form-group ${styles.formGridFull}`}>
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
               <input type="checkbox" name="availableForSale" checked={form.availableForSale} onChange={handleChange} />
               <span className="form-label" style={{ margin: 0 }}>Dostupan za prodaju</span>

@@ -2,9 +2,10 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import { AnimatePresence, motion } from 'framer-motion';
+import { X, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
 import { useCartStore } from '@/lib/cart';
-import { formatPrice } from '@/lib/shopify';
+import { formatPrice } from '@/lib/format';
 import styles from './CartSidebar.module.css';
 
 export default function CartSidebar() {
@@ -21,85 +22,91 @@ export default function CartSidebar() {
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
 
-  if (!isOpen && items.length === 0) return null;
-
   return (
-    <>
-      {isOpen && <div className="overlay" onClick={closeCart} />}
-
-      <aside className={`${styles.sidebar} ${isOpen ? styles.open : ''}`} id="cart-sidebar">
-        {/* Header */}
-        <div className={styles.header}>
-          <div className={styles.headerLeft}>
-            <h2 className={styles.title}>Vaša korpa</h2>
-            {totalItems > 0 && (
-              <span className="badge badge-gold">{totalItems} stavki</span>
-            )}
-          </div>
-          <button className="btn btn-ghost" onClick={closeCart} aria-label="Zatvori" id="close-cart-btn">
-            <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24">
-              <path d="M18 6 6 18M6 6l12 12" strokeLinecap="round" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Items */}
-        {items.length === 0 ? (
-          <div className={styles.empty}>
-            <span className={styles.emptyIcon}>🛒</span>
-            <p>Vaša korpa je prazna</p>
-            <Link href="/products" className="btn btn-secondary btn-sm" onClick={closeCart}>
-              Pogledaj proizvode
-            </Link>
-          </div>
-        ) : (
-          <>
-            <div className={styles.items}>
-              {items.map((item) => (
-                <div key={item.id} className={styles.item}>
-                  <div className={styles.itemImage}>
-                    {item.image ? (
-                      <Image src={item.image.url} alt={item.title} fill sizes="68px" className={styles.itemImg} />
-                    ) : <span>🛍️</span>}
-                  </div>
-                  <div className={styles.itemInfo}>
-                    <p className={styles.itemTitle}>{item.title}</p>
-                    {item.variantTitle && <p className={styles.itemVariant}>{item.variantTitle}</p>}
-                    <p className={styles.itemPrice}>{formatPrice(item.price * item.quantity)}</p>
-                  </div>
-                  <div className={styles.itemActions}>
-                    <div className="qty-control">
-                      <button className="qty-btn" onClick={() => updateQuantity(item.id, item.quantity - 1)}>−</button>
-                      <span className="qty-value">{item.quantity}</span>
-                      <button className="qty-btn" onClick={() => updateQuantity(item.id, item.quantity + 1)}>+</button>
-                    </div>
-                    <button className="btn btn-ghost btn-sm" onClick={() => removeItem(item.id)} aria-label="Ukloni">
-                      <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24">
-                        <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" />
-                        <path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              ))}
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            className="overlay"
+            onClick={closeCart}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          />
+          <motion.aside
+            className={styles.sidebar}
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', stiffness: 320, damping: 34 }}
+          >
+            <div className={styles.header}>
+              <h2 className={styles.title}>Korpa</h2>
+              {totalItems > 0 && <span className={styles.count}>{totalItems} artikala</span>}
+              <button className="btn btn-ghost btn-sm" onClick={closeCart} aria-label="Zatvori"><X size={18} /></button>
             </div>
 
-            <div className={styles.footer}>
-              <div className={styles.total}>
-                <span>Ukupno</span>
-                <span className={styles.totalPrice}>{formatPrice(totalPrice)}</span>
+            {items.length === 0 ? (
+              <div className={styles.empty}>
+                <ShoppingBag size={32} strokeWidth={1} />
+                <p>Korpa je prazna</p>
+                <Link href="/products" className="btn btn-outline btn-sm" onClick={closeCart}>
+                  Pogledaj kolekciju
+                </Link>
               </div>
-              <p className={styles.shippingNote}>✓ Dostava 1–3 radna dana · Plaćanje pouzećem</p>
-              <Link href="/checkout" className={`btn btn-primary btn-full ${styles.checkoutBtn}`} onClick={closeCart} id="go-to-checkout-btn">
-                Nastavi sa narudžbinom
-              </Link>
-              <button className={`btn btn-ghost btn-full ${styles.continueBtn}`} onClick={closeCart}>
-                Nastavi kupovinu
-              </button>
-            </div>
-          </>
-        )}
-      </aside>
-    </>
+            ) : (
+              <>
+                <div className={styles.items}>
+                  <AnimatePresence initial={false}>
+                    {items.map((item) => (
+                      <motion.div
+                        key={item.id}
+                        className={styles.item}
+                        layout
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        {item.image ? (
+                          <img src={item.image.url} alt={item.title} className={styles.itemImg} />
+                        ) : (
+                          <div className={styles.itemImg} />
+                        )}
+                        <div className={styles.itemInfo}>
+                          <h4>{item.title}</h4>
+                          {item.variantTitle && <p className={styles.itemVariant}>{item.variantTitle}</p>}
+                          <p className={styles.itemPrice}>{formatPrice(item.price * item.quantity)}</p>
+                        </div>
+                        <div className={styles.itemActions}>
+                          <div className="qty-control">
+                            <button className="qty-btn" onClick={() => updateQuantity(item.id, item.quantity - 1)} aria-label="Smanji količinu"><Minus size={13} /></button>
+                            <span className="qty-value">{item.quantity}</span>
+                            <button className="qty-btn" onClick={() => updateQuantity(item.id, item.quantity + 1)} aria-label="Povećaj količinu"><Plus size={13} /></button>
+                          </div>
+                          <button className={styles.removeBtn} onClick={() => removeItem(item.id)} aria-label="Ukloni">
+                            <Trash2 size={13} /> Ukloni
+                          </button>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+                <div className={styles.footer}>
+                  <div className={styles.total}>
+                    <span className={styles.totalLabel}>Ukupno</span>
+                    <span className={styles.totalPrice}>{formatPrice(totalPrice)}</span>
+                  </div>
+                  <p className={styles.note}>Dostava 1–3 dana · Plaćanje pouzećem</p>
+                  <Link href="/checkout" className={`btn btn-primary btn-full ${styles.checkoutBtn}`} onClick={closeCart}>
+                    Nastavi na plaćanje
+                  </Link>
+                </div>
+              </>
+            )}
+          </motion.aside>
+        </>
+      )}
+    </AnimatePresence>
   );
 }

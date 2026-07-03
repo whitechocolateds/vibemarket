@@ -4,13 +4,13 @@ import StoreChrome from '@/components/StoreChrome';
 
 export const metadata: Metadata = {
   title: {
-    default: 'VibeMarket — Online Prodavnica',
-    template: '%s | VibeMarket',
+    default: 'VibeMarket - Prodavnica sa stavom',
+    template: '%s · VibeMarket',
   },
-  description: 'Pronađite proizvode koji vam trebaju uz brzu dostavu i plaćanje pouzećem. Dostava 1-3 radna dana širom Srbije.',
+  description: 'Pažljivo odabrani proizvodi. Dostava 1–3 radna dana širom Srbije. Plaćanje pouzećem.',
   keywords: ['online kupovina', 'prodavnica', 'pouzeće', 'srbija', 'dostava'],
   openGraph: {
-    title: 'VibeMarket — Online Prodavnica',
+    title: 'VibeMarket - Online prodavnica',
     description: 'Brza dostava i plaćanje pouzećem. Dostava 1-3 radna dana.',
     type: 'website',
     locale: 'sr_RS',
