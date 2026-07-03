@@ -95,7 +95,33 @@ export interface Order {
   items: CartItem[];
   customerInfo: OrderForm;
   totalPrice: number;
-  status: 'pending' | 'confirmed' | 'shipped' | 'delivered';
+  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+}
+
+export interface AdminStats {
+  totalRevenue: number;
+  totalOrders: number;
+  pendingOrders: number;
+  todayRevenue: number;
+  todayOrders: number;
+  totalProducts: number;
+  recentOrders: Order[];
+}
+
+export interface ProductInput {
+  title: string;
+  handle?: string;
+  description: string;
+  descriptionHtml?: string;
+  price: number;
+  compareAtPrice?: number | null;
+  imageUrl: string;
+  imageUrls?: string[];
+  tags: string[];
+  vendor: string;
+  productType: string;
+  quantity: number;
+  availableForSale: boolean;
 }
 
 export interface ShopifyCheckoutInput {

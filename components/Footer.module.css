@@ -1,0 +1,137 @@
+.footer {
+  background: var(--bg-dark);
+  color: #CBD5E1;
+  margin-top: var(--space-20);
+}
+
+.inner {
+  display: grid;
+  grid-template-columns: 1.4fr 2fr;
+  gap: var(--space-16);
+  padding: var(--space-16) 0;
+}
+
+@media (max-width: 768px) {
+  .inner { grid-template-columns: 1fr; gap: var(--space-10); }
+}
+
+.brand { max-width: 360px; }
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+  text-decoration: none;
+}
+
+.logoImg {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  filter: brightness(1.2);
+}
+
+.logoText {
+  font-family: 'Fraunces', serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #F8FAFC;
+}
+
+.logoText span { color: #A5B4FC; }
+
+.tagline {
+  font-size: 0.9rem;
+  color: #94A3B8;
+  line-height: 1.65;
+  margin-bottom: var(--space-6);
+}
+
+.badges {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #CBD5E1;
+}
+
+.links {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-8);
+}
+
+@media (max-width: 640px) {
+  .links { grid-template-columns: 1fr 1fr; }
+}
+
+.linkCol {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.linkCol h4 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #64748B;
+  margin-bottom: var(--space-1);
+}
+
+.linkCol a {
+  font-size: 0.875rem;
+  color: #94A3B8;
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.linkCol a:hover { color: #F8FAFC; }
+
+.bottomBar {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: var(--space-5) 0;
+}
+
+.bottomInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.bottomBar p {
+  font-size: 0.78rem;
+  color: #64748B;
+}
+
+.bottomRight {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.bottomRight a {
+  font-size: 0.78rem;
+  color: #64748B;
+  transition: color var(--transition-fast);
+}
+
+.bottomRight a:hover { color: #94A3B8; }
+
+@media (max-width: 640px) {
+  .bottomInner { flex-direction: column; text-align: center; }
+}

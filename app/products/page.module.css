@@ -1,0 +1,92 @@
+.page { padding-bottom: var(--space-24); }
+
+.pageHeader {
+  position: relative;
+  padding: var(--space-12) 0 var(--space-8);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: var(--space-8);
+}
+
+.headerBg {
+  position: absolute;
+  inset: 0;
+  background: var(--accent-gradient-subtle);
+  opacity: 0.5;
+}
+
+.pageTitle {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.1;
+  position: relative;
+}
+
+.pageSubtitle {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-top: var(--space-2);
+  position: relative;
+}
+
+.filtersBar {
+  display: flex;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+  align-items: center;
+}
+
+@media (max-width: 640px) {
+  .filtersBar { flex-direction: column; align-items: stretch; }
+}
+
+.searchForm { flex: 1; }
+.searchWrapper { position: relative; }
+
+.searchIcon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.searchInput { padding-left: 44px !important; }
+.sortSelect { min-width: 190px; }
+
+.tags {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-8);
+  padding-bottom: var(--space-6);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.skeletonGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-5);
+}
+
+.skeletonCard {
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+}
+
+.skeletonImg { aspect-ratio: 1; width: 100%; }
+
+.skeletonInfo {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.skeletonLine     { height: 14px; width: 75%; border-radius: 3px; }
+.skeletonLineShort{ height: 12px; width: 45%; border-radius: 3px; }

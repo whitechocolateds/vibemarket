@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local store data
+/data/*.json
+/data/admin-credentials.txt
+!data/.gitkeep
