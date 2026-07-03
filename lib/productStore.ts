@@ -19,7 +19,13 @@ export async function getAllProducts(): Promise<Product[]> {
 
 export async function getProductByHandle(handle: string): Promise<Product | null> {
   const products = await loadProducts();
-  return products.find((p) => p.handle === handle) ?? null;
+  let decoded = handle;
+  try {
+    decoded = decodeURIComponent(handle);
+  } catch {
+    // handle was already decoded or isn't validly percent-encoded; fall back to raw value
+  }
+  return products.find((p) => p.handle === handle || p.handle === decoded) ?? null;
 }
 
 export async function getProductById(id: string): Promise<Product | null> {

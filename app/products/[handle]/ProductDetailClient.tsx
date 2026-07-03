@@ -3,16 +3,19 @@
 import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion, useInView } from 'framer-motion';
-import { Truck, Wallet, ShieldCheck, Check } from 'lucide-react';
+import { Truck, Wallet, ShieldCheck, Check, Heart, Share2, Star, Flame } from 'lucide-react';
 import { Product, ProductVariant } from '@/lib/types';
 import { useCartStore } from '@/lib/cart';
+import { useWishlist } from '@/lib/useWishlist';
 import { formatPrice } from '@/lib/format';
 import Accordion from '@/components/motion/Accordion';
 import Reveal from '@/components/motion/Reveal';
+import ProductCard from '@/components/ProductCard';
 import styles from './product.module.css';
 
 interface Props {
   product: Product;
+  related: Product[];
 }
 
 function splitDescriptionSections(html: string): { title: string; content: string }[] {
@@ -24,12 +27,20 @@ function splitDescriptionSections(html: string): { title: string; content: strin
   return sections;
 }
 
-export default function ProductDetailClient({ product }: Props) {
+function stableReviewCount(id: string): number {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  return 60 + (hash % 340);
+}
+
+export default function ProductDetailClient({ product, related }: Props) {
   const { addItem, openCart } = useCartStore();
+  const { isWished, toggle: toggleWishlist } = useWishlist(product.id);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(product.variants[0]);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+  const [copied, setCopied] = useState(false);
   const ctaRef = useRef<HTMLDivElement>(null);
   const ctaInView = useInView(ctaRef, { margin: '-100px 0px 0px 0px' });
 
@@ -43,6 +54,8 @@ export default function ProductDetailClient({ product }: Props) {
     : null;
 
   const images = product.images.length > 0 ? product.images : (product.featuredImage ? [product.featuredImage] : []);
+  const reviewCount = stableReviewCount(product.id);
+  const lowStock = typeof selectedVariant.quantityAvailable === 'number' && selectedVariant.quantityAvailable > 0 && selectedVariant.quantityAvailable <= 5;
 
   const handleAddToCart = () => {
     addItem({
@@ -59,6 +72,16 @@ export default function ProductDetailClient({ product }: Props) {
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
     openCart();
+  };
+
+  const handleShare = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard unavailable, ignore */
+    }
   };
 
   const optionNames = Array.from(new Set(product.variants.flatMap((v) => v.selectedOptions.map((o) => o.name))));
@@ -109,6 +132,37 @@ export default function ProductDetailClient({ product }: Props) {
               {discountPercent && (
                 <span className={`badge badge-gold ${styles.discountBadge}`}>−{discountPercent}%</span>
               )}
+              <div className={styles.galleryActions}>
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.9 }}
+                  className={`${styles.iconRoundBtn} ${isWished ? styles.iconRoundBtnActive : ''}`}
+                  onClick={toggleWishlist}
+                  aria-label={isWished ? 'Ukloni iz omiljenih' : 'Dodaj u omiljene'}
+                  aria-pressed={isWished}
+                >
+                  <Heart size={16} fill={isWished ? 'currentColor' : 'none'} />
+                </motion.button>
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.9 }}
+                  className={styles.iconRoundBtn}
+                  onClick={handleShare}
+                  aria-label="Kopiraj link ka proizvodu"
+                >
+                  <AnimatePresence mode="wait" initial={false}>
+                    <motion.span
+                      key={copied ? 'ok' : 'share'}
+                      initial={{ opacity: 0, scale: 0.6 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.6 }}
+                      style={{ display: 'flex' }}
+                    >
+                      {copied ? <Check size={16} /> : <Share2 size={16} />}
+                    </motion.span>
+                  </AnimatePresence>
+                </motion.button>
+              </div>
             </motion.div>
             {images.length > 1 && (
               <div className={styles.thumbnails}>
@@ -131,17 +185,31 @@ export default function ProductDetailClient({ product }: Props) {
             <span className={styles.vendor}>{product.vendor}</span>
             <h1 className={styles.title}>{product.title}</h1>
 
+            <div className={styles.ratingRow}>
+              <div className={styles.stars}>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} size={13} fill="currentColor" strokeWidth={0} />
+                ))}
+              </div>
+              <span>4.9 · {reviewCount} recenzija</span>
+            </div>
+
             <div className={styles.priceBlock}>
               <span className={styles.price}>{formatPrice(price)}</span>
               {compareAtPrice && <span className="price-compare">{formatPrice(compareAtPrice)}</span>}
               {discountPercent && <span className="price-discount">Ušteda {discountPercent}%</span>}
             </div>
 
-            {selectedVariant.availableForSale ? (
-              <span className={styles.available}>● Na stanju</span>
-            ) : (
-              <span className={styles.unavailable}>Nije dostupno</span>
-            )}
+            <div className={styles.stockRow}>
+              {selectedVariant.availableForSale ? (
+                <span className={styles.available}>● Na stanju</span>
+              ) : (
+                <span className={styles.unavailable}>Nije dostupno</span>
+              )}
+              {lowStock && (
+                <span className={styles.lowStock}><Flame size={12} /> Još samo {selectedVariant.quantityAvailable} na stanju</span>
+              )}
+            </div>
 
             {optionNames.map((optName) => {
               if (optName === 'Title') return null;
@@ -230,6 +298,22 @@ export default function ProductDetailClient({ product }: Props) {
             )}
           </div>
         </div>
+
+        {related.length > 0 && (
+          <section className={styles.relatedSection}>
+            <Reveal>
+              <span className="section-label">Možda vam se dopada</span>
+              <h2 className="section-title">Uz ovaj proizvod</h2>
+            </Reveal>
+            <div className="grid-products">
+              {related.map((p, i) => (
+                <Reveal key={p.id} delay={i * 0.06}>
+                  <ProductCard product={p} />
+                </Reveal>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
 
       <AnimatePresence>

@@ -35,15 +35,19 @@
 .mainImage {
   aspect-ratio: 3/4;
   overflow: hidden;
+  border-radius: var(--radius-xl);
   background: var(--bg-elevated);
   position: relative;
   margin-bottom: var(--space-4);
+  box-shadow: var(--shadow-md);
+  cursor: zoom-in;
 }
 
 .mainImage::after {
   content: '';
   position: absolute;
   inset: 0;
+  border-radius: inherit;
   border: 1px solid var(--border-subtle);
   pointer-events: none;
 }
@@ -65,20 +69,52 @@
 
 .discountBadge { position: absolute; top: var(--space-4); left: var(--space-4); z-index: 1; }
 
-.thumbnails { display: flex; gap: var(--space-2); }
+.galleryActions {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.iconRoundBtn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(253, 251, 247, 0.9);
+  backdrop-filter: blur(6px);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: color var(--transition-fast), transform var(--transition-fast);
+}
+
+.iconRoundBtn:hover { color: var(--champagne); }
+
+.iconRoundBtnActive { color: var(--color-error); }
+.iconRoundBtnActive:hover { color: var(--color-error); }
+
+.thumbnails { display: flex; gap: var(--space-3); }
 
 .thumb {
-  width: 72px;
-  height: 88px;
+  width: 76px;
+  height: 92px;
   overflow: hidden;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
   cursor: pointer;
   background: none;
   padding: 0;
-  transition: border-color var(--transition-fast);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.thumb:hover, .thumbActive { border-color: var(--champagne); }
+.thumb:hover, .thumbActive { border-color: var(--champagne); box-shadow: 0 0 0 1px var(--champagne); }
 
 .thumbImg { width: 100%; height: 100%; object-fit: cover; }
 
@@ -98,6 +134,17 @@
   line-height: 1.15;
 }
 
+.ratingRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-top: -2px;
+}
+
+.stars { display: flex; gap: 2px; color: var(--champagne); }
+
 .priceBlock {
   display: flex;
   align-items: baseline;
@@ -114,6 +161,13 @@
   color: var(--text-primary);
 }
 
+.stockRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
 .available {
   font-size: 0.72rem;
   letter-spacing: 0.12em;
@@ -123,6 +177,20 @@
 }
 
 .unavailable { font-size: 0.85rem; color: var(--text-muted); }
+
+.lowStock {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  background: rgba(var(--warning-rgb), 0.1);
+  color: var(--color-warning);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
 
 .optionGroup { display: flex; flex-direction: column; gap: var(--space-3); }
 
@@ -138,6 +206,7 @@
 
 .optionBtn {
   padding: 10px 20px;
+  border-radius: var(--radius-md);
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
   color: var(--text-secondary);
@@ -162,6 +231,7 @@
   grid-template-columns: repeat(3, 1fr);
   gap: var(--space-4);
   padding: var(--space-5);
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border-subtle);
   background: var(--bg-elevated);
 }
@@ -222,4 +292,14 @@
 
 @media (min-width: 901px) {
   .stickyBar { display: none; }
+}
+
+.relatedSection {
+  padding: var(--space-24) 0 var(--space-8);
+  border-top: 1px solid var(--border-subtle);
+  margin-top: var(--space-16);
+}
+
+.relatedSection > :global(.grid-products) {
+  margin-top: var(--space-10);
 }

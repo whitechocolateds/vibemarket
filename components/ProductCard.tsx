@@ -113,6 +113,7 @@ export default function ProductCard({ product, spotlight = false }: Props) {
     <motion.div
       whileHover={{ y: -6 }}
       transition={{ type: 'spring', stiffness: 300, damping: 22 }}
+      style={{ height: '100%' }}
     >
       <Link
         href={`/products/${product.handle}`}

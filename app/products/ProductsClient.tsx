@@ -3,13 +3,26 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, PackageSearch, ArrowUpDown, Loader2 } from 'lucide-react';
+import {
+  Search, X, PackageSearch, ArrowUpDown, Loader2,
+  LayoutGrid, Flame, Sparkles, Dumbbell, Cpu, UtensilsCrossed, ShoppingBag,
+  type LucideIcon,
+} from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
 import Reveal from '@/components/motion/Reveal';
 import { Product } from '@/lib/types';
 import styles from './page.module.css';
 
 const POPULAR_TAGS = ['bestseller', 'novo', 'sport', 'fudbal', 'elektronika', 'kuhinja'];
+
+const TAG_ICONS: Record<string, LucideIcon> = {
+  bestseller: Flame,
+  novo: Sparkles,
+  sport: Dumbbell,
+  fudbal: ShoppingBag,
+  elektronika: Cpu,
+  kuhinja: UtensilsCrossed,
+};
 
 export default function ProductsClient() {
   const searchParams = useSearchParams();
@@ -84,104 +97,108 @@ export default function ProductsClient() {
 
   return (
     <div className={styles.page}>
-      <section className={styles.hero}>
-        <div className="container">
-          <Reveal>
-            <span className="section-label">Prodavnica</span>
-            <h1 className={styles.heroTitle}>Kolekcija</h1>
-            <p className={styles.heroSub}>
-              {initialLoading ? 'Učitavanje...' : `${products.length} pažljivo odabranih artikala`}
-            </p>
-          </Reveal>
-        </div>
-      </section>
-
       <div className={styles.toolbar}>
         <div className="container">
-          <div className={styles.filters}>
-            <form onSubmit={(e) => e.preventDefault()} className={styles.searchWrap}>
-              <Search size={16} className={styles.searchIcon} />
-              <input
-                type="text"
-                className={`input ${styles.searchInput}`}
-                placeholder="Pretraži proizvode..."
-                aria-label="Pretraži proizvode"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-              />
-              <AnimatePresence>
-                {searchInput && (
-                  <motion.button
-                    type="button"
-                    className={styles.clearBtn}
-                    aria-label="Obriši pretragu"
-                    onClick={() => setSearchInput('')}
-                    initial={{ opacity: 0, scale: 0.6 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.6 }}
-                  >
-                    <X size={14} />
-                  </motion.button>
-                )}
-              </AnimatePresence>
-            </form>
-            <div className={styles.sortWrap}>
-              <ArrowUpDown size={14} className={styles.sortIcon} />
-              <select
-                className={`select ${styles.sort}`}
-                aria-label="Sortiraj proizvode"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-              >
-                <option value="">Podrazumevano</option>
-                <option value="price-asc">Cena ↑</option>
-                <option value="price-desc">Cena ↓</option>
-                <option value="name">Naziv</option>
-              </select>
-            </div>
-          </div>
+          <Reveal>
+            <div className={styles.toolbarHead}>
+              <div className={styles.titleBlock}>
+                <h1 className={styles.pageTitle}>Kolekcija</h1>
+                <span className={styles.countBadge}>
+                  {initialLoading ? 'Učitavanje...' : `${products.length} artikala`}
+                </span>
+              </div>
 
-          {visibleTags.length > 0 && (
-            <div className={styles.tags}>
-              <button type="button" className={`tag-pill ${!selectedTag ? 'active' : ''}`} onClick={() => setSelectedTag('')}>Sve</button>
-              {visibleTags.map((tag) => (
-                <button
-                  type="button"
-                  key={tag}
-                  className={`tag-pill ${selectedTag === tag ? 'active' : ''}`}
-                  onClick={() => setSelectedTag(selectedTag === tag ? '' : tag)}
-                >
-                  {tag.charAt(0).toUpperCase() + tag.slice(1)}
-                </button>
-              ))}
-              <AnimatePresence>
-                {hasActiveFilters && (
-                  <motion.button
-                    type="button"
-                    className={styles.resetInline}
-                    onClick={resetFilters}
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: 'auto' }}
-                    exit={{ opacity: 0, width: 0 }}
+              {visibleTags.length > 0 && (
+                <div className={styles.tags}>
+                  <button type="button" className={`tag-pill ${styles.tagPill} ${!selectedTag ? 'active' : ''}`} onClick={() => setSelectedTag('')}>
+                    <LayoutGrid size={13} /> Sve
+                  </button>
+                  {visibleTags.map((tag) => {
+                    const Icon = TAG_ICONS[tag];
+                    return (
+                      <button
+                        type="button"
+                        key={tag}
+                        className={`tag-pill ${styles.tagPill} ${selectedTag === tag ? 'active' : ''}`}
+                        onClick={() => setSelectedTag(selectedTag === tag ? '' : tag)}
+                      >
+                        {Icon && <Icon size={13} />} {tag.charAt(0).toUpperCase() + tag.slice(1)}
+                      </button>
+                    );
+                  })}
+                  <AnimatePresence>
+                    {hasActiveFilters && (
+                      <motion.button
+                        type="button"
+                        className={styles.resetInline}
+                        onClick={resetFilters}
+                        initial={{ opacity: 0, width: 0 }}
+                        animate={{ opacity: 1, width: 'auto' }}
+                        exit={{ opacity: 0, width: 0 }}
+                      >
+                        <X size={12} /> Resetuj
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
+
+              <div className={styles.filters}>
+                <AnimatePresence>
+                  {refetching && !initialLoading && (
+                    <motion.span
+                      className={styles.inlineSpinner}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      <Loader2 size={14} className={styles.spin} />
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+                <form onSubmit={(e) => e.preventDefault()} className={styles.searchWrap}>
+                  <Search size={16} className={styles.searchIcon} />
+                  <input
+                    type="text"
+                    className={`input ${styles.searchInput}`}
+                    placeholder="Pretraži proizvode..."
+                    aria-label="Pretraži proizvode"
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                  />
+                  <AnimatePresence>
+                    {searchInput && (
+                      <motion.button
+                        type="button"
+                        className={styles.clearBtn}
+                        aria-label="Obriši pretragu"
+                        onClick={() => setSearchInput('')}
+                        initial={{ opacity: 0, scale: 0.6 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.6 }}
+                      >
+                        <X size={14} />
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
+                </form>
+                <div className={styles.sortWrap}>
+                  <ArrowUpDown size={14} className={styles.sortIcon} />
+                  <select
+                    className={`select ${styles.sort}`}
+                    aria-label="Sortiraj proizvode"
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
                   >
-                    <X size={12} /> Resetuj
-                  </motion.button>
-                )}
-              </AnimatePresence>
-              <AnimatePresence>
-                {refetching && !initialLoading && (
-                  <motion.span
-                    className={styles.inlineSpinner}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    <Loader2 size={14} className={styles.spin} />
-                  </motion.span>
-                )}
-              </AnimatePresence>
+                    <option value="">Podrazumevano</option>
+                    <option value="price-asc">Cena ↑</option>
+                    <option value="price-desc">Cena ↓</option>
+                    <option value="name">Naziv</option>
+                  </select>
+                </div>
+              </div>
             </div>
-          )}
+          </Reveal>
         </div>
       </div>
 

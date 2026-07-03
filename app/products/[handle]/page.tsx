@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import ProductDetailClient from './ProductDetailClient';
-import { getProductByHandle } from '@/lib/productStore';
+import { getProductByHandle, getAllProducts } from '@/lib/productStore';
 
 interface Props {
   params: Promise<{ handle: string }>;
@@ -29,5 +29,12 @@ export default async function ProductDetailPage({ params }: Props) {
 
   if (!product) notFound();
 
-  return <ProductDetailClient product={product} />;
+  const all = await getAllProducts();
+  const related = all
+    .filter((p) => p.id !== product.id)
+    .filter((p) => p.productType === product.productType || p.tags.some((t) => product.tags.includes(t)))
+    .slice(0, 4);
+  const fallbackRelated = related.length > 0 ? related : all.filter((p) => p.id !== product.id).slice(0, 4);
+
+  return <ProductDetailClient product={product} related={fallbackRelated} />;
 }

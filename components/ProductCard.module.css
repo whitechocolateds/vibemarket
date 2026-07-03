@@ -1,29 +1,27 @@
 .card {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   text-decoration: none;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-base), border-color var(--transition-base);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-accent);
 }
 
 .imageWrap {
   position: relative;
   aspect-ratio: 3/4;
   overflow: hidden;
-  border-radius: var(--radius-lg);
   background: var(--bg-elevated);
-  margin-bottom: var(--space-4);
-}
-
-.imageWrap::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  border: 1px solid var(--border-subtle);
-  transition: border-color var(--transition-base);
-  pointer-events: none;
-}
-
-.card:hover .imageWrap::after {
-  border-color: var(--border-accent);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .image {
@@ -33,7 +31,7 @@
   transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.card:hover .image { transform: scale(1.05); }
+.card:hover .image { transform: scale(1.06); }
 
 /* ─── Spotlight (featured hero card) ────────────────────────────────────── */
 .spotlightMotion { height: 100%; }
@@ -205,11 +203,19 @@
   gap: 6px;
 }
 
-.info { display: flex; flex-direction: column; gap: 6px; }
+.info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 7px;
+  padding: var(--space-5) var(--space-4);
+  flex: 1;
+}
 
 .vendor {
-  font-size: 0.62rem;
-  font-weight: 600;
+  font-size: 0.64rem;
+  font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--champagne);
@@ -217,7 +223,7 @@
 
 .title {
   font-family: 'Prata', serif;
-  font-size: 1rem;
+  font-size: 1.08rem;
   font-weight: 400;
   color: var(--text-primary);
   line-height: 1.35;
@@ -230,21 +236,24 @@
 .priceRow {
   display: flex;
   align-items: baseline;
+  justify-content: center;
   gap: var(--space-2);
-  margin-top: 4px;
+  margin-top: 2px;
+  font-size: 1.05rem;
 }
 
 .stock {
-  font-size: 0.65rem;
+  font-size: 0.68rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-success);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .unavailable {
-  font-size: 0.65rem;
+  font-size: 0.68rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-muted);
+  font-weight: 700;
 }

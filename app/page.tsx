@@ -7,9 +7,9 @@ import HeroSpotlight from '@/components/HeroSpotlight';
 import HeroGlow from '@/components/HeroGlow';
 import KineticHeading from '@/components/motion/KineticHeading';
 import RotatingEyebrow from '@/components/motion/RotatingEyebrow';
-import TestimonialCard from '@/components/TestimonialCard';
+import TestimonialsCarousel from '@/components/TestimonialsCarousel';
 import { getAllProducts, getProductByHandle } from '@/lib/productStore';
-import { Star, Truck, Wallet, ShieldCheck } from 'lucide-react';
+import { Star, Truck, Wallet, ShieldCheck, LayoutGrid, MessageCircleHeart } from 'lucide-react';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
@@ -33,6 +33,21 @@ const TESTIMONIALS = [
     name: 'Jovana M.',
     city: 'Niš',
   },
+  {
+    quote: 'Naručio sam popodne, kurir je zvao već sutradan ujutru. Ambalaža uredna, proizvod tačno kao na slici.',
+    name: 'Stefan P.',
+    city: 'Kragujevac',
+  },
+  {
+    quote: 'Prijatno iznenađenje - očekivala sam običnu prodavnicu, a dobila sam pažnju do detalja i brz odgovor podrške.',
+    name: 'Ana V.',
+    city: 'Subotica',
+  },
+  {
+    quote: 'Vraćam se redovno. Cene su poštene, dostava tačna, a asortiman se stalno osvežava novim stvarima.',
+    name: 'Marko D.',
+    city: 'Novi Pazar',
+  },
 ];
 
 const FEATURED_ORDER = [
@@ -44,7 +59,6 @@ const FEATURED_ORDER = [
   'wireless-punjač',
   'laptop-stend',
   'fitnes-narukvica',
-  'kibla-za-led-mega',
 ];
 
 export default async function HomePage() {
@@ -52,8 +66,10 @@ export default async function HomePage() {
   const products = [...all]
     .sort((a, b) => FEATURED_ORDER.indexOf(a.handle) - FEATURED_ORDER.indexOf(b.handle))
     .slice(0, 7);
-  const heroProduct = (await getProductByHandle('bežične-slušalice-pro')) ?? products[0];
-  const heroAccent = (await getProductByHandle('pametni-sat-sport')) ?? products[1];
+  const heroHandles = ['bežične-slušalice-pro', 'pametni-sat-sport', 'bluetooth-zvucnik', 'mehanička-tastatura'];
+  const heroLookup = await Promise.all(heroHandles.map((h) => getProductByHandle(h)));
+  const heroProducts = heroLookup.filter((p): p is NonNullable<typeof p> => p !== null);
+  const fallbackHero = heroProducts.length > 0 ? heroProducts : products.slice(0, 4);
 
   return (
     <>
@@ -106,7 +122,7 @@ export default async function HomePage() {
             </div>
           </div>
 
-          {heroProduct && <HeroSpotlight product={heroProduct} accent={heroAccent} />}
+          {fallbackHero.length > 0 && <HeroSpotlight products={fallbackHero} />}
         </div>
 
         <div className={styles.heroScroll}>
@@ -123,8 +139,9 @@ export default async function HomePage() {
           <Reveal>
             <header className={styles.sectionHeader}>
               <div>
-                <span className="section-label">Kolekcija</span>
+                <span className={styles.sectionEyebrow}><LayoutGrid size={13} /> Kolekcija</span>
                 <h2 className="section-title">Izabrano za vas</h2>
+                <span className={styles.sectionRule} />
               </div>
               <Link href="/products" className="btn btn-outline">
                 Svi proizvodi
@@ -143,17 +160,12 @@ export default async function HomePage() {
 
       <section className={styles.testimonials}>
         <div className="container">
-          <Reveal>
-            <span className="section-label">Iskustva kupaca</span>
+          <Reveal className={styles.sectionCentered}>
+            <span className={styles.sectionEyebrow}><MessageCircleHeart size={13} /> Iskustva kupaca</span>
             <h2 className="section-title">Reč po reč, bez filtera</h2>
+            <span className={styles.sectionRule} />
           </Reveal>
-          <div className={styles.testimonialGrid}>
-            {TESTIMONIALS.map((t, i) => (
-              <Reveal key={t.name} delay={i * 0.1}>
-                <TestimonialCard quote={t.quote} name={t.name} city={t.city} />
-              </Reveal>
-            ))}
-          </div>
+          <TestimonialsCarousel items={TESTIMONIALS} />
         </div>
       </section>
 
