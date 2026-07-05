@@ -6,6 +6,7 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
+  setProductAvailability,
 } from '@/lib/productStore';
 import { ProductInput } from '@/lib/types';
 
@@ -51,6 +52,23 @@ export async function PUT(req: NextRequest) {
     if (!body.id) return NextResponse.json({ error: 'ID je obavezan' }, { status: 400 });
     const { id, ...input } = body;
     const product = await updateProduct(id, input);
+    return NextResponse.json({ data: product });
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Greška';
+    return NextResponse.json({ error: msg }, { status: 400 });
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
+
+  try {
+    const body = await req.json() as { id: string; availableForSale: boolean };
+    if (!body.id || typeof body.availableForSale !== 'boolean') {
+      return NextResponse.json({ error: 'Nedostaju podaci' }, { status: 400 });
+    }
+    const product = await setProductAvailability(body.id, body.availableForSale);
     return NextResponse.json({ data: product });
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Greška';

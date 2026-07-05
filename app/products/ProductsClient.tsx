@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -33,9 +33,8 @@ export default function ProductsClient() {
   const [selectedTag, setSelectedTag] = useState(searchParams.get('tag') ?? '');
   const [sortBy, setSortBy] = useState(searchParams.get('sort') ?? '');
 
-  const [products, setProducts] = useState<Product[]>([]);
-  const [initialLoading, setInitialLoading] = useState(true);
-  const [refetching, setRefetching] = useState(false);
+  // Rezultat poslednjeg završenog fetch-a; "refetching" se izvodi poređenjem ključa filtera
+  const [result, setResult] = useState<{ key: string; products: Product[] } | null>(null);
 
   // Debounce free-text search so we don't hit the API on every keystroke
   useEffect(() => {
@@ -43,35 +42,40 @@ export default function ProductsClient() {
     return () => clearTimeout(t);
   }, [searchInput]);
 
-  const fetchProducts = useCallback(async () => {
-    setRefetching(true);
-    try {
-      const params = new URLSearchParams();
-      if (searchQuery) params.set('q', searchQuery);
-      const res = await fetch(`/api/products?${params}`);
-      const json = await res.json();
-      let data: Product[] = json.data ?? [];
+  const filterKey = `${searchQuery}|${selectedTag}|${sortBy}`;
 
-      if (selectedTag) data = data.filter((p) => p.tags.includes(selectedTag));
+  useEffect(() => {
+    let active = true;
+    const key = `${searchQuery}|${selectedTag}|${sortBy}`;
+    (async () => {
+      let data: Product[] = [];
+      try {
+        const params = new URLSearchParams();
+        if (searchQuery) params.set('q', searchQuery);
+        const res = await fetch(`/api/products?${params}`);
+        const json = await res.json();
+        data = json.data ?? [];
 
-      if (sortBy === 'price-asc') {
-        data.sort((a, b) => parseFloat(a.priceRange.minVariantPrice.amount) - parseFloat(b.priceRange.minVariantPrice.amount));
-      } else if (sortBy === 'price-desc') {
-        data.sort((a, b) => parseFloat(b.priceRange.minVariantPrice.amount) - parseFloat(a.priceRange.minVariantPrice.amount));
-      } else if (sortBy === 'name') {
-        data.sort((a, b) => a.title.localeCompare(b.title, 'sr'));
+        if (selectedTag) data = data.filter((p) => p.tags.includes(selectedTag));
+
+        if (sortBy === 'price-asc') {
+          data.sort((a, b) => parseFloat(a.priceRange.minVariantPrice.amount) - parseFloat(b.priceRange.minVariantPrice.amount));
+        } else if (sortBy === 'price-desc') {
+          data.sort((a, b) => parseFloat(b.priceRange.minVariantPrice.amount) - parseFloat(a.priceRange.minVariantPrice.amount));
+        } else if (sortBy === 'name') {
+          data.sort((a, b) => a.title.localeCompare(b.title, 'sr'));
+        }
+      } catch {
+        data = [];
       }
-
-      setProducts(data);
-    } catch {
-      setProducts([]);
-    } finally {
-      setRefetching(false);
-      setInitialLoading(false);
-    }
+      if (active) setResult({ key, products: data });
+    })();
+    return () => { active = false; };
   }, [searchQuery, selectedTag, sortBy]);
 
-  useEffect(() => { fetchProducts(); }, [fetchProducts]);
+  const initialLoading = result === null;
+  const refetching = result !== null && result.key !== filterKey;
+  const products = result?.products ?? [];
 
   // Keep the URL in sync so filters are shareable/bookmarkable, without a full navigation
   const firstSync = useRef(true);

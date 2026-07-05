@@ -1,11 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { Search, RefreshCw, ShoppingBag } from 'lucide-react';
 import { Order } from '@/lib/types';
 import { formatPrice } from '@/lib/format';
-import StatusBadge, { STATUS_LABELS } from '@/components/admin/StatusBadge';
+import { STATUS_LABELS } from '@/components/admin/StatusBadge';
+import { toast } from '@/components/admin/Toaster';
 import styles from '../../admin.module.css';
+
+type SortKey = 'newest' | 'oldest' | 'amountDesc' | 'amountAsc';
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString('sr-RS', {
@@ -17,20 +21,76 @@ function formatDate(iso: string) {
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [filter, setFilter] = useState<string>('all');
+  const [query, setQuery] = useState('');
+  const [sort, setSort] = useState<SortKey>('newest');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [updating, setUpdating] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
+    let active = true;
     fetch('/api/admin/orders')
       .then((r) => r.json())
-      .then((json) => setOrders(json.data ?? []))
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
-  }, []);
+      .then((json) => { if (active) setOrders(json.data ?? []); })
+      .catch(() => { if (active) setError(true); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [reloadKey]);
 
-  const filtered = filter === 'all'
-    ? orders
-    : orders.filter((o) => o.status === filter);
+  const load = () => {
+    setLoading(true);
+    setError(false);
+    setReloadKey((k) => k + 1);
+  };
+
+  const updateStatus = async (id: string, status: Order['status']) => {
+    setUpdating(id);
+    try {
+      const res = await fetch('/api/admin/orders', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? 'Greška');
+      setOrders((prev) => prev.map((o) => (o.id === id ? json.data : o)));
+      toast(`Status promenjen u „${STATUS_LABELS[status]}"`);
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Greška pri promeni statusa', 'error');
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { all: orders.length };
+    for (const key of Object.keys(STATUS_LABELS)) c[key] = 0;
+    for (const o of orders) c[o.status] = (c[o.status] ?? 0) + 1;
+    return c;
+  }, [orders]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    let list = filter === 'all' ? orders : orders.filter((o) => o.status === filter);
+    if (q) {
+      list = list.filter((o) =>
+        o.orderNumber.toLowerCase().includes(q) ||
+        `${o.customerInfo.firstName} ${o.customerInfo.lastName}`.toLowerCase().includes(q) ||
+        o.customerInfo.city.toLowerCase().includes(q) ||
+        o.customerInfo.email.toLowerCase().includes(q) ||
+        o.customerInfo.phone.toLowerCase().includes(q)
+      );
+    }
+    return [...list].sort((a, b) => {
+      switch (sort) {
+        case 'oldest': return a.createdAt.localeCompare(b.createdAt);
+        case 'amountDesc': return b.totalPrice - a.totalPrice;
+        case 'amountAsc': return a.totalPrice - b.totalPrice;
+        default: return b.createdAt.localeCompare(a.createdAt);
+      }
+    });
+  }, [orders, filter, query, sort]);
 
   const filters = [
     { key: 'all', label: 'Sve' },
@@ -43,62 +103,116 @@ export default function AdminOrdersPage() {
         <div>
           <h1 className={styles.pageTitle}>Porudžbine</h1>
           <p className={styles.pageSubtitle}>
-            {loading ? 'Učitavanje...' : `${orders.length} porudžbina ukupno`}
+            {loading ? 'Učitavanje...' : `${orders.length} porudžbina · ${formatPrice(orders.filter((o) => o.status !== 'cancelled').reduce((s, o) => s + o.totalPrice, 0))} prihoda`}
           </p>
         </div>
+        <button type="button" className="btn btn-secondary btn-sm" onClick={load} disabled={loading}>
+          <RefreshCw size={14} strokeWidth={2} /> Osveži
+        </button>
       </div>
 
-      <div className={styles.filters}>
-        {filters.map((f) => (
-          <button
-            key={f.key}
-            type="button"
-            className={`${styles.filterBtn} ${filter === f.key ? styles.filterActive : ''}`}
-            onClick={() => setFilter(f.key)}
-          >
-            {f.label}
-          </button>
-        ))}
+      <div className={styles.toolbar}>
+        <div className={styles.searchBox}>
+          <Search size={15} strokeWidth={2} />
+          <input
+            className={styles.searchInput}
+            placeholder="Pretraži po broju, kupcu, gradu, telefonu..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+        <select
+          className={styles.sortSelect}
+          value={sort}
+          onChange={(e) => setSort(e.target.value as SortKey)}
+          aria-label="Sortiranje"
+        >
+          <option value="newest">Najnovije prvo</option>
+          <option value="oldest">Najstarije prvo</option>
+          <option value="amountDesc">Iznos: veći prvo</option>
+          <option value="amountAsc">Iznos: manji prvo</option>
+        </select>
+      </div>
+
+      <div className={styles.toolbar}>
+        <div className={styles.filters}>
+          {filters.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              className={`${styles.filterBtn} ${filter === f.key ? styles.filterActive : ''}`}
+              onClick={() => setFilter(f.key)}
+            >
+              {f.label}
+              <span className={styles.filterCount}>{counts[f.key] ?? 0}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className={styles.card}>
         {loading ? (
-          <div className={styles.empty}>Učitavanje...</div>
+          <div>
+            {[...Array(5)].map((_, i) => <div key={i} className={styles.skeletonRow} />)}
+          </div>
         ) : error ? (
-          <div className={styles.empty}>Greška pri učitavanju porudžbina</div>
+          <div className={styles.empty}>
+            Greška pri učitavanju porudžbina
+            <button type="button" className="btn btn-secondary btn-sm" onClick={load}>Pokušaj ponovo</button>
+          </div>
         ) : filtered.length === 0 ? (
-          <div className={styles.empty}>Nema porudžbina</div>
+          <div className={styles.empty}>
+            <ShoppingBag size={32} strokeWidth={1.25} className={styles.emptyIcon} />
+            {query || filter !== 'all' ? 'Nema porudžbina za zadate filtere' : 'Još nema porudžbina'}
+          </div>
         ) : (
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Broj</th>
-                <th>Kupac</th>
-                <th>Grad</th>
-                <th>Stavki</th>
-                <th>Iznos</th>
-                <th>Status</th>
-                <th>Datum</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((order) => (
-                <tr key={order.id}>
-                  <td>
-                    <Link href={`/admin/orders/${order.id}`} className={styles.tableLink}>
-                      {order.orderNumber}
-                    </Link>
-                  </td>
-                  <td>{order.customerInfo.firstName} {order.customerInfo.lastName}</td>
-                  <td>{order.customerInfo.city}</td>
-                  <td>{order.items.reduce((s, i) => s + i.quantity, 0)}</td>
-                  <td>{formatPrice(order.totalPrice)}</td>
-                  <td><StatusBadge status={order.status} /></td>
-                  <td>{formatDate(order.createdAt)}</td>
+          <div className={styles.tableWrap}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Broj</th>
+                  <th>Kupac</th>
+                  <th>Grad</th>
+                  <th>Stavki</th>
+                  <th>Iznos</th>
+                  <th>Status</th>
+                  <th>Datum</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filtered.map((order) => (
+                  <tr key={order.id}>
+                    <td>
+                      <Link href={`/admin/orders/${order.id}`} className={styles.tableLink}>
+                        {order.orderNumber}
+                      </Link>
+                    </td>
+                    <td>
+                      {order.customerInfo.firstName} {order.customerInfo.lastName}
+                      <p className={styles.cellMuted}>{order.customerInfo.phone}</p>
+                    </td>
+                    <td>{order.customerInfo.city}</td>
+                    <td>{order.items.reduce((s, i) => s + i.quantity, 0)}</td>
+                    <td><strong>{formatPrice(order.totalPrice)}</strong></td>
+                    <td>
+                      <select
+                        className={styles.statusSelect}
+                        value={order.status}
+                        disabled={updating === order.id}
+                        onChange={(e) => updateStatus(order.id, e.target.value as Order['status'])}
+                        aria-label={`Status porudžbine ${order.orderNumber}`}
+                      >
+                        {Object.entries(STATUS_LABELS).map(([key, label]) => (
+                          <option key={key} value={key}>{label}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td>{formatDate(order.createdAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </>

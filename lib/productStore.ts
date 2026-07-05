@@ -110,6 +110,37 @@ export async function updateProduct(id: string, input: ProductInput): Promise<Pr
   return updated;
 }
 
+export async function setProductAvailability(id: string, availableForSale: boolean): Promise<Product> {
+  const products = await loadProducts();
+  const product = products.find((p) => p.id === id);
+  if (!product) throw new Error('Proizvod nije pronađen');
+
+  product.availableForSale = availableForSale;
+  for (const v of product.variants) v.availableForSale = availableForSale;
+  await writeJsonFile(FILE, products);
+  return product;
+}
+
+export async function decrementStock(items: { productId: string; quantity: number }[]): Promise<void> {
+  const products = await loadProducts();
+  let changed = false;
+
+  for (const item of items) {
+    const product = products.find((p) => p.id === item.productId);
+    const variant = product?.variants[0];
+    if (!product || !variant || typeof variant.quantityAvailable !== 'number') continue;
+
+    variant.quantityAvailable = Math.max(0, variant.quantityAvailable - item.quantity);
+    if (variant.quantityAvailable === 0) {
+      variant.availableForSale = false;
+      product.availableForSale = false;
+    }
+    changed = true;
+  }
+
+  if (changed) await writeJsonFile(FILE, products);
+}
+
 export async function deleteProduct(id: string): Promise<void> {
   const products = await loadProducts();
   const filtered = products.filter((p) => p.id !== id);

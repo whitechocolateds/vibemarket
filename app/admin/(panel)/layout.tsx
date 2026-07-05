@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { isAdminAuthenticated } from '@/lib/adminAuth';
 import AdminSidebar from '@/components/admin/AdminSidebar';
+import Toaster from '@/components/admin/Toaster';
 import styles from '../admin.module.css';
 
 export default async function AdminPanelLayout({
@@ -17,6 +18,7 @@ export default async function AdminPanelLayout({
         <AdminSidebar />
         <main className={styles.main}>{children}</main>
       </div>
+      <Toaster />
     </div>
   );
 }

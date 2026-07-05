@@ -98,6 +98,30 @@ export interface Order {
   status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
 }
 
+export interface DailyStat {
+  date: string; // YYYY-MM-DD
+  label: string; // dd.MM
+  revenue: number;
+  orders: number;
+}
+
+export interface TopProduct {
+  productId: string;
+  title: string;
+  handle: string;
+  image: string | null;
+  quantity: number;
+  revenue: number;
+}
+
+export interface LowStockProduct {
+  id: string;
+  title: string;
+  handle: string;
+  image: string | null;
+  quantity: number;
+}
+
 export interface AdminStats {
   totalRevenue: number;
   totalOrders: number;
@@ -105,6 +129,13 @@ export interface AdminStats {
   todayRevenue: number;
   todayOrders: number;
   totalProducts: number;
+  activeProducts: number;
+  avgOrderValue: number;
+  itemsSold: number;
+  statusCounts: Record<Order['status'], number>;
+  revenueByDay: DailyStat[];
+  topProducts: TopProduct[];
+  lowStockProducts: LowStockProduct[];
   recentOrders: Order[];
 }
 

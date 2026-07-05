@@ -23,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="sr">
+    <html lang="sr" data-scroll-behavior="smooth">
       <body>
         <StoreChrome>{children}</StoreChrome>
       </body>
