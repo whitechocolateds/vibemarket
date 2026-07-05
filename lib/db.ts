@@ -36,6 +36,12 @@ export async function writeJsonFile<T>(filename: string, data: T): Promise<void>
     return;
   }
 
+  if (process.env.VERCEL === '1') {
+    throw new Error(
+      `Cannot write ${filename} on Vercel without Blob storage. Connect a Blob store or set BLOB_READ_WRITE_TOKEN.`
+    );
+  }
+
   await ensureDataDir();
   const filePath = path.join(DATA_DIR, filename);
   await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');

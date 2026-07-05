@@ -6,10 +6,19 @@ import { slugify } from './slugify';
 const FILE = 'products.json';
 
 async function loadProducts(): Promise<Product[]> {
-  const stored = await readJsonFile<Product[] | null>(FILE, null);
-  if (stored && stored.length > 0) return stored;
+  try {
+    const stored = await readJsonFile<Product[] | null>(FILE, null);
+    if (stored && stored.length > 0) return stored;
+  } catch (error) {
+    console.error('Failed to read products store:', error);
+  }
 
-  await writeJsonFile(FILE, MOCK_PRODUCTS);
+  try {
+    await writeJsonFile(FILE, MOCK_PRODUCTS);
+  } catch (error) {
+    console.warn('Could not seed products store:', error);
+  }
+
   return MOCK_PRODUCTS;
 }
 
