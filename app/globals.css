@@ -1,47 +1,66 @@
 @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700&family=Prata&display=swap');
 
-/* ─── Ivory & Bronze — Light Premium Design Tokens ────────────────────────── */
+/* ─── VibeMarket — Royal Blue & Gold Design Tokens ────────────────────────── */
 :root {
-  --bg-deep: #EAE3D4;
-  --bg-primary: #FAF8F3;
+  /* Brand — royal blue (logo field) */
+  --brand-rgb: 22, 82, 190;
+  --brand: rgb(var(--brand-rgb));
+  --brand-light: #2E6FE6;
+  --brand-dark: #0F3E9A;
+  --brand-deep: #0A2A6B;
+  --brand-glow: rgba(var(--brand-rgb), 0.1);
+  --brand-gradient: linear-gradient(135deg, #2E6FE6 0%, #1652BE 55%, #0F3E9A 100%);
+
+  /* Gold (logo bag + wordmark) */
+  --gold-rgb: 240, 176, 12;
+  --gold: rgb(var(--gold-rgb));
+  --gold-light: #FFC838;
+  --gold-dark: #C6890A;
+  --gold-glow: rgba(var(--gold-rgb), 0.14);
+  --gold-gradient: linear-gradient(135deg, #FFC838 0%, #F0B00C 50%, #C6890A 100%);
+
+  /* Surfaces — cool near-white */
+  --bg-deep: #E6ECF6;
+  --bg-primary: #F6F8FC;
   --bg-elevated: #FFFFFF;
-  --bg-surface: #F3EFE6;
+  --bg-surface: #EDF1F9;
   --bg-card: #FFFFFF;
-  --bg-card-hover: #FBF9F4;
+  --bg-card-hover: #F5F8FE;
   --bg-input: #FFFFFF;
   --bg-modal: #FFFFFF;
-  --bg-overlay: rgba(28, 24, 18, 0.5);
+  --bg-overlay: rgba(8, 20, 48, 0.5);
 
-  --champagne-rgb: 150, 108, 58;
-  --champagne: rgb(var(--champagne-rgb));
-  --champagne-light: #C4986A;
-  --champagne-dark: #6E5029;
-  --champagne-glow: rgba(var(--champagne-rgb), 0.1);
-  --champagne-gradient: linear-gradient(135deg, #C4986A 0%, #966C3A 50%, #6E5029 100%);
+  /* Accent family aliased to GOLD (keeps existing --champagne-* usages on brand) */
+  --champagne-rgb: var(--gold-rgb);
+  --champagne: var(--gold);
+  --champagne-light: var(--gold-light);
+  --champagne-dark: var(--gold-dark);
+  --champagne-glow: var(--gold-glow);
+  --champagne-gradient: var(--gold-gradient);
 
-  --text-primary: #201B14;
-  --text-secondary: #6B6154;
-  --text-muted: #9B917F;
-  --text-inverse: #FDFBF7;
+  --text-primary: #12213B;
+  --text-secondary: #45506A;
+  --text-muted: #8892A6;
+  --text-inverse: #FFFFFF;
 
-  --border-subtle: rgba(32, 27, 20, 0.09);
-  --border-medium: rgba(32, 27, 20, 0.16);
-  --border-accent: rgba(var(--champagne-rgb), 0.4);
+  --border-subtle: rgba(18, 33, 59, 0.09);
+  --border-medium: rgba(18, 33, 59, 0.16);
+  --border-accent: rgba(var(--gold-rgb), 0.42);
 
   --success-rgb: 47, 137, 90;
   --error-rgb: 189, 68, 58;
   --warning-rgb: 187, 111, 20;
-  --info-rgb: 59, 100, 148;
+  --info-rgb: 40, 96, 170;
 
   --color-success: rgb(var(--success-rgb));
   --color-error: rgb(var(--error-rgb));
   --color-warning: rgb(var(--warning-rgb));
   --color-info: rgb(var(--info-rgb));
 
-  --shadow-sm: 0 2px 10px rgba(32, 27, 20, 0.06);
-  --shadow-md: 0 12px 32px rgba(32, 27, 20, 0.08);
-  --shadow-lg: 0 28px 70px rgba(32, 27, 20, 0.14);
-  --shadow-glow: 0 0 60px rgba(var(--champagne-rgb), 0.18);
+  --shadow-sm: 0 2px 10px rgba(18, 33, 59, 0.07);
+  --shadow-md: 0 12px 32px rgba(18, 33, 59, 0.10);
+  --shadow-lg: 0 28px 70px rgba(11, 42, 107, 0.18);
+  --shadow-glow: 0 0 60px rgba(var(--brand-rgb), 0.20);
 
   --space-1: 4px;  --space-2: 8px;  --space-3: 12px;
   --space-4: 16px; --space-5: 20px; --space-6: 24px;
@@ -63,11 +82,10 @@
   --header-height: 76px;
 
   /* legacy aliases */
-  --accent-primary: var(--champagne);
-  --accent-light: var(--champagne-glow);
-  --accent-gradient: var(--champagne-gradient);
-  --gold-gradient: var(--champagne-gradient);
-  --text-gold: var(--champagne);
+  --accent-primary: var(--brand);
+  --accent-light: var(--brand-glow);
+  --accent-gradient: var(--brand-gradient);
+  --text-gold: var(--gold);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -138,22 +156,22 @@ a { color: inherit; text-decoration: none; }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
 
 .btn-primary {
-  background: var(--champagne);
+  background: var(--brand);
   color: var(--text-inverse);
 }
 .btn-primary:hover {
-  background: var(--champagne-light);
-  box-shadow: 0 8px 28px rgba(var(--champagne-rgb), 0.32);
+  background: var(--brand-light);
+  box-shadow: 0 8px 28px rgba(var(--brand-rgb), 0.34);
 }
 
 .btn-outline {
   background: transparent;
-  color: var(--champagne);
-  border: 1px solid var(--border-accent);
+  color: var(--brand);
+  border: 1px solid rgba(var(--brand-rgb), 0.4);
 }
 .btn-outline:hover {
-  background: var(--champagne-glow);
-  border-color: var(--champagne);
+  background: var(--brand-glow);
+  border-color: var(--brand);
 }
 
 .btn-secondary {
@@ -409,8 +427,8 @@ a { color: inherit; text-decoration: none; }
   inset: -20%;
   pointer-events: none;
   background:
-    radial-gradient(circle at 20% 30%, rgba(var(--champagne-rgb), 0.16) 0%, transparent 45%),
-    radial-gradient(circle at 80% 70%, rgba(var(--champagne-rgb), 0.1) 0%, transparent 50%);
+    radial-gradient(circle at 18% 28%, rgba(var(--brand-rgb), 0.18) 0%, transparent 46%),
+    radial-gradient(circle at 82% 68%, rgba(var(--gold-rgb), 0.16) 0%, transparent 52%);
   animation: meshShift 16s ease-in-out infinite;
   filter: blur(40px);
 }

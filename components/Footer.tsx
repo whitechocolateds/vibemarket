@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Mail, Phone, ArrowRight } from 'lucide-react';
+import Logo from './Logo';
 import styles from './Footer.module.css';
 
 function InstagramIcon() {
@@ -58,7 +59,7 @@ export default function Footer() {
 
       <div className={`container ${styles.top}`}>
         <div className={styles.brand}>
-          <Link href="/" className={styles.logo}>Vibe<span>Market</span></Link>
+          <Logo variant="onDark" size={32} tagline className={styles.logo} />
           <p>Prodavnica sa stavom. Pažljivo odabrani proizvodi, brza dostava, plaćanje pouzećem.</p>
           <div className={styles.social}>
             <a href="#" aria-label="Instagram"><InstagramIcon /></a>
@@ -80,8 +81,8 @@ export default function Footer() {
           </div>
           <div>
             <h4>Kontakt</h4>
-            <a href="mailto:podrska@vibemarket.rs"><Mail size={13} /> podrska@vibemarket.rs</a>
-            <a href="tel:+381601234567"><Phone size={13} /> +381 60 123 4567</a>
+            <a href="mailto:stupardavid3@gmail.com"><Mail size={13} /> stupardavid3@gmail.com</a>
+            <a href="tel:+3816121446605"><Phone size={13} /> +381 61 2144 6605</a>
           </div>
         </div>
       </div>

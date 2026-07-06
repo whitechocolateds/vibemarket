@@ -11,6 +11,7 @@ import {
   Store,
   LogOut,
 } from 'lucide-react';
+import { LogoMark } from '@/components/Logo';
 import styles from '@/app/admin/admin.module.css';
 
 const links = [
@@ -45,9 +46,12 @@ export default function AdminSidebar() {
   return (
     <aside className={styles.sidebar}>
       <div className={styles.sidebarBrand}>
-        <Link href="/admin">
-          Vibe<span>Market</span>
-          <small>Admin panel</small>
+        <Link href="/admin" style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+          <LogoMark size={26} />
+          <span>
+            Vibe<span>Market</span>
+            <small>Admin panel</small>
+          </span>
         </Link>
       </div>
 

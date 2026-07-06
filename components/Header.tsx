@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ShoppingBag, Menu, X } from 'lucide-react';
 import { useCartStore } from '@/lib/cart';
+import Logo from './Logo';
 import styles from './Header.module.css';
 
 const NAV = [
@@ -30,9 +31,7 @@ export default function Header() {
   return (
     <header className={`${styles.header} ${scrolled || !isHome ? styles.solid : ''}`}>
       <div className={`container ${styles.inner}`}>
-        <Link href="/" className={styles.logo}>
-          Vibe<span>Market</span>
-        </Link>
+        <Logo variant="onLight" size={30} className={styles.logo} />
 
         <nav className={`${styles.nav} ${menuOpen ? styles.open : ''}`}>
           {NAV.map((item) => {

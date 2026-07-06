@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Lock, Eye, EyeOff, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle, ArrowLeft } from 'lucide-react';
+import { LogoMark } from '@/components/Logo';
 import styles from '../admin.module.css';
 
 export default function AdminLoginPage() {
@@ -46,7 +47,7 @@ export default function AdminLoginPage() {
       <div className={styles.loginCard}>
         <div className={styles.loginBrand}>
           <div className={styles.loginIcon}>
-            <Lock size={22} strokeWidth={1.75} />
+            <LogoMark size={30} />
           </div>
           <h1>Vibe<span>Market</span> Admin</h1>
           <p>Prijavite se za pristup panelu</p>

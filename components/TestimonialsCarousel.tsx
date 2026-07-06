@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { useState } from 'react';
+import { motion } from 'framer-motion';
 import TestimonialCard from './TestimonialCard';
 import styles from '../app/page.module.css';
 
@@ -9,52 +9,36 @@ interface Testimonial {
   quote: string;
   name: string;
   city: string;
+  time: string;
+  likes: number;
 }
 
-const VISIBLE = 3;
-const ROTATE_MS = 5500;
+const INITIAL = 4;
 
 export default function TestimonialsCarousel({ items }: { items: Testimonial[] }) {
-  const [start, setStart] = useState(0);
-  const visibleCount = Math.min(VISIBLE, items.length);
-
-  useEffect(() => {
-    if (items.length <= visibleCount) return;
-    const id = setInterval(() => setStart((s) => (s + visibleCount) % items.length), ROTATE_MS);
-    return () => clearInterval(id);
-  }, [items.length, visibleCount]);
-
-  const visible = Array.from({ length: visibleCount }, (_, i) => items[(start + i) % items.length]);
+  const [expanded, setExpanded] = useState(false);
+  const visible = expanded ? items : items.slice(0, INITIAL);
 
   return (
-    <div className={styles.testimonialViewport}>
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={start}
-          className={styles.testimonialGrid}
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -14 }}
-          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        >
-          {visible.map((t) => (
-            <TestimonialCard key={t.name} quote={t.quote} name={t.name} city={t.city} />
-          ))}
-        </motion.div>
-      </AnimatePresence>
+    <div className={styles.fbFeed}>
+      <div className={styles.fbGrid}>
+        {visible.map((t, i) => (
+          <motion.div
+            key={t.name}
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-40px' }}
+            transition={{ duration: 0.45, delay: Math.min(i * 0.06, 0.3), ease: [0.16, 1, 0.3, 1] }}
+          >
+            <TestimonialCard {...t} />
+          </motion.div>
+        ))}
+      </div>
 
-      {items.length > visibleCount && (
-        <div className={styles.testimonialDots}>
-          {Array.from({ length: Math.ceil(items.length / visibleCount) }).map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              aria-label={`Prikaži grupu recenzija ${i + 1}`}
-              className={`${styles.dot} ${Math.floor(start / visibleCount) === i ? styles.dotActive : ''}`}
-              onClick={() => setStart(i * visibleCount)}
-            />
-          ))}
-        </div>
+      {items.length > INITIAL && !expanded && (
+        <button type="button" className={styles.fbMore} onClick={() => setExpanded(true)}>
+          Prikaži još {items.length - INITIAL} recenzija
+        </button>
       )}
     </div>
   );

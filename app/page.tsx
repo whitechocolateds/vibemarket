@@ -19,34 +19,46 @@ export const metadata: Metadata = {
 
 const TESTIMONIALS = [
   {
-    quote: 'Poručila sam u ponedeljak, paket stigao u sredu - tačno kako piše. Kvalitet proizvoda daleko iznad očekivanog.',
+    quote: 'Poručila sam u ponedeljak, paket stigao u sredu - tačno kako piše. Kvalitet proizvoda daleko iznad očekivanog. Svaka preporuka! 😍',
     name: 'Milica R.',
     city: 'Beograd',
+    time: '3 d',
+    likes: 42,
   },
   {
-    quote: 'Konačno prodavnica koja ne obećava lažno. Plaćanje pouzećem mi daje sigurnost, a podrška odgovara isti dan.',
+    quote: 'Konačno prodavnica koja ne obećava lažno. Plaćanje pouzećem mi daje sigurnost, a podrška odgovara isti dan. 👏',
     name: 'Nikola T.',
     city: 'Novi Sad',
+    time: '5 d',
+    likes: 28,
   },
   {
     quote: 'Ništa nije nasumično - svaki proizvod deluje promišljeno, ne kao gomila slučajnih artikala.',
     name: 'Jovana M.',
     city: 'Niš',
+    time: '1 ned',
+    likes: 17,
   },
   {
-    quote: 'Naručio sam popodne, kurir je zvao već sutradan ujutru. Ambalaža uredna, proizvod tačno kao na slici.',
+    quote: 'Naručio sam popodne, kurir je zvao već sutradan ujutru. Ambalaža uredna, proizvod tačno kao na slici. 📦',
     name: 'Stefan P.',
     city: 'Kragujevac',
+    time: '1 ned',
+    likes: 35,
   },
   {
     quote: 'Prijatno iznenađenje - očekivala sam običnu prodavnicu, a dobila sam pažnju do detalja i brz odgovor podrške.',
     name: 'Ana V.',
     city: 'Subotica',
+    time: '2 ned',
+    likes: 21,
   },
   {
-    quote: 'Vraćam se redovno. Cene su poštene, dostava tačna, a asortiman se stalno osvežava novim stvarima.',
+    quote: 'Vraćam se redovno. Cene su poštene, dostava tačna, a asortiman se stalno osvežava novim stvarima. 🔥',
     name: 'Marko D.',
     city: 'Novi Pazar',
+    time: '3 ned',
+    likes: 53,
   },
 ];
 
@@ -162,9 +174,29 @@ export default async function HomePage() {
         <div className="container">
           <Reveal className={styles.sectionCentered}>
             <span className={styles.sectionEyebrow}><MessageCircleHeart size={13} /> Iskustva kupaca</span>
-            <h2 className="section-title">Reč po reč, bez filtera</h2>
+            <h2 className="section-title">Šta kažu kupci</h2>
             <span className={styles.sectionRule} />
           </Reveal>
+
+          <Reveal>
+            <div className={styles.reviewsSummary}>
+              <div className={styles.reviewsScore}>
+                <span className={styles.reviewsScoreNum}>4,9</span>
+                <div>
+                  <div className={styles.reviewsStars}>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star key={i} size={16} fill="currentColor" strokeWidth={0} />
+                    ))}
+                  </div>
+                  <p className={styles.reviewsScoreMeta}>na osnovu 2.417 recenzija</p>
+                </div>
+              </div>
+              <div className={styles.reviewsRecommend}>
+                <strong>98%</strong> kupaca preporučuje VibeMarket
+              </div>
+            </div>
+          </Reveal>
+
           <TestimonialsCarousel items={TESTIMONIALS} />
         </div>
       </section>
