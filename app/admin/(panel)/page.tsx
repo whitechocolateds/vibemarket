@@ -57,8 +57,8 @@ export default async function AdminDashboardPage() {
       </div>
 
       <div className={styles.statsGrid}>
-        <div className={styles.statCard}>
-          <div className={styles.statIcon}><Wallet size={18} strokeWidth={1.75} /></div>
+        <div className={`${styles.statCard} ${styles.statCardGold}`}>
+          <div className={`${styles.statIcon} ${styles.statIconGold}`}><Wallet size={18} strokeWidth={1.75} /></div>
           <div>
             <p className={styles.statLabel}>Ukupan prihod</p>
             <p className={`${styles.statValue} ${styles.statValueAccent}`}>
@@ -67,24 +67,24 @@ export default async function AdminDashboardPage() {
             <p className={styles.statHint}>prosek {formatPrice(stats.avgOrderValue)} po porudžbini</p>
           </div>
         </div>
-        <div className={styles.statCard}>
-          <div className={styles.statIcon}><ShoppingBag size={18} strokeWidth={1.75} /></div>
+        <div className={`${styles.statCard} ${styles.statCardBlue}`}>
+          <div className={`${styles.statIcon} ${styles.statIconBlue}`}><ShoppingBag size={18} strokeWidth={1.75} /></div>
           <div>
             <p className={styles.statLabel}>Porudžbine</p>
             <p className={styles.statValue}>{stats.totalOrders}</p>
             <p className={styles.statHint}>{stats.itemsSold} prodatih artikala</p>
           </div>
         </div>
-        <div className={styles.statCard}>
-          <div className={styles.statIcon}><Clock3 size={18} strokeWidth={1.75} /></div>
+        <div className={`${styles.statCard} ${styles.statCardWarning}`}>
+          <div className={`${styles.statIcon} ${styles.statIconWarning}`}><Clock3 size={18} strokeWidth={1.75} /></div>
           <div>
             <p className={styles.statLabel}>Na čekanju</p>
             <p className={`${styles.statValue} ${styles.statValueWarning}`}>{stats.pendingOrders}</p>
             <p className={styles.statHint}>čeka potvrdu</p>
           </div>
         </div>
-        <div className={styles.statCard}>
-          <div className={styles.statIcon}><TrendingUp size={18} strokeWidth={1.75} /></div>
+        <div className={`${styles.statCard} ${styles.statCardSuccess}`}>
+          <div className={`${styles.statIcon} ${styles.statIconSuccess}`}><TrendingUp size={18} strokeWidth={1.75} /></div>
           <div>
             <p className={styles.statLabel}>Danas</p>
             <p className={`${styles.statValue} ${styles.statValueSuccess}`}>
@@ -93,8 +93,8 @@ export default async function AdminDashboardPage() {
             <p className={styles.statHint}>{stats.todayOrders} porudžbina danas</p>
           </div>
         </div>
-        <div className={styles.statCard}>
-          <div className={styles.statIcon}><Boxes size={18} strokeWidth={1.75} /></div>
+        <div className={`${styles.statCard} ${styles.statCardBlue}`}>
+          <div className={`${styles.statIcon} ${styles.statIconBlue}`}><Boxes size={18} strokeWidth={1.75} /></div>
           <div>
             <p className={styles.statLabel}>Katalog</p>
             <p className={styles.statValue}>{stats.totalProducts}</p>

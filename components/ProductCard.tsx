@@ -145,9 +145,9 @@ export default function ProductCard({ product, spotlight = false }: Props) {
             <div className={styles.placeholder}>◆</div>
           )}
           <div className={styles.badges}>
-            {discountPercent && <span className="badge badge-dark">−{discountPercent}%</span>}
+            {discountPercent && <span className="badge badge-gold">−{discountPercent}%</span>}
             {product.tags.includes('novo') && !discountPercent && (
-              <span className="badge badge-gold">Novo</span>
+              <span className="badge badge-blue">Novo</span>
             )}
           </div>
           <div className={styles.quickAdd}>{addButton}</div>

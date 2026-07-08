@@ -253,6 +253,7 @@ a { color: inherit; text-decoration: none; }
   text-transform: uppercase;
 }
 .badge-gold { background: var(--champagne-glow); color: var(--champagne); border: 1px solid var(--border-accent); }
+.badge-blue { background: var(--brand-glow); color: var(--brand); border: 1px solid rgba(var(--brand-rgb), 0.32); }
 .badge-green { background: rgba(var(--success-rgb), 0.1); color: var(--color-success); }
 .badge-red { background: rgba(var(--error-rgb), 0.1); color: var(--color-error); }
 .badge-dark { background: var(--bg-surface); color: var(--text-muted); border: 1px solid var(--border-subtle); }
@@ -349,6 +350,19 @@ a { color: inherit; text-decoration: none; }
 .empty-state { text-align: center; padding: var(--space-20) var(--space-6); }
 .empty-state-icon { font-size: 2.5rem; margin-bottom: var(--space-4); opacity: 0.3; }
 .empty-state h3 { font-family: 'Prata', serif; font-size: 1.5rem; margin-bottom: var(--space-3); }
+
+.empty-icon-badge {
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-4);
+  background: var(--champagne-glow);
+  border: 1px solid var(--border-accent);
+  color: var(--champagne);
+}
 
 .skeleton {
   background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-card-hover) 50%, var(--bg-card) 75%);

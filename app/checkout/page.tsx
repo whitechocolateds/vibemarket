@@ -47,7 +47,9 @@ export default function CheckoutPage() {
       <div className={styles.page}>
         <div className="container">
           <div className="empty-state">
-            <PackageOpen size={40} strokeWidth={1} style={{ margin: '0 auto var(--space-4)', opacity: 0.4 }} />
+            <div className="empty-icon-badge">
+              <PackageOpen size={32} strokeWidth={1.5} />
+            </div>
             <h3>Korpa je prazna</h3>
             <p>Dodajte artikle pre naručivanja</p>
             <Link href="/products" className="btn btn-primary" style={{ marginTop: 16 }}>Kolekcija</Link>

@@ -232,6 +232,21 @@
   box-shadow: var(--shadow-sm);
 }
 
+.statCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--border-subtle);
+}
+
+.statCardGold::before { background: var(--gold-gradient); }
+.statCardBlue::before { background: var(--brand-gradient); }
+.statCardWarning::before { background: var(--color-warning); }
+.statCardSuccess::before { background: var(--color-success); }
+
 .statIcon {
   width: 40px;
   height: 40px;
@@ -243,6 +258,24 @@
   background: var(--champagne-glow);
   color: var(--champagne);
   flex-shrink: 0;
+}
+
+.statIconBlue {
+  background: var(--brand-glow);
+  border-color: rgba(var(--brand-rgb), 0.32);
+  color: var(--brand);
+}
+
+.statIconWarning {
+  background: rgba(var(--warning-rgb), 0.1);
+  border-color: rgba(var(--warning-rgb), 0.3);
+  color: var(--color-warning);
+}
+
+.statIconSuccess {
+  background: rgba(var(--success-rgb), 0.1);
+  border-color: rgba(var(--success-rgb), 0.3);
+  color: var(--color-success);
 }
 
 .statLabel {

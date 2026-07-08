@@ -24,6 +24,16 @@
   border-bottom: 1px solid var(--border-subtle);
 }
 
+.imageWrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 0 1px rgba(18, 33, 59, 0.05),
+    inset 0 -56px 44px -36px rgba(18, 33, 59, 0.16);
+}
+
 .image {
   width: 100%;
   height: 100%;

@@ -48,7 +48,9 @@ export default function CartSidebar() {
 
             {items.length === 0 ? (
               <div className={styles.empty}>
-                <ShoppingBag size={32} strokeWidth={1} />
+                <div className="empty-icon-badge">
+                  <ShoppingBag size={30} strokeWidth={1.5} />
+                </div>
                 <p>Korpa je prazna</p>
                 <Link href="/products" className="btn btn-outline btn-sm" onClick={closeCart}>
                   Pogledaj kolekciju

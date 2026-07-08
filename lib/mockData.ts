@@ -13,69 +13,6 @@ export const MOCK_COLLECTIONS: Collection[] = [
 
 export const MOCK_PRODUCTS: Product[] = [
   {
-    id: 'prod-9',
-    handle: 'kibla-za-led-mega',
-    title: 'Kibla za led h24cm MEGA (pakovanje od 10 komada)',
-    description:
-      'Kibla za led h24cm MEGA (prečnik 19 cm) – kvalitetna, prostrana i praktična posuda za led idealna za domaćinstvo, ugostitelje i događaje. Pakovanje od 10 komada u raznim bojama.',
-    descriptionHtml: `<p>Kibla za led h24cm MEGA predstavlja praktičan, moderan i izuzetno funkcionalan dodatak svakom domu, ugostiteljskom objektu, kancelariji ili event prostoru. Dizajnirana je tako da omogući dugotrajno hlađenje kockica leda i pravilno čuvanje temperature pića.</p>
-<h3>Osnovne karakteristike</h3>
-<ul>
-<li><strong>Visina:</strong> 24 cm</li>
-<li><strong>Prečnik:</strong> 19 cm</li>
-<li><strong>Pakovanje:</strong> 10 komada (razne boje, boje se ne biraju)</li>
-<li><strong>Materijal:</strong> kvalitetna, izdržljiva plastika</li>
-<li><strong>Proizvođač:</strong> Megaplast, Srbija</li>
-</ul>
-<p>Izrađena je od plastike koja ne zadržava mirise, lako se čisti i otporna je na hladnoću - led sporije topi i ostaje svež duže vreme. Lagana je, jednostavna za prenošenje i stabilna za korišćenje na stolovima, šankovima ili napolju.</p>
-<h3>Idealna za</h3>
-<ul>
-<li>Rođendanske proslave, slave i porodična okupljanja</li>
-<li>Kafiće, restorane, barove i cateringe</li>
-<li>Posluživanje vina, šampanjca i koktela</li>
-<li>Letnje žurke, terase i vikendice</li>
-</ul>`,
-    featuredImage: {
-      url: 'https://plastikaonline.rs/wp-content/uploads/2022/09/Kibla-za-led-MEGA-plava-600x532.jpg',
-      altText: 'Kibla za led h24cm MEGA – plava',
-    },
-    images: [
-      {
-        url: 'https://plastikaonline.rs/wp-content/uploads/2022/09/Kibla-za-led-MEGA-plava-600x532.jpg',
-        altText: 'Kibla za led MEGA – plava',
-      },
-      {
-        url: 'https://plastikaonline.rs/wp-content/uploads/2022/09/Kibla-za-led-h24cm-MEGA-600x600.jpg',
-        altText: 'Kibla za led h24cm MEGA',
-      },
-      {
-        url: 'https://plastikaonline.rs/wp-content/uploads/2022/09/Kibla-za-led-MEGA-bela-600x584.jpg',
-        altText: 'Kibla za led MEGA – bela',
-      },
-      {
-        url: 'https://plastikaonline.rs/wp-content/uploads/2022/09/Kibla-za-led-MEGA-mix-600x400.jpg',
-        altText: 'Kibla za led MEGA – mix boja u pakovanju',
-      },
-    ],
-    variants: [{
-      id: 'var-9-1',
-      title: 'Pakovanje 10 kom',
-      price: { amount: '3800', currencyCode: 'RSD' },
-      compareAtPrice: null,
-      availableForSale: true,
-      quantityAvailable: 50,
-      selectedOptions: [{ name: 'Pakovanje', value: '10 komada' }],
-    }],
-    priceRange: {
-      minVariantPrice: { amount: '3800', currencyCode: 'RSD' },
-      maxVariantPrice: { amount: '3800', currencyCode: 'RSD' },
-    },
-    tags: ['kuhinja', 'ugostiteljstvo', 'novo', 'kibla-za-led'],
-    vendor: 'Megaplast, Srbija',
-    productType: 'Kuhinja',
-    availableForSale: true,
-  },
-  {
     id: 'prod-1',
     handle: 'bežične-slušalice-pro',
     title: 'Bežične Slušalice Pro',
