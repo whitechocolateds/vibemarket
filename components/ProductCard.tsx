@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Check, Sparkles } from 'lucide-react';
+import { Plus, Check, Sparkles, Clock, Flame } from 'lucide-react';
 import { Product } from '@/lib/types';
 import { useCartStore } from '@/lib/cart';
 import { formatPrice, getProductPrice } from '@/lib/format';
+import { LOW_STOCK_THRESHOLD } from '@/lib/shipping';
 import styles from './ProductCard.module.css';
 
 interface Props {
@@ -27,6 +28,29 @@ export default function ProductCard({ product, spotlight = false }: Props) {
       : null;
 
   const secondImage = product.images?.[1];
+
+  const stockQty = product.variants[0]?.quantityAvailable;
+  const lowStock = product.availableForSale && typeof stockQty === 'number' && stockQty > 0 && stockQty < LOW_STOCK_THRESHOLD;
+
+  // Odbrojavanje "ponude dana" do ponoći — samo na istaknutoj kartici sa popustom
+  const [dealTimeLeft, setDealTimeLeft] = useState<string | null>(null);
+  useEffect(() => {
+    if (!spotlight || !discountPercent) return;
+    const tick = () => {
+      const now = new Date();
+      const midnight = new Date(now);
+      midnight.setHours(24, 0, 0, 0);
+      const diff = midnight.getTime() - now.getTime();
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor(diff / 60000) % 60;
+      const s = Math.floor(diff / 1000) % 60;
+      const pad = (n: number) => String(n).padStart(2, '0');
+      setDealTimeLeft(`${pad(h)}:${pad(m)}:${pad(s)}`);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [spotlight, discountPercent]);
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -94,6 +118,11 @@ export default function ProductCard({ product, spotlight = false }: Props) {
           </div>
 
           <div className={styles.spotlightContent}>
+            {dealTimeLeft && (
+              <span className={styles.spotlightTimer}>
+                <Clock size={11} /> Ponuda dana ističe za <strong>{dealTimeLeft}</strong>
+              </span>
+            )}
             <span className={styles.spotlightVendor}>{product.vendor}</span>
             <h3 className={styles.spotlightTitle}>{product.title}</h3>
             <div className={styles.spotlightBottom}>
@@ -160,7 +189,11 @@ export default function ProductCard({ product, spotlight = false }: Props) {
             {compareAtPrice && <span className="price-compare">{formatPrice(compareAtPrice)}</span>}
           </div>
           {product.availableForSale ? (
-            <span className={styles.stock}>Na stanju</span>
+            lowStock ? (
+              <span className={styles.lowStock}><Flame size={11} /> Još samo {stockQty} kom</span>
+            ) : (
+              <span className={styles.stock}>Na stanju</span>
+            )
           ) : (
             <span className={styles.unavailable}>Nije dostupno</span>
           )}

@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CartSidebar from '@/components/CartSidebar';
+import SocialProof from '@/components/SocialProof';
 
 export default function StoreChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -19,6 +20,7 @@ export default function StoreChrome({ children }: { children: React.ReactNode })
       <main style={{ paddingTop: 'var(--header-height)', minHeight: '100vh' }}>{children}</main>
       <Footer />
       <CartSidebar />
+      <SocialProof />
     </>
   );
 }

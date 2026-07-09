@@ -120,6 +120,30 @@
   gap: 6px;
 }
 
+.spotlightTimer {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 5px 12px;
+  margin-bottom: 4px;
+  border-radius: var(--radius-full);
+  background: rgba(20, 16, 10, 0.6);
+  border: 1px solid rgba(var(--gold-rgb), 0.4);
+  backdrop-filter: blur(6px);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.spotlightTimer svg { color: var(--champagne-light); }
+
+.spotlightTimer strong {
+  color: var(--champagne-light);
+  font-variant-numeric: tabular-nums;
+}
+
 .spotlightVendor {
   font-size: 0.65rem;
   font-weight: 600;
@@ -200,6 +224,11 @@
 
 .card:hover .quickAdd { transform: translateY(0); }
 
+/* Na touch uređajima nema hover-a — dugme je uvek vidljivo */
+@media (hover: none) {
+  .quickAdd { transform: translateY(0); }
+}
+
 .addBtn {
   width: 100%;
   font-size: 0.68rem !important;
@@ -247,7 +276,8 @@
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: var(--space-2);
+  flex-wrap: wrap;
+  gap: 2px var(--space-2);
   margin-top: 2px;
   font-size: 1.05rem;
 }
@@ -258,6 +288,23 @@
   text-transform: uppercase;
   color: var(--color-success);
   font-weight: 700;
+}
+
+.lowStock {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-warning);
+  font-weight: 700;
+  animation: lowStockPulse 2.2s ease-in-out infinite;
+}
+
+@keyframes lowStockPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
 }
 
 .unavailable {

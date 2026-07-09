@@ -3,9 +3,10 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
+import { X, Minus, Plus, Trash2, ShoppingBag, Truck, PartyPopper } from 'lucide-react';
 import { useCartStore } from '@/lib/cart';
 import { formatPrice } from '@/lib/format';
+import { FREE_SHIPPING_THRESHOLD } from '@/lib/shipping';
 import styles from './CartSidebar.module.css';
 
 export default function CartSidebar() {
@@ -95,6 +96,27 @@ export default function CartSidebar() {
                   </AnimatePresence>
                 </div>
                 <div className={styles.footer}>
+                  <div className={styles.shipProgress}>
+                    {totalPrice > FREE_SHIPPING_THRESHOLD ? (
+                      <p className={`${styles.shipMsg} ${styles.shipFree}`}>
+                        <PartyPopper size={14} />
+                        <span>Ostvarili ste <strong>besplatnu dostavu</strong>!</span>
+                      </p>
+                    ) : (
+                      <p className={styles.shipMsg}>
+                        <Truck size={14} />
+                        <span>Još <strong>{formatPrice(FREE_SHIPPING_THRESHOLD - totalPrice)}</strong> do besplatne dostave</span>
+                      </p>
+                    )}
+                    <div className={styles.shipTrack}>
+                      <motion.div
+                        className={styles.shipFill}
+                        initial={false}
+                        animate={{ width: `${Math.min(100, (totalPrice / FREE_SHIPPING_THRESHOLD) * 100)}%` }}
+                        transition={{ type: 'spring', stiffness: 120, damping: 20 }}
+                      />
+                    </div>
+                  </div>
                   <div className={styles.total}>
                     <span className={styles.totalLabel}>Ukupno</span>
                     <span className={styles.totalPrice}>{formatPrice(totalPrice)}</span>

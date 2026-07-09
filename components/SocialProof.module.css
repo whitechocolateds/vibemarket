@@ -1,0 +1,79 @@
+.toast {
+  position: fixed;
+  left: var(--space-4);
+  bottom: var(--space-4);
+  z-index: 85;
+  width: min(340px, calc(100vw - 32px));
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--gold);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: stretch;
+}
+
+@media (max-width: 768px) {
+  /* iznad sticky trake "Dodaj u korpu" na detalju proizvoda */
+  .toast { bottom: 84px; }
+}
+
+.body {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  flex: 1;
+  min-width: 0;
+}
+
+.img {
+  width: 46px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  flex-shrink: 0;
+}
+
+.text {
+  display: block;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  min-width: 0;
+}
+
+.who { font-weight: 700; color: var(--text-primary); }
+
+.productName {
+  display: block;
+  font-weight: 600;
+  color: var(--brand);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  font-size: 0.66rem;
+  color: var(--text-muted);
+}
+
+.meta svg { color: var(--color-success); flex-shrink: 0; }
+
+.close {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  padding: 8px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.close:hover { color: var(--text-primary); }

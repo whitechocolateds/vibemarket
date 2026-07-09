@@ -112,6 +112,44 @@
   gap: var(--space-4);
 }
 
+.shipProgress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--champagne-glow);
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-lg);
+}
+
+.shipMsg {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.shipMsg svg { color: var(--champagne-dark); flex-shrink: 0; }
+.shipMsg strong { color: var(--text-primary); }
+
+.shipFree { color: var(--color-success); }
+.shipFree svg { color: var(--color-success); }
+.shipFree strong { color: var(--color-success); }
+
+.shipTrack {
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: rgba(18, 33, 59, 0.08);
+  overflow: hidden;
+}
+
+.shipFill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--gold-gradient);
+}
+
 .total {
   display: flex;
   justify-content: space-between;

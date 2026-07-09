@@ -1,13 +1,15 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useInView } from 'framer-motion';
-import { Truck, Wallet, ShieldCheck, Check, Heart, Share2, Star, Flame } from 'lucide-react';
+import { Truck, Wallet, ShieldCheck, Check, Heart, Share2, Star, Flame, Eye } from 'lucide-react';
 import { Product, ProductVariant } from '@/lib/types';
 import { useCartStore } from '@/lib/cart';
 import { useWishlist } from '@/lib/useWishlist';
 import { formatPrice } from '@/lib/format';
+import { LOW_STOCK_THRESHOLD } from '@/lib/shipping';
 import Accordion from '@/components/motion/Accordion';
 import Reveal from '@/components/motion/Reveal';
 import ProductCard from '@/components/ProductCard';
@@ -27,14 +29,26 @@ function splitDescriptionSections(html: string): { title: string; content: strin
   return sections;
 }
 
-function stableReviewCount(id: string): number {
+function stableHash(id: string): number {
   let hash = 0;
   for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
-  return 60 + (hash % 340);
+  return hash;
+}
+
+function stableReviewCount(id: string): number {
+  return 60 + (stableHash(id) % 340);
+}
+
+function viewersLabel(n: number): string {
+  const m10 = n % 10;
+  const m100 = n % 100;
+  if (m10 >= 2 && m10 <= 4 && !(m100 >= 12 && m100 <= 14)) return 'osobe gledaju';
+  return 'osoba gleda';
 }
 
 export default function ProductDetailClient({ product, related }: Props) {
-  const { addItem, openCart } = useCartStore();
+  const router = useRouter();
+  const { addItem, openCart, closeCart } = useCartStore();
   const { isWished, toggle: toggleWishlist } = useWishlist(product.id);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(product.variants[0]);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -55,23 +69,41 @@ export default function ProductDetailClient({ product, related }: Props) {
 
   const images = product.images.length > 0 ? product.images : (product.featuredImage ? [product.featuredImage] : []);
   const reviewCount = stableReviewCount(product.id);
-  const lowStock = typeof selectedVariant.quantityAvailable === 'number' && selectedVariant.quantityAvailable > 0 && selectedVariant.quantityAvailable <= 5;
+  const lowStock = typeof selectedVariant.quantityAvailable === 'number' && selectedVariant.quantityAvailable > 0 && selectedVariant.quantityAvailable < LOW_STOCK_THRESHOLD;
+
+  // "Uživo" broj posetilaca — deterministična početna vrednost (SSR-safe), blago osciluje
+  const [viewers, setViewers] = useState(() => 5 + (stableHash(product.id) % 14));
+  useEffect(() => {
+    const id = setInterval(() => {
+      setViewers((v) => Math.max(3, Math.min(24, v + (Math.random() < 0.5 ? -1 : 1))));
+    }, 7000);
+    return () => clearInterval(id);
+  }, []);
+
+  const buildCartItem = () => ({
+    id: selectedVariant.id,
+    productId: product.id,
+    handle: product.handle,
+    title: product.title,
+    variantTitle: selectedVariant.title !== 'Default' ? selectedVariant.title : '',
+    price,
+    compareAtPrice: compareAtPrice ?? undefined,
+    image: product.featuredImage,
+    quantity,
+  });
 
   const handleAddToCart = () => {
-    addItem({
-      id: selectedVariant.id,
-      productId: product.id,
-      handle: product.handle,
-      title: product.title,
-      variantTitle: selectedVariant.title !== 'Default' ? selectedVariant.title : '',
-      price,
-      compareAtPrice: compareAtPrice ?? undefined,
-      image: product.featuredImage,
-      quantity,
-    });
+    addItem(buildCartItem());
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
     openCart();
+  };
+
+  const handleBuyNow = () => {
+    if (!selectedVariant.availableForSale) return;
+    addItem(buildCartItem());
+    closeCart();
+    router.push('/checkout');
   };
 
   const handleShare = async () => {
@@ -192,6 +224,9 @@ export default function ProductDetailClient({ product, related }: Props) {
                 ))}
               </div>
               <span>4.9 · {reviewCount} recenzija</span>
+              <span className={styles.viewers}>
+                <Eye size={13} /> {viewers} {viewersLabel(viewers)} upravo sada
+              </span>
             </div>
 
             <div className={styles.priceBlock}>
@@ -274,7 +309,14 @@ export default function ProductDetailClient({ product, related }: Props) {
                   </motion.span>
                 </AnimatePresence>
               </motion.button>
-              <Link href="/checkout" className="btn btn-outline btn-full">Kupi odmah</Link>
+              <button
+                type="button"
+                className="btn btn-outline btn-full"
+                onClick={handleBuyNow}
+                disabled={!selectedVariant.availableForSale}
+              >
+                Kupi odmah
+              </button>
             </div>
 
             <div className={styles.perks}>

@@ -8,6 +8,7 @@ import { User, MapPin, Wallet, ShieldCheck, Truck, PackageCheck, PackageOpen } f
 import { useCartStore } from '@/lib/cart';
 import { formatPrice } from '@/lib/format';
 import { OrderForm } from '@/lib/types';
+import { FREE_SHIPPING_THRESHOLD, shippingCostFor } from '@/lib/shipping';
 import Reveal from '@/components/motion/Reveal';
 import styles from './page.module.css';
 
@@ -39,7 +40,7 @@ export default function CheckoutPage() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitting, setSubmitting] = useState(false);
 
-  const shippingCost = totalPrice > 5000 ? 0 : 350;
+  const shippingCost = shippingCostFor(totalPrice);
   const grandTotal = totalPrice + shippingCost;
 
   if (totalItems === 0) {
@@ -200,7 +201,7 @@ export default function CheckoutPage() {
                 <span>Dostava</span>
                 <span className={shippingCost === 0 ? styles.free : ''}>{shippingCost === 0 ? 'Besplatna' : formatPrice(shippingCost)}</span>
               </div>
-              {shippingCost > 0 && <p className={styles.hint}>Još {formatPrice(5000 - totalPrice)} do besplatne dostave</p>}
+              {shippingCost > 0 && <p className={styles.hint}>Još {formatPrice(FREE_SHIPPING_THRESHOLD - totalPrice)} do besplatne dostave</p>}
               <div className={`${styles.summaryRow} ${styles.summaryTotal}`}><span>Ukupno</span><span>{formatPrice(grandTotal)}</span></div>
               <div className={styles.trust}>
                 <span><ShieldCheck size={14} /> Sigurna porudžbina</span>
