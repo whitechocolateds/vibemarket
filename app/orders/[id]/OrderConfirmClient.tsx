@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useSearchParams, useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { PackageCheck, Truck, Home } from 'lucide-react';
+import ConfettiBurst from '@/components/motion/ConfettiBurst';
 import styles from './order.module.css';
 
 export default function OrderConfirmClient() {
@@ -20,6 +21,7 @@ export default function OrderConfirmClient() {
 
   return (
     <div className={styles.page}>
+      <ConfettiBurst />
       <div className="container">
         <motion.div
           className={styles.card}

@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CartSidebar from '@/components/CartSidebar';
 import SocialProof from '@/components/SocialProof';
+import BackToTop from '@/components/BackToTop';
 
 export default function StoreChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -21,6 +22,7 @@ export default function StoreChrome({ children }: { children: React.ReactNode })
       <Footer />
       <CartSidebar />
       <SocialProof />
+      <BackToTop />
     </>
   );
 }

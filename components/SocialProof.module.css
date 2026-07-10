@@ -14,8 +14,11 @@
 }
 
 @media (max-width: 768px) {
-  /* iznad sticky trake "Dodaj u korpu" na detalju proizvoda */
-  .toast { bottom: 84px; }
+  /* iznad sticky trake "Dodaj u korpu"; sužen da ne prekrije "nazad na vrh" dugme desno */
+  .toast {
+    bottom: 84px;
+    width: min(320px, calc(100vw - 84px));
+  }
 }
 
 .body {

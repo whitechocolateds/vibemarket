@@ -1,0 +1,28 @@
+.btn {
+  position: fixed;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  z-index: 84;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-medium);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.btn:hover {
+  color: var(--brand);
+  border-color: var(--brand);
+}
+
+@media (max-width: 768px) {
+  /* iznad sticky trake "Dodaj u korpu" na detalju proizvoda */
+  .btn { bottom: 84px; }
+}

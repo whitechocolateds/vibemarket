@@ -103,6 +103,105 @@
 
 .removeBtn:hover { color: var(--color-error); }
 
+.upsell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.upsellEmpty {
+  width: 100%;
+  text-align: left;
+  margin-top: var(--space-4);
+}
+
+.upsellTitle {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--champagne-dark);
+}
+
+.upsellItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.upsellLink {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+}
+
+.upsellImg {
+  width: 44px;
+  height: 54px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  flex-shrink: 0;
+}
+
+.upsellInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.upsellName {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.upsellPriceRow {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.upsellPrice { font-size: 0.78rem; font-weight: 700; color: var(--text-primary); }
+
+.upsellCompare {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+.upsellAdd {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(var(--brand-rgb), 0.35);
+  background: var(--bg-elevated);
+  color: var(--brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.upsellAdd:hover {
+  background: var(--brand);
+  color: var(--text-inverse);
+  border-color: var(--brand);
+}
+
 .footer {
   padding: var(--space-6);
   border-top: 1px solid var(--border-subtle);

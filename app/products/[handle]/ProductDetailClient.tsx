@@ -10,9 +10,11 @@ import { useCartStore } from '@/lib/cart';
 import { useWishlist } from '@/lib/useWishlist';
 import { formatPrice } from '@/lib/format';
 import { LOW_STOCK_THRESHOLD } from '@/lib/shipping';
+import { recordRecentlyViewed } from '@/lib/recentlyViewed';
 import Accordion from '@/components/motion/Accordion';
 import Reveal from '@/components/motion/Reveal';
 import ProductCard from '@/components/ProductCard';
+import RecentlyViewed from '@/components/RecentlyViewed';
 import styles from './product.module.css';
 
 interface Props {
@@ -70,6 +72,18 @@ export default function ProductDetailClient({ product, related }: Props) {
   const images = product.images.length > 0 ? product.images : (product.featuredImage ? [product.featuredImage] : []);
   const reviewCount = stableReviewCount(product.id);
   const lowStock = typeof selectedVariant.quantityAvailable === 'number' && selectedVariant.quantityAvailable > 0 && selectedVariant.quantityAvailable < LOW_STOCK_THRESHOLD;
+
+  useEffect(() => {
+    recordRecentlyViewed({
+      handle: product.handle,
+      title: product.title,
+      image: product.featuredImage?.url ?? null,
+      price: parseFloat(product.variants[0]?.price.amount ?? '0'),
+      compareAtPrice: product.variants[0]?.compareAtPrice
+        ? parseFloat(product.variants[0].compareAtPrice.amount)
+        : null,
+    });
+  }, [product]);
 
   // "Uživo" broj posetilaca — deterministična početna vrednost (SSR-safe), blago osciluje
   const [viewers, setViewers] = useState(() => 5 + (stableHash(product.id) % 14));
@@ -356,6 +370,8 @@ export default function ProductDetailClient({ product, related }: Props) {
             </div>
           </section>
         )}
+
+        <RecentlyViewed excludeHandle={product.handle} />
       </div>
 
       <AnimatePresence>

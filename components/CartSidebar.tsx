@@ -1,22 +1,109 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, Minus, Plus, Trash2, ShoppingBag, Truck, PartyPopper } from 'lucide-react';
 import { useCartStore } from '@/lib/cart';
-import { formatPrice } from '@/lib/format';
+import { formatPrice, getProductPrice } from '@/lib/format';
 import { FREE_SHIPPING_THRESHOLD } from '@/lib/shipping';
+import { Product } from '@/lib/types';
 import styles from './CartSidebar.module.css';
 
+function UpsellList({ title, products, onAdd, onNavigate, className = '' }: {
+  title: string;
+  products: Product[];
+  onAdd: (p: Product) => void;
+  onNavigate: () => void;
+  className?: string;
+}) {
+  return (
+    <div className={`${styles.upsell} ${className}`}>
+      <p className={styles.upsellTitle}>{title}</p>
+      {products.map((p) => {
+        const sp = getProductPrice(p);
+        return (
+          <div key={p.id} className={styles.upsellItem}>
+            <Link href={`/products/${p.handle}`} onClick={onNavigate} className={styles.upsellLink}>
+              <img src={p.featuredImage!.url} alt={p.title} className={styles.upsellImg} />
+              <span className={styles.upsellInfo}>
+                <span className={styles.upsellName}>{p.title}</span>
+                <span className={styles.upsellPriceRow}>
+                  <span className={styles.upsellPrice}>{formatPrice(sp.price)}</span>
+                  {sp.compareAtPrice && sp.compareAtPrice > sp.price && (
+                    <span className={styles.upsellCompare}>{formatPrice(sp.compareAtPrice)}</span>
+                  )}
+                </span>
+              </span>
+            </Link>
+            <button
+              type="button"
+              className={styles.upsellAdd}
+              onClick={() => onAdd(p)}
+              aria-label={`Dodaj ${p.title} u korpu`}
+            >
+              <Plus size={14} />
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function CartSidebar() {
-  const { items, totalPrice, totalItems, isOpen, closeCart, removeItem, updateQuantity } = useCartStore();
+  const { items, totalPrice, totalItems, isOpen, closeCart, removeItem, updateQuantity, addItem } = useCartStore();
+  const [catalog, setCatalog] = useState<Product[]>([]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') closeCart(); };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [closeCart]);
+
+  // Katalog za predloge učitavamo tek kad se korpa prvi put otvori
+  useEffect(() => {
+    if (!isOpen || catalog.length > 0) return;
+    let alive = true;
+    (async () => {
+      try {
+        const res = await fetch('/api/products');
+        const json = await res.json();
+        if (alive) setCatalog((json.data ?? []).filter((p: Product) => p.availableForSale && p.featuredImage && p.variants[0]));
+      } catch {
+        /* predlozi su opcioni */
+      }
+    })();
+    return () => { alive = false; };
+  }, [isOpen, catalog.length]);
+
+  // Predlozi: proizvodi koji nisu u korpi, sa popustom napred, pa jeftiniji (impulsivna dopuna)
+  const suggestions = catalog
+    .filter((p) => !items.some((i) => i.productId === p.id))
+    .sort((a, b) => {
+      const aP = getProductPrice(a);
+      const bP = getProductPrice(b);
+      const aDisc = aP.compareAtPrice && aP.compareAtPrice > aP.price ? 1 : 0;
+      const bDisc = bP.compareAtPrice && bP.compareAtPrice > bP.price ? 1 : 0;
+      if (aDisc !== bDisc) return bDisc - aDisc;
+      return aP.price - bP.price;
+    })
+    .slice(0, 2);
+
+  const addSuggestion = (product: Product) => {
+    const variant = product.variants[0];
+    const { price, compareAtPrice } = getProductPrice(product);
+    addItem({
+      id: variant.id,
+      productId: product.id,
+      handle: product.handle,
+      title: product.title,
+      variantTitle: variant.title !== 'Default' ? variant.title : '',
+      price,
+      compareAtPrice: compareAtPrice ?? undefined,
+      image: product.featuredImage,
+    });
+  };
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : '';
@@ -56,6 +143,16 @@ export default function CartSidebar() {
                 <Link href="/products" className="btn btn-outline btn-sm" onClick={closeCart}>
                   Pogledaj kolekciju
                 </Link>
+
+                {suggestions.length > 0 && (
+                  <UpsellList
+                    title="Popularno ove nedelje"
+                    products={suggestions}
+                    onAdd={addSuggestion}
+                    onNavigate={closeCart}
+                    className={styles.upsellEmpty}
+                  />
+                )}
               </div>
             ) : (
               <>
@@ -94,6 +191,15 @@ export default function CartSidebar() {
                       </motion.div>
                     ))}
                   </AnimatePresence>
+
+                  {suggestions.length > 0 && (
+                    <UpsellList
+                      title="Često se kupuje uz ovo"
+                      products={suggestions}
+                      onAdd={addSuggestion}
+                      onNavigate={closeCart}
+                    />
+                  )}
                 </div>
                 <div className={styles.footer}>
                   <div className={styles.shipProgress}>
