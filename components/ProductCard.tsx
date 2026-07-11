@@ -2,12 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Check, Sparkles, Clock, Flame } from 'lucide-react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import { Sparkles, Clock, Flame } from 'lucide-react';
 import { Product } from '@/lib/types';
 import { useCartStore } from '@/lib/cart';
 import { formatPrice, getProductPrice } from '@/lib/format';
 import { LOW_STOCK_THRESHOLD } from '@/lib/shipping';
+import { isOptimizableImageUrl } from '@/lib/imageHost';
 import styles from './ProductCard.module.css';
 
 interface Props {
@@ -17,9 +20,9 @@ interface Props {
 }
 
 export default function ProductCard({ product, spotlight = false }: Props) {
-  const { addItem } = useCartStore();
+  const router = useRouter();
+  const { addItem, closeCart } = useCartStore();
   const { price, compareAtPrice } = getProductPrice(product);
-  const [added, setAdded] = useState(false);
   const [hovered, setHovered] = useState(false);
 
   const discountPercent =
@@ -32,7 +35,7 @@ export default function ProductCard({ product, spotlight = false }: Props) {
   const stockQty = product.variants[0]?.quantityAvailable;
   const lowStock = product.availableForSale && typeof stockQty === 'number' && stockQty > 0 && stockQty < LOW_STOCK_THRESHOLD;
 
-  // Odbrojavanje "ponude dana" do ponoći — samo na istaknutoj kartici sa popustom
+  // Odbrojavanje "ponude dana" do ponoći - samo na istaknutoj kartici sa popustom
   const [dealTimeLeft, setDealTimeLeft] = useState<string | null>(null);
   useEffect(() => {
     if (!spotlight || !discountPercent) return;
@@ -52,7 +55,7 @@ export default function ProductCard({ product, spotlight = false }: Props) {
     return () => clearInterval(id);
   }, [spotlight, discountPercent]);
 
-  const handleAdd = (e: React.MouseEvent) => {
+  const handleBuyNow = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const variant = product.variants[0];
@@ -67,28 +70,45 @@ export default function ProductCard({ product, spotlight = false }: Props) {
       compareAtPrice: compareAtPrice ?? undefined,
       image: product.featuredImage,
     });
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1600);
+    closeCart();
+    router.push('/checkout');
   };
 
-  const addButton = (
-    <button
-      className={`btn btn-primary btn-sm ${styles.addBtn}`}
-      onClick={handleAdd}
-      disabled={!product.availableForSale}
-    >
-      <AnimatePresence mode="wait" initial={false}>
-        {added ? (
-          <motion.span key="ok" className={styles.addBtnInner} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }}>
-            <Check size={14} /> Dodato
-          </motion.span>
-        ) : (
-          <motion.span key="add" className={styles.addBtnInner} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }}>
-            <Plus size={14} /> {product.availableForSale ? 'Dodaj u korpu' : 'Rasprodato'}
-          </motion.span>
-        )}
-      </AnimatePresence>
-    </button>
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const variant = product.variants[0];
+    if (!variant) return;
+    addItem({
+      id: variant.id,
+      productId: product.id,
+      handle: product.handle,
+      title: product.title,
+      variantTitle: variant.title !== 'Default' ? variant.title : '',
+      price,
+      compareAtPrice: compareAtPrice ?? undefined,
+      image: product.featuredImage,
+    });
+  };
+
+  const actionButtons = (
+    <div className={styles.btnGroup}>
+      <button
+        className={`btn btn-primary ${styles.actionBtn}`}
+        onClick={handleBuyNow}
+        disabled={!product.availableForSale}
+      >
+        {product.availableForSale ? 'Kupi odmah' : 'Rasprodato'}
+      </button>
+      {product.availableForSale && (
+        <button
+          className={`btn btn-secondary ${styles.actionBtn}`}
+          onClick={handleAddToCart}
+        >
+          Dodaj u korpu
+        </button>
+      )}
+    </div>
   );
 
   if (spotlight) {
@@ -101,9 +121,12 @@ export default function ProductCard({ product, spotlight = false }: Props) {
           onMouseLeave={() => setHovered(false)}
         >
           {product.featuredImage ? (
-            <img
+            <Image
               src={product.featuredImage.url}
               alt={product.featuredImage.altText ?? product.title}
+              fill
+              sizes="(max-width: 768px) 100vw, 40vw"
+              unoptimized={!isOptimizableImageUrl(product.featuredImage.url)}
               className={styles.spotlightImg}
               style={{ transform: hovered ? 'scale(1.06)' : 'scale(1)' }}
             />
@@ -130,7 +153,7 @@ export default function ProductCard({ product, spotlight = false }: Props) {
                 <span className={styles.spotlightPrice}>{formatPrice(price)}</span>
                 {compareAtPrice && <span className={styles.spotlightCompare}>{formatPrice(compareAtPrice)}</span>}
               </div>
-              {addButton}
+              {actionButtons}
             </div>
           </div>
         </Link>
@@ -153,19 +176,23 @@ export default function ProductCard({ product, spotlight = false }: Props) {
         <div className={styles.imageWrap}>
           {product.featuredImage ? (
             <>
-              <img
+              <Image
                 src={product.featuredImage.url}
                 alt={product.featuredImage.altText ?? product.title}
+                fill
+                sizes="(max-width: 768px) 50vw, (max-width: 1100px) 33vw, 25vw"
+                unoptimized={!isOptimizableImageUrl(product.featuredImage.url)}
                 className={styles.image}
-                loading="lazy"
                 style={{ opacity: hovered && secondImage ? 0 : 1 }}
               />
               {secondImage && (
-                <img
+                <Image
                   src={secondImage.url}
                   alt=""
+                  fill
+                  sizes="(max-width: 768px) 50vw, (max-width: 1100px) 33vw, 25vw"
+                  unoptimized={!isOptimizableImageUrl(secondImage.url)}
                   className={styles.image}
-                  loading="lazy"
                   style={{ position: 'absolute', inset: 0, opacity: hovered ? 1 : 0 }}
                 />
               )}
@@ -174,12 +201,12 @@ export default function ProductCard({ product, spotlight = false }: Props) {
             <div className={styles.placeholder}>◆</div>
           )}
           <div className={styles.badges}>
-            {discountPercent && <span className="badge badge-gold">−{discountPercent}%</span>}
+            {discountPercent && <span className="badge badge-red">−{discountPercent}%</span>}
             {product.tags.includes('novo') && !discountPercent && (
               <span className="badge badge-blue">Novo</span>
             )}
           </div>
-          <div className={styles.quickAdd}>{addButton}</div>
+          <div className={styles.quickAdd}>{actionButtons}</div>
         </div>
         <div className={styles.info}>
           <span className={styles.vendor}>{product.vendor}</span>

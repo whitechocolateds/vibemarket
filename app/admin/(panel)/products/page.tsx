@@ -161,7 +161,7 @@ export default function AdminProductsPage() {
           aria-label="Sortiranje"
         >
           <option value="newest">Najnovije prvo</option>
-          <option value="title">Naziv (A–Š)</option>
+          <option value="title">Naziv (A-Š)</option>
           <option value="priceDesc">Cena: veća prvo</option>
           <option value="priceAsc">Cena: manja prvo</option>
           <option value="stockAsc">Zalihe: najmanje prvo</option>

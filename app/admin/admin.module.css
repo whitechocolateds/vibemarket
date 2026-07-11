@@ -170,6 +170,13 @@
   flex-wrap: wrap;
 }
 
+.pageHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
 .pageTitle {
   font-family: 'Prata', serif;
   font-size: 1.75rem;
@@ -633,7 +640,7 @@
 }
 
 .table td {
-  padding: 14px var(--space-5);
+  padding: 16px var(--space-5);
   font-size: 0.85rem;
   color: var(--text-secondary);
   border-bottom: 1px solid var(--border-subtle);
@@ -642,15 +649,38 @@
 
 .table tr:last-child td { border-bottom: none; }
 .table tbody tr { transition: background var(--transition-fast); }
+.table tbody tr:nth-child(even) td { background: rgba(18, 33, 59, 0.015); }
 .table tbody tr:hover td { background: var(--bg-card-hover); }
 
 .tableLink {
-  color: var(--text-primary);
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--brand);
+  font-weight: 700;
+  letter-spacing: 0.01em;
   text-decoration: none;
 }
 
-.tableLink:hover { color: var(--champagne); }
+.tableLink:hover { color: var(--brand-dark); text-decoration: underline; }
+
+.customerName {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.cellMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.cellMeta svg { flex-shrink: 0; color: var(--text-muted); opacity: 0.8; }
 
 .cellMuted { font-size: 0.72rem; color: var(--text-muted); }
 
@@ -1008,6 +1038,12 @@
   border-color: var(--champagne-dark);
   box-shadow: 0 0 0 3px var(--champagne-glow);
 }
+
+.statusSelect_pending { background-color: rgba(var(--warning-rgb), 0.08); border-color: rgba(var(--warning-rgb), 0.3); color: var(--color-warning); font-weight: 600; }
+.statusSelect_confirmed { background-color: var(--champagne-glow); border-color: var(--border-accent); color: var(--champagne-dark); font-weight: 600; }
+.statusSelect_shipped { background-color: rgba(var(--info-rgb), 0.08); border-color: rgba(var(--info-rgb), 0.3); color: var(--color-info); font-weight: 600; }
+.statusSelect_delivered { background-color: rgba(var(--success-rgb), 0.08); border-color: rgba(var(--success-rgb), 0.3); color: var(--color-success); font-weight: 600; }
+.statusSelect_cancelled { background-color: rgba(var(--error-rgb), 0.08); border-color: rgba(var(--error-rgb), 0.3); color: var(--color-error); font-weight: 600; }
 
 /* ─── Order status stepper ───────────────────────────────────────────────── */
 .stepper {

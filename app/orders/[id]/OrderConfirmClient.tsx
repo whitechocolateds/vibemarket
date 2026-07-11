@@ -1,9 +1,11 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { PackageCheck, Truck, Home } from 'lucide-react';
+import { trackPixel } from '@/lib/metaEvents';
 import ConfettiBurst from '@/components/motion/ConfettiBurst';
 import styles from './order.module.css';
 
@@ -12,6 +14,17 @@ export default function OrderConfirmClient() {
   const searchParams = useSearchParams();
   const orderId = params.id as string;
   const name = searchParams.get('name') ?? 'korisniče';
+  const firedRef = useRef(false);
+
+  useEffect(() => {
+    if (firedRef.current) return;
+    firedRef.current = true;
+    const value = Number(searchParams.get('value') ?? 0);
+    const eventId = searchParams.get('eventId') ?? undefined;
+    const contentIds = (searchParams.get('contentIds') ?? '').split(',').filter(Boolean);
+    trackPixel('Purchase', { value, currency: 'RSD', content_ids: contentIds }, eventId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const steps = [
     { icon: PackageCheck, label: 'Pakovanje', active: true },
@@ -62,7 +75,7 @@ export default function OrderConfirmClient() {
               ))}
             </div>
             <p style={{ marginTop: 16, fontSize: '0.85rem', color: 'var(--color-success)' }}>
-              Očekivano: 1–3 radna dana
+              Očekivano: 1-3 radna dana
             </p>
           </div>
 

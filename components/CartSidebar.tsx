@@ -7,6 +7,7 @@ import { X, Minus, Plus, Trash2, ShoppingBag, Truck, PartyPopper } from 'lucide-
 import { useCartStore } from '@/lib/cart';
 import { formatPrice, getProductPrice } from '@/lib/format';
 import { FREE_SHIPPING_THRESHOLD } from '@/lib/shipping';
+import { bundleUnitPrice } from '@/lib/bundlePricing';
 import { Product } from '@/lib/types';
 import styles from './CartSidebar.module.css';
 
@@ -52,8 +53,12 @@ function UpsellList({ title, products, onAdd, onNavigate, className = '' }: {
 }
 
 export default function CartSidebar() {
-  const { items, totalPrice, totalItems, isOpen, closeCart, removeItem, updateQuantity, addItem } = useCartStore();
+  const { items, totalItems, isOpen, closeCart, removeItem, updateQuantity, addItem } = useCartStore();
   const [catalog, setCatalog] = useState<Product[]>([]);
+
+  // Cene po stavci uključuju količinski popust (2 kom -10%, 3 kom -15%), isto kao na checkout-u
+  const discountedItems = items.map((item) => ({ ...item, unitPrice: bundleUnitPrice(item.price, item.quantity) }));
+  const totalPrice = discountedItems.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') closeCart(); };
@@ -158,7 +163,7 @@ export default function CartSidebar() {
               <>
                 <div className={styles.items}>
                   <AnimatePresence initial={false}>
-                    {items.map((item) => (
+                    {discountedItems.map((item) => (
                       <motion.div
                         key={item.id}
                         className={styles.item}
@@ -176,7 +181,15 @@ export default function CartSidebar() {
                         <div className={styles.itemInfo}>
                           <h4>{item.title}</h4>
                           {item.variantTitle && <p className={styles.itemVariant}>{item.variantTitle}</p>}
-                          <p className={styles.itemPrice}>{formatPrice(item.price * item.quantity)}</p>
+                          <p className={styles.itemPrice}>
+                            {item.unitPrice < item.price && (
+                              <span className={styles.itemPriceOld}>{formatPrice(item.price * item.quantity)}</span>
+                            )}
+                            {formatPrice(item.unitPrice * item.quantity)}
+                          </p>
+                          {item.unitPrice < item.price && (
+                            <span className={styles.itemSaveTag}>Popust za {item.quantity} kom</span>
+                          )}
                         </div>
                         <div className={styles.itemActions}>
                           <div className="qty-control">
@@ -227,7 +240,7 @@ export default function CartSidebar() {
                     <span className={styles.totalLabel}>Ukupno</span>
                     <span className={styles.totalPrice}>{formatPrice(totalPrice)}</span>
                   </div>
-                  <p className={styles.note}>Dostava 1–3 dana · Plaćanje pouzećem</p>
+                  <p className={styles.note}>Dostava 1-3 dana · Plaćanje pouzećem</p>
                   <Link href="/checkout" className={`btn btn-primary btn-full ${styles.checkoutBtn}`} onClick={closeCart}>
                     Nastavi na plaćanje
                   </Link>

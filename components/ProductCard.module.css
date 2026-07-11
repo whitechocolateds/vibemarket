@@ -224,7 +224,7 @@
 
 .card:hover .quickAdd { transform: translateY(0); }
 
-/* Na touch uređajima nema hover-a — dugme je uvek vidljivo */
+/* Na touch uređajima nema hover-a - dugme je uvek vidljivo */
 @media (hover: none) {
   .quickAdd { transform: translateY(0); }
 }
@@ -313,4 +313,29 @@
   text-transform: uppercase;
   color: var(--text-muted);
   font-weight: 700;
+}
+
+.btnGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.actionBtn {
+  width: 100%;
+  font-size: 0.68rem !important;
+  padding: 10px !important;
+  letter-spacing: 0.1em !important;
+}
+
+.spotlightCard .btnGroup {
+  flex-direction: row;
+}
+
+@media (max-width: 768px) {
+  .spotlightCard .btnGroup {
+    flex-direction: column;
+    width: 100%;
+  }
 }

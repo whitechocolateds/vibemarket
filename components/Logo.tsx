@@ -85,7 +85,7 @@ export default function Logo({
 
   if (href) {
     return (
-      <Link href={href} aria-label="VibeMarket — Kupuj na klik" style={{ display: 'inline-flex' }}>
+      <Link href={href} aria-label="VibeMarket - Kupuj na klik" style={{ display: 'inline-flex' }}>
         {inner}
       </Link>
     );

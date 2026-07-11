@@ -1,8 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700&family=Prata&display=swap');
 
-/* ─── VibeMarket — Royal Blue & Gold Design Tokens ────────────────────────── */
+/* ─── VibeMarket - Royal Blue & Gold Design Tokens ────────────────────────── */
 :root {
-  /* Brand — royal blue (logo field) */
+  /* Brand - royal blue (logo field) */
   --brand-rgb: 22, 82, 190;
   --brand: rgb(var(--brand-rgb));
   --brand-light: #2E6FE6;
@@ -11,15 +11,16 @@
   --brand-glow: rgba(var(--brand-rgb), 0.1);
   --brand-gradient: linear-gradient(135deg, #2E6FE6 0%, #1652BE 55%, #0F3E9A 100%);
 
-  /* Gold (logo bag + wordmark) */
-  --gold-rgb: 240, 176, 12;
+  /* Gold (logo bag + wordmark) - darkened from the raw logo yellow so it reads as text on light backgrounds (WCAG AA 5.3:1).
+     --gold-light is reserved for text on DARK backgrounds (footer, CTA, table headers). */
+  --gold-rgb: 139, 101, 4;
   --gold: rgb(var(--gold-rgb));
   --gold-light: #FFC838;
-  --gold-dark: #C6890A;
+  --gold-dark: #6E4F03;
   --gold-glow: rgba(var(--gold-rgb), 0.14);
   --gold-gradient: linear-gradient(135deg, #FFC838 0%, #F0B00C 50%, #C6890A 100%);
 
-  /* Surfaces — cool near-white */
+  /* Surfaces - cool near-white */
   --bg-deep: #E6ECF6;
   --bg-primary: #F6F8FC;
   --bg-elevated: #FFFFFF;
@@ -39,18 +40,18 @@
   --champagne-gradient: var(--gold-gradient);
 
   --text-primary: #12213B;
-  --text-secondary: #45506A;
-  --text-muted: #8892A6;
+  --text-secondary: #3E4963;
+  --text-muted: #546078;
   --text-inverse: #FFFFFF;
 
-  --border-subtle: rgba(18, 33, 59, 0.09);
-  --border-medium: rgba(18, 33, 59, 0.16);
+  --border-subtle: rgba(18, 33, 59, 0.14);
+  --border-medium: rgba(18, 33, 59, 0.26);
   --border-accent: rgba(var(--gold-rgb), 0.42);
 
-  --success-rgb: 47, 137, 90;
-  --error-rgb: 189, 68, 58;
-  --warning-rgb: 187, 111, 20;
-  --info-rgb: 40, 96, 170;
+  --success-rgb: 26, 118, 71;
+  --error-rgb: 178, 54, 44;
+  --warning-rgb: 158, 88, 8;
+  --info-rgb: 32, 84, 152;
 
   --color-success: rgb(var(--success-rgb));
   --color-error: rgb(var(--error-rgb));

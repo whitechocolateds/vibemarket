@@ -68,7 +68,7 @@
 
 .heroTitle em {
   font-style: italic;
-  background: linear-gradient(100deg, var(--champagne-dark) 0%, var(--champagne-light) 30%, var(--champagne) 60%, var(--champagne-light) 90%);
+  background: linear-gradient(100deg, var(--champagne-dark) 0%, #B8830B 30%, var(--champagne) 60%, #B8830B 90%);
   background-size: 250% auto;
   background-clip: text;
   -webkit-background-clip: text;
@@ -598,6 +598,17 @@
   color: #050505;
 }
 
+.fbPhoto {
+  display: block;
+  width: 100%;
+  max-width: 160px;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-top: var(--space-3);
+  box-shadow: var(--shadow-sm);
+}
+
 .fbActions {
   display: flex;
   align-items: center;
@@ -674,6 +685,9 @@
   z-index: 1;
   text-align: center;
 }
+
+/* Na tamnoj CTA podlozi zlatna mora biti svetla varijanta */
+.ctaInner :global(.section-label) { color: var(--gold-light); }
 
 .ctaTitle {
   font-family: 'Prata', serif;

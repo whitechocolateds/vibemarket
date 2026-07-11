@@ -83,7 +83,7 @@ export async function getAdminStats(): Promise<AdminStats> {
   };
   for (const o of orders) statusCounts[o.status] += 1;
 
-  // Prihod po danu — poslednjih 14 dana uključujući danas
+  // Prihod po danu - poslednjih 14 dana uključujući danas
   const days: DailyStat[] = [];
   const byDay = new Map<string, DailyStat>();
   for (let i = 13; i >= 0; i--) {

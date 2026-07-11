@@ -10,6 +10,7 @@ interface Props {
   city: string;
   time: string;
   likes: number;
+  image?: string;
 }
 
 const AVATAR_COLORS = [
@@ -44,7 +45,7 @@ function FbBadge() {
   );
 }
 
-export default function TestimonialCard({ quote, name, city, time, likes }: Props) {
+export default function TestimonialCard({ quote, name, city, time, likes, image }: Props) {
   const [liked, setLiked] = useState(false);
   const count = likes + (liked ? 1 : 0);
 
@@ -68,6 +69,10 @@ export default function TestimonialCard({ quote, name, city, time, likes }: Prop
           ))}
         </div>
         <p className={styles.fbText}>{quote}</p>
+        {image && (
+          // eslint-disable-next-line @next/next/no-img-element -- fotografija priložena uz recenziju
+          <img src={image} alt="Fotografija uz recenziju" className={styles.fbPhoto} />
+        )}
       </div>
 
       <div className={styles.fbActions}>

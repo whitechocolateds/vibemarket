@@ -85,6 +85,8 @@ function buildProduct(input: ProductInput, id?: string): Product {
     vendor: input.vendor.trim() || 'VibeMarket',
     productType: input.productType.trim() || 'Ostalo',
     availableForSale: input.availableForSale,
+    comparisonPoints: (input.comparisonPoints ?? []).map((p) => p.trim()).filter(Boolean),
+    faqs: (input.faqs ?? []).filter((f) => f.question.trim() && f.answer.trim()),
   };
 }
 

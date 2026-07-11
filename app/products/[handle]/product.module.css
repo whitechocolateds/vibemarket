@@ -5,15 +5,56 @@
 .breadcrumb {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-1);
   margin-bottom: var(--space-8);
-  font-size: 0.72rem;
+  flex-wrap: wrap;
+}
+
+.crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+  font-size: 0.7rem;
+  font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-muted);
+  transition: all var(--transition-fast);
 }
 
-.breadcrumb a:hover { color: var(--champagne); }
+.crumb:hover {
+  color: var(--brand);
+  background: var(--brand-glow);
+  border-color: rgba(var(--brand-rgb), 0.2);
+}
+
+.crumbSep { color: var(--text-muted); opacity: 0.5; flex-shrink: 0; }
+
+.crumbCurrent {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 14px;
+  border-radius: var(--radius-full);
+  background: var(--champagne-glow);
+  border: 1px solid var(--border-accent);
+  color: var(--champagne-dark);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60vw;
+}
+
+@media (max-width: 640px) {
+  .crumb { padding: 6px 10px; }
+  .crumbCurrent { max-width: 48vw; }
+}
 
 .layout {
   display: grid;
@@ -55,7 +96,7 @@
 .mainImg {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .noImage {
@@ -103,6 +144,7 @@
 .thumbnails { display: flex; gap: var(--space-3); }
 
 .thumb {
+  position: relative;
   width: 76px;
   height: 92px;
   overflow: hidden;
@@ -178,6 +220,22 @@
   color: var(--text-primary);
 }
 
+.offerTimer {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  background: rgba(var(--error-rgb), 0.08);
+  border: 1px solid rgba(var(--error-rgb), 0.25);
+  color: var(--color-error);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.offerTimer strong { font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+
 .stockRow {
   display: flex;
   align-items: center;
@@ -237,11 +295,95 @@
 .optionSelected { border-color: var(--champagne) !important; color: var(--champagne) !important; background: var(--champagne-glow) !important; }
 .optionDisabled { opacity: 0.35; cursor: not-allowed; }
 
-.qtyRow { display: flex; align-items: center; gap: var(--space-5); }
+.bundleSection { display: flex; flex-direction: column; gap: var(--space-3); }
+
+.bundleGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+@media (max-width: 480px) {
+  .bundleGrid { grid-template-columns: 1fr; }
+}
+
+.bundleCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: var(--space-4) var(--space-3);
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all var(--transition-fast);
+  text-align: center;
+}
+
+.bundleCard:hover { border-color: var(--border-accent); }
+
+.bundleCardActive {
+  border-color: var(--brand);
+  background: var(--brand-glow);
+  box-shadow: 0 0 0 1px var(--brand);
+}
+
+.bundleTag {
+  position: absolute;
+  top: -11px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  background: var(--champagne);
+  color: var(--text-inverse);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.bundleTagBest { background: var(--color-error); }
+
+.bundleQty {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-top: 4px;
+}
+
+.bundleTotal {
+  font-family: 'Prata', serif;
+  font-size: 1.15rem;
+  color: var(--text-primary);
+}
+
+.bundleSave {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-success);
+}
 
 .ctaButtons { display: flex; flex-direction: column; gap: var(--space-3); }
 
 .addBtn { padding: 18px !important; letter-spacing: 0.14em !important; }
+
+.shippingHint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.shippingHint strong { color: var(--color-success); }
+.shippingHint svg { flex-shrink: 0; color: var(--champagne-dark); }
 
 .perks {
   display: grid;
@@ -286,14 +428,18 @@
   left: 0;
   right: 0;
   z-index: 95;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-md);
+}
+
+.stickyInner {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
   padding: var(--space-4) var(--space-6);
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(16px);
-  border-top: 1px solid var(--border-subtle);
 }
 
 .stickyInfo { display: flex; flex-direction: column; min-width: 0; }
@@ -305,10 +451,17 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.stickyPrice { font-size: 0.85rem; color: var(--champagne); font-weight: 600; }
+.stickyPrice { font-size: 0.85rem; color: var(--champagne-dark); font-weight: 600; }
+
+.stickyActions {
+  display: flex;
+  gap: 8px;
+}
 
 @media (min-width: 901px) {
-  .stickyBar { display: none; }
+  .stickyInner { padding-top: var(--space-3); padding-bottom: var(--space-3); }
+  .stickyTitle { font-size: 0.9rem; }
+  .stickyPrice { font-size: 0.95rem; }
 }
 
 .relatedSection {
@@ -319,4 +472,24 @@
 
 .relatedSection > :global(.grid-products) {
   margin-top: var(--space-10);
+}
+
+.infoSection {
+  padding: var(--space-16) 0;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: var(--space-10);
+}
+
+.infoSectionHeader { margin-bottom: var(--space-8); display: block; }
+.infoSectionHeader :global(.section-label) { display: inline-flex; align-items: center; }
+
+.compareFaqGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-12);
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .compareFaqGrid { grid-template-columns: 1fr; gap: var(--space-16); }
 }

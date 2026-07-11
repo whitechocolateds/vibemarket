@@ -12,7 +12,7 @@ interface Item {
 const ITEMS: Item[] = [
   { icon: Sparkles, text: 'Novo ove nedelje' },
   { icon: Star, text: '4.9/5 od 2.400+ kupaca' },
-  { icon: Truck, text: 'Dostava za 1–3 dana' },
+  { icon: Truck, text: 'Dostava za 1-3 dana' },
   { icon: Wallet, text: 'Platite tek kad stigne' },
 ];
 

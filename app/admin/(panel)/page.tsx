@@ -48,7 +48,7 @@ export default async function AdminDashboardPage() {
       <div className={styles.pageHeader}>
         <div>
           <h1 className={styles.pageTitle}>Pregled prodaje</h1>
-          <p className={styles.pageSubtitle}>Dobrodošli nazad — evo šta se dešava u prodavnici</p>
+          <p className={styles.pageSubtitle}>Dobrodošli nazad - evo šta se dešava u prodavnici</p>
         </div>
         <div className={styles.headerActions}>
           <Link href="/admin/orders" className="btn btn-secondary btn-sm">Porudžbine</Link>
@@ -106,7 +106,7 @@ export default async function AdminDashboardPage() {
       <div className={styles.dashGrid}>
         <div className={styles.card}>
           <div className={styles.cardHeader}>
-            <h2><BarChart3 size={16} strokeWidth={1.75} /> Prihod — poslednjih 14 dana</h2>
+            <h2><BarChart3 size={16} strokeWidth={1.75} /> Prihod - poslednjih 14 dana</h2>
             <span className={styles.cardHeaderHint}>{formatPrice(chartTotal)} ukupno</span>
           </div>
           <div className={styles.chart}>
@@ -114,7 +114,7 @@ export default async function AdminDashboardPage() {
               <div
                 key={day.date}
                 className={styles.chartCol}
-                title={`${day.label} — ${formatPrice(day.revenue)} (${day.orders} porudžbina)`}
+                title={`${day.label} - ${formatPrice(day.revenue)} (${day.orders} porudžbina)`}
               >
                 <div
                   className={`${styles.chartBar} ${day.revenue === 0 ? styles.chartBarEmpty : ''}`}

@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Search, RefreshCw, ShoppingBag } from 'lucide-react';
+import { Search, RefreshCw, ShoppingBag, Download, Phone, Mail, MapPin } from 'lucide-react';
 import { Order } from '@/lib/types';
 import { formatPrice } from '@/lib/format';
 import { STATUS_LABELS } from '@/components/admin/StatusBadge';
 import { toast } from '@/components/admin/Toaster';
+import { downloadXls, XlsColumn } from '@/lib/exportOrders';
 import styles from '../../admin.module.css';
 
 type SortKey = 'newest' | 'oldest' | 'amountDesc' | 'amountAsc';
@@ -78,7 +79,7 @@ export default function AdminOrdersPage() {
         o.orderNumber.toLowerCase().includes(q) ||
         `${o.customerInfo.firstName} ${o.customerInfo.lastName}`.toLowerCase().includes(q) ||
         o.customerInfo.city.toLowerCase().includes(q) ||
-        o.customerInfo.email.toLowerCase().includes(q) ||
+        (o.customerInfo.email ?? '').toLowerCase().includes(q) ||
         o.customerInfo.phone.toLowerCase().includes(q)
       );
     }
@@ -97,6 +98,38 @@ export default function AdminOrdersPage() {
     ...Object.entries(STATUS_LABELS).map(([key, label]) => ({ key, label })),
   ];
 
+  const exportXls = () => {
+    const columns: XlsColumn[] = [
+      { header: 'Broj', width: 110 },
+      { header: 'Ime', width: 100 },
+      { header: 'Prezime', width: 110 },
+      { header: 'Telefon', width: 110, forceText: true },
+      { header: 'Email', width: 200 },
+      { header: 'Adresa', width: 200 },
+      { header: 'Grad', width: 130 },
+      { header: 'Poštanski broj', width: 100, forceText: true },
+      { header: 'Stavki', width: 60 },
+      { header: 'Iznos (RSD)', width: 100 },
+      { header: 'Status', width: 110 },
+      { header: 'Datum', width: 140 },
+    ];
+    const rows = filtered.map((o) => [
+      o.orderNumber,
+      o.customerInfo.firstName,
+      o.customerInfo.lastName,
+      o.customerInfo.phone,
+      o.customerInfo.email ?? '',
+      o.customerInfo.address,
+      o.customerInfo.city,
+      o.customerInfo.postalCode,
+      o.items.reduce((s, i) => s + i.quantity, 0),
+      o.totalPrice,
+      STATUS_LABELS[o.status],
+      formatDate(o.createdAt),
+    ]);
+    downloadXls(`porudzbine_${new Date().toISOString().slice(0, 10)}.xls`, columns, rows);
+  };
+
   return (
     <>
       <div className={styles.pageHeader}>
@@ -106,9 +139,14 @@ export default function AdminOrdersPage() {
             {loading ? 'Učitavanje...' : `${orders.length} porudžbina · ${formatPrice(orders.filter((o) => o.status !== 'cancelled').reduce((s, o) => s + o.totalPrice, 0))} prihoda`}
           </p>
         </div>
-        <button type="button" className="btn btn-secondary btn-sm" onClick={load} disabled={loading}>
-          <RefreshCw size={14} strokeWidth={2} /> Osveži
-        </button>
+        <div className={styles.pageHeaderActions}>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={exportXls} disabled={loading || filtered.length === 0}>
+            <Download size={14} strokeWidth={2} /> Izvezi Excel
+          </button>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={load} disabled={loading}>
+            <RefreshCw size={14} strokeWidth={2} /> Osveži
+          </button>
+        </div>
       </div>
 
       <div className={styles.toolbar}>
@@ -188,15 +226,21 @@ export default function AdminOrdersPage() {
                       </Link>
                     </td>
                     <td>
-                      {order.customerInfo.firstName} {order.customerInfo.lastName}
-                      <p className={styles.cellMuted}>{order.customerInfo.phone}</p>
+                      <p className={styles.customerName}>{order.customerInfo.firstName} {order.customerInfo.lastName}</p>
+                      <p className={styles.cellMeta}><Phone size={11} strokeWidth={2} />{order.customerInfo.phone}</p>
+                      {order.customerInfo.email && (
+                        <p className={styles.cellMeta}><Mail size={11} strokeWidth={2} />{order.customerInfo.email}</p>
+                      )}
                     </td>
-                    <td>{order.customerInfo.city}</td>
+                    <td>
+                      <p className={styles.customerName}>{order.customerInfo.city} {order.customerInfo.postalCode}</p>
+                      <p className={styles.cellMeta}><MapPin size={11} strokeWidth={2} />{order.customerInfo.address}</p>
+                    </td>
                     <td>{order.items.reduce((s, i) => s + i.quantity, 0)}</td>
                     <td><strong>{formatPrice(order.totalPrice)}</strong></td>
                     <td>
                       <select
-                        className={styles.statusSelect}
+                        className={`${styles.statusSelect} ${styles[`statusSelect_${order.status}`]}`}
                         value={order.status}
                         disabled={updating === order.id}
                         onChange={(e) => updateStatus(order.id, e.target.value as Order['status'])}
@@ -207,7 +251,7 @@ export default function AdminOrdersPage() {
                         ))}
                       </select>
                     </td>
-                    <td>{formatDate(order.createdAt)}</td>
+                    <td className={styles.cellMuted}>{formatDate(order.createdAt)}</td>
                   </tr>
                 ))}
               </tbody>

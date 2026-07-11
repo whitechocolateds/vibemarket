@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { FileText, Banknote, ImageIcon, Tags } from 'lucide-react';
-import { Product, ProductInput } from '@/lib/types';
+import { FileText, Banknote, ImageIcon, Tags, ListChecks, HelpCircle } from 'lucide-react';
+import { Product, ProductInput, ProductFaq } from '@/lib/types';
 import { slugify } from '@/lib/slugify';
 import styles from '@/app/admin/admin.module.css';
 
@@ -25,7 +25,25 @@ const EMPTY: ProductInput = {
   productType: 'Ostalo',
   quantity: 10,
   availableForSale: true,
+  comparisonPoints: [],
+  faqs: [],
 };
+
+function parseFaqs(raw: string): ProductFaq[] {
+  return raw
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [question, ...rest] = line.split('|');
+      return { question: question.trim(), answer: rest.join('|').trim() };
+    })
+    .filter((f) => f.question && f.answer);
+}
+
+function faqsToStr(faqs?: ProductFaq[]): string {
+  return (faqs ?? []).map((f) => `${f.question} | ${f.answer}`).join('\n');
+}
 
 function productToInput(p: Product): ProductInput {
   const v = p.variants[0];
@@ -43,6 +61,8 @@ function productToInput(p: Product): ProductInput {
     productType: p.productType,
     quantity: v?.quantityAvailable ?? 0,
     availableForSale: p.availableForSale,
+    comparisonPoints: p.comparisonPoints ?? [],
+    faqs: p.faqs ?? [],
   };
 }
 
@@ -52,6 +72,10 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
   const [extraImages, setExtraImages] = useState(
     initial ? initial.images.slice(1).map((i) => i.url).join('\n') : ''
   );
+  const [comparisonPointsStr, setComparisonPointsStr] = useState(
+    (initial?.comparisonPoints ?? []).join('\n')
+  );
+  const [faqsStr, setFaqsStr] = useState(faqsToStr(initial?.faqs));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -91,6 +115,8 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
         tags: tagsStr.split(',').map((t) => t.trim()).filter(Boolean),
         imageUrls: extraImages.split('\n').map((u) => u.trim()).filter(Boolean),
         compareAtPrice: form.compareAtPrice || null,
+        comparisonPoints: comparisonPointsStr.split('\n').map((p) => p.trim()).filter(Boolean),
+        faqs: parseFaqs(faqsStr),
       };
       if (!data.title.trim()) throw new Error('Naziv je obavezan');
       if (!data.imageUrl.trim()) throw new Error('Glavna slika je obavezna');
@@ -235,6 +261,50 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
           <div className="form-group">
             <label className="form-label" htmlFor="tags">Tagovi (odvojeni zarezom)</label>
             <input id="tags" className="input" value={tagsStr} onChange={(e) => setTagsStr(e.target.value)} placeholder="novo, bestseller, elektronika" />
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.formSection}>
+        <div className={styles.formSectionTitle}>
+          <ListChecks size={14} strokeWidth={2} /> Zašto baš ovaj proizvod
+        </div>
+        <div className={styles.formGrid}>
+          <div className={`form-group ${styles.formGridFull}`}>
+            <label className="form-label" htmlFor="comparisonPoints">Prednosti (jedna po liniji)</label>
+            <textarea
+              id="comparisonPoints"
+              className="textarea"
+              rows={4}
+              value={comparisonPointsStr}
+              onChange={(e) => setComparisonPointsStr(e.target.value)}
+              placeholder={'Npr. Baterija traje 30h, konkurencija retko prelazi 20h\nVodootporan do 50m'}
+            />
+            <span className={styles.fieldHint}>
+              Prikazuje se u tabeli poređenja na strani proizvoda - navedite ono što OVAJ proizvod čini boljim izborom od sličnih proizvoda. Ako ostavite prazno, prikazuje se opšti podrazumevani tekst.
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.formSection}>
+        <div className={styles.formSectionTitle}>
+          <HelpCircle size={14} strokeWidth={2} /> Pitanja i odgovori o proizvodu
+        </div>
+        <div className={styles.formGrid}>
+          <div className={`form-group ${styles.formGridFull}`}>
+            <label className="form-label" htmlFor="faqs">FAQ (format: Pitanje? | Odgovor. - jedno po liniji)</label>
+            <textarea
+              id="faqs"
+              className="textarea"
+              rows={5}
+              value={faqsStr}
+              onChange={(e) => setFaqsStr(e.target.value)}
+              placeholder={'Da li je vodootporan? | Da, do 50m dubine.\nKoja je garancija? | 24 meseca proizvođačke garancije.'}
+            />
+            <span className={styles.fieldHint}>
+              Specifično za ovaj proizvod. Ako ostavite prazno, prikazuju se opšta pitanja o dostavi i plaćanju.
+            </span>
           </div>
         </div>
       </div>

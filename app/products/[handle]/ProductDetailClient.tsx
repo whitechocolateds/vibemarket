@@ -2,20 +2,48 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useInView } from 'framer-motion';
-import { Truck, Wallet, ShieldCheck, Check, Heart, Share2, Star, Flame, Eye } from 'lucide-react';
+import { Truck, Wallet, ShieldCheck, Check, Heart, Share2, Star, Flame, Eye, Clock, MessageCircleHeart, HelpCircle, ListChecks, Home, ChevronRight } from 'lucide-react';
 import { Product, ProductVariant } from '@/lib/types';
 import { useCartStore } from '@/lib/cart';
 import { useWishlist } from '@/lib/useWishlist';
 import { formatPrice } from '@/lib/format';
-import { LOW_STOCK_THRESHOLD } from '@/lib/shipping';
+import { LOW_STOCK_THRESHOLD, FREE_SHIPPING_THRESHOLD } from '@/lib/shipping';
 import { recordRecentlyViewed } from '@/lib/recentlyViewed';
+import { pickTestimonials } from '@/lib/testimonials';
+import { stableReviewCount } from '@/lib/reviewStats';
+import { BUNDLE_TIERS, bundleUnitPrice } from '@/lib/bundlePricing';
+import { trackPixel } from '@/lib/metaEvents';
+import { isOptimizableImageUrl } from '@/lib/imageHost';
 import Accordion from '@/components/motion/Accordion';
 import Reveal from '@/components/motion/Reveal';
 import ProductCard from '@/components/ProductCard';
 import RecentlyViewed from '@/components/RecentlyViewed';
+import TestimonialsCarousel from '@/components/TestimonialsCarousel';
+import ProductComparisonTable from '@/components/ProductComparisonTable';
+import ProductFAQ from '@/components/ProductFAQ';
 import styles from './product.module.css';
+
+const MotionImage = motion.create(Image);
+const OFFER_CYCLE_MS = 30 * 60 * 1000;
+
+function useOfferCountdown() {
+  const [label, setLabel] = useState('30:00');
+  useEffect(() => {
+    const tick = () => {
+      const remainder = OFFER_CYCLE_MS - (Date.now() % OFFER_CYCLE_MS);
+      const m = Math.floor(remainder / 60000);
+      const s = Math.floor((remainder % 60000) / 1000);
+      setLabel(`${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+  return label;
+}
 
 interface Props {
   product: Product;
@@ -37,10 +65,6 @@ function stableHash(id: string): number {
   return hash;
 }
 
-function stableReviewCount(id: string): number {
-  return 60 + (stableHash(id) % 340);
-}
-
 function viewersLabel(n: number): string {
   const m10 = n % 10;
   const m100 = n % 100;
@@ -50,15 +74,18 @@ function viewersLabel(n: number): string {
 
 export default function ProductDetailClient({ product, related }: Props) {
   const router = useRouter();
-  const { addItem, openCart, closeCart } = useCartStore();
+  const { addItem, closeCart } = useCartStore();
   const { isWished, toggle: toggleWishlist } = useWishlist(product.id);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(product.variants[0]);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [added, setAdded] = useState(false);
   const [copied, setCopied] = useState(false);
   const ctaRef = useRef<HTMLDivElement>(null);
   const ctaInView = useInView(ctaRef, { margin: '-100px 0px 0px 0px' });
+  const offerCountdown = useOfferCountdown();
+  const reviews = pickTestimonials(product.handle).map((r, i) =>
+    i < 2 && product.featuredImage ? { ...r, image: product.featuredImage.url } : r
+  );
 
   const price = parseFloat(selectedVariant.price.amount);
   const compareAtPrice = selectedVariant.compareAtPrice
@@ -72,6 +99,7 @@ export default function ProductDetailClient({ product, related }: Props) {
   const images = product.images.length > 0 ? product.images : (product.featuredImage ? [product.featuredImage] : []);
   const reviewCount = stableReviewCount(product.id);
   const lowStock = typeof selectedVariant.quantityAvailable === 'number' && selectedVariant.quantityAvailable > 0 && selectedVariant.quantityAvailable < LOW_STOCK_THRESHOLD;
+  const bundleTotal = bundleUnitPrice(price, quantity) * quantity;
 
   useEffect(() => {
     recordRecentlyViewed({
@@ -85,7 +113,18 @@ export default function ProductDetailClient({ product, related }: Props) {
     });
   }, [product]);
 
-  // "Uživo" broj posetilaca — deterministična početna vrednost (SSR-safe), blago osciluje
+  useEffect(() => {
+    trackPixel('ViewContent', {
+      content_ids: [product.id],
+      content_name: product.title,
+      content_type: 'product',
+      value: price,
+      currency: 'RSD',
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.id]);
+
+  // "Uživo" broj posetilaca - deterministična početna vrednost (SSR-safe), blago osciluje
   const [viewers, setViewers] = useState(() => 5 + (stableHash(product.id) % 14));
   useEffect(() => {
     const id = setInterval(() => {
@@ -106,18 +145,30 @@ export default function ProductDetailClient({ product, related }: Props) {
     quantity,
   });
 
-  const handleAddToCart = () => {
-    addItem(buildCartItem());
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
-    openCart();
-  };
-
   const handleBuyNow = () => {
     if (!selectedVariant.availableForSale) return;
     addItem(buildCartItem());
+    trackPixel('AddToCart', {
+      content_ids: [product.id],
+      content_name: product.title,
+      content_type: 'product',
+      value: bundleTotal,
+      currency: 'RSD',
+    });
     closeCart();
     router.push('/checkout');
+  };
+
+  const handleAddToCart = () => {
+    if (!selectedVariant.availableForSale) return;
+    addItem(buildCartItem());
+    trackPixel('AddToCart', {
+      content_ids: [product.id],
+      content_name: product.title,
+      content_type: 'product',
+      value: bundleTotal,
+      currency: 'RSD',
+    });
   };
 
   const handleShare = async () => {
@@ -134,9 +185,9 @@ export default function ProductDetailClient({ product, related }: Props) {
 
   const accordionItems = product.descriptionHtml
     ? splitDescriptionSections(product.descriptionHtml).map((s) => ({
-        title: s.title,
-        content: <div dangerouslySetInnerHTML={{ __html: s.content }} />,
-      }))
+      title: s.title,
+      content: <div dangerouslySetInnerHTML={{ __html: s.content }} />,
+    }))
     : product.description
       ? [{ title: 'O proizvodu', content: <p>{product.description}</p> }]
       : [];
@@ -144,12 +195,14 @@ export default function ProductDetailClient({ product, related }: Props) {
   return (
     <div className={styles.page}>
       <div className="container">
-        <nav className={styles.breadcrumb}>
-          <Link href="/">Početna</Link>
-          <span>·</span>
-          <Link href="/products">Kolekcija</Link>
-          <span>·</span>
-          <span>{product.title}</span>
+        <nav className={styles.breadcrumb} aria-label="Putanja">
+          <Link href="/" className={styles.crumb}>
+            <Home size={13} strokeWidth={2.2} /> Početna
+          </Link>
+          <ChevronRight size={13} className={styles.crumbSep} aria-hidden />
+          <Link href="/products" className={styles.crumb}>Kolekcija</Link>
+          <ChevronRight size={13} className={styles.crumbSep} aria-hidden />
+          <span className={styles.crumbCurrent} aria-current="page">{product.title}</span>
         </nav>
 
         <div className={styles.layout}>
@@ -161,7 +214,7 @@ export default function ProductDetailClient({ product, related }: Props) {
             >
               <AnimatePresence mode="wait">
                 {images[selectedImage] ? (
-                  <motion.img
+                  <MotionImage
                     key={selectedImage}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -169,6 +222,10 @@ export default function ProductDetailClient({ product, related }: Props) {
                     transition={{ duration: 0.25 }}
                     src={images[selectedImage].url}
                     alt={images[selectedImage].altText ?? product.title}
+                    fill
+                    sizes="(max-width: 900px) 100vw, 46vw"
+                    unoptimized={!isOptimizableImageUrl(images[selectedImage].url)}
+                    priority={selectedImage === 0}
                     className={styles.mainImg}
                   />
                 ) : (
@@ -176,7 +233,7 @@ export default function ProductDetailClient({ product, related }: Props) {
                 )}
               </AnimatePresence>
               {discountPercent && (
-                <span className={`badge badge-gold ${styles.discountBadge}`}>−{discountPercent}%</span>
+                <span className={`badge badge-red ${styles.discountBadge}`}>−{discountPercent}%</span>
               )}
               <div className={styles.galleryActions}>
                 <motion.button
@@ -220,7 +277,14 @@ export default function ProductDetailClient({ product, related }: Props) {
                     onClick={() => setSelectedImage(i)}
                     aria-label={`Prikaži sliku ${i + 1}`}
                   >
-                    <img src={img.url} alt="" className={styles.thumbImg} />
+                    <Image
+                      src={img.url}
+                      alt=""
+                      fill
+                      sizes="76px"
+                      unoptimized={!isOptimizableImageUrl(img.url)}
+                      className={styles.thumbImg}
+                    />
                   </button>
                 ))}
               </div>
@@ -247,6 +311,11 @@ export default function ProductDetailClient({ product, related }: Props) {
               <span className={styles.price}>{formatPrice(price)}</span>
               {compareAtPrice && <span className="price-compare">{formatPrice(compareAtPrice)}</span>}
               {discountPercent && <span className="price-discount">Ušteda {discountPercent}%</span>}
+            </div>
+
+            <div className={styles.offerTimer}>
+              <Clock size={14} />
+              Ponuda ističe za <strong>{offerCountdown}</strong>
             </div>
 
             <div className={styles.stockRow}>
@@ -293,12 +362,28 @@ export default function ProductDetailClient({ product, related }: Props) {
               );
             })}
 
-            <div className={styles.qtyRow}>
-              <p className={styles.optionLabel}>Količina</p>
-              <div className="qty-control">
-                <button type="button" className="qty-btn" onClick={() => setQuantity(Math.max(1, quantity - 1))}>−</button>
-                <span className="qty-value">{quantity}</span>
-                <button type="button" className="qty-btn" onClick={() => setQuantity(quantity + 1)}>+</button>
+            <div className={styles.bundleSection}>
+              <p className={styles.optionLabel}>Izaberite paket</p>
+              <div className={styles.bundleGrid}>
+                {BUNDLE_TIERS.map((tier) => {
+                  const unit = bundleUnitPrice(price, tier.quantity);
+                  const total = unit * tier.quantity;
+                  const isSelected = quantity === tier.quantity;
+                  return (
+                    <button
+                      key={tier.quantity}
+                      type="button"
+                      className={`${styles.bundleCard} ${isSelected ? styles.bundleCardActive : ''}`}
+                      onClick={() => setQuantity(tier.quantity)}
+                    >
+                      {tier.quantity === 2 && <span className={styles.bundleTag}>Najpopularnije</span>}
+                      {tier.quantity === 3 && <span className={`${styles.bundleTag} ${styles.bundleTagBest}`}>Najveća ušteda</span>}
+                      <span className={styles.bundleQty}>{tier.quantity} {tier.quantity === 1 ? 'komad' : 'komada'}</span>
+                      <span className={styles.bundleTotal}>{formatPrice(total)}</span>
+                      {tier.discountPercent > 0 && <span className={styles.bundleSave}>Ušteda {tier.discountPercent}%</span>}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -307,34 +392,32 @@ export default function ProductDetailClient({ product, related }: Props) {
                 type="button"
                 whileTap={{ scale: 0.97 }}
                 className={`btn btn-primary btn-full ${styles.addBtn}`}
-                onClick={handleAddToCart}
-                disabled={!selectedVariant.availableForSale}
-              >
-                <AnimatePresence mode="wait" initial={false}>
-                  <motion.span
-                    key={added ? 'ok' : 'add'}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
-                  >
-                    {added && <Check size={16} />}
-                    {added ? 'Dodato u korpu' : selectedVariant.availableForSale ? 'Dodaj u korpu' : 'Rasprodato'}
-                  </motion.span>
-                </AnimatePresence>
-              </motion.button>
-              <button
-                type="button"
-                className="btn btn-outline btn-full"
                 onClick={handleBuyNow}
                 disabled={!selectedVariant.availableForSale}
               >
-                Kupi odmah
-              </button>
+                {selectedVariant.availableForSale ? `Kupi odmah · ${formatPrice(bundleTotal)}` : 'Rasprodato'}
+              </motion.button>
+              {selectedVariant.availableForSale && (
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.97 }}
+                  className={`btn btn-outline btn-full ${styles.addBtn}`}
+                  onClick={handleAddToCart}
+                >
+                  Dodaj u korpu
+                </motion.button>
+              )}
+              <p className={styles.shippingHint}>
+                {bundleTotal >= FREE_SHIPPING_THRESHOLD ? (
+                  <><Truck size={13} /> Ostvarujete <strong>besplatnu dostavu</strong></>
+                ) : (
+                  <><Truck size={13} /> Besplatna dostava za porudžbine iznad {formatPrice(FREE_SHIPPING_THRESHOLD)}</>
+                )}
+              </p>
             </div>
 
             <div className={styles.perks}>
-              <div className={styles.perk}><Truck size={18} /><strong>Dostava</strong>1–3 radna dana</div>
+              <div className={styles.perk}><Truck size={18} /><strong>Dostava</strong>1-3 radna dana</div>
               <div className={styles.perk}><Wallet size={18} /><strong>Plaćanje</strong>Pouzećem</div>
               <div className={styles.perk}><ShieldCheck size={18} /><strong>Garancija</strong>Zadovoljstvo</div>
             </div>
@@ -354,6 +437,38 @@ export default function ProductDetailClient({ product, related }: Props) {
             )}
           </div>
         </div>
+
+        <section className={styles.infoSection}>
+          <div className={styles.compareFaqGrid}>
+            <div>
+              <Reveal className={styles.infoSectionHeader}>
+                <span className="section-label"><ListChecks size={13} style={{ marginRight: 6, verticalAlign: -2 }} />Uporedite sami</span>
+                <h2 className="section-title">Zašto baš {product.title}?</h2>
+              </Reveal>
+              <Reveal delay={0.08}>
+                <ProductComparisonTable vendor={product.vendor} title={product.title} points={product.comparisonPoints} />
+              </Reveal>
+            </div>
+
+            <div>
+              <Reveal className={styles.infoSectionHeader}>
+                <span className="section-label"><HelpCircle size={13} style={{ marginRight: 6, verticalAlign: -2 }} />Pitanja i odgovori</span>
+                <h2 className="section-title">Pitanja o proizvodu</h2>
+              </Reveal>
+              <Reveal delay={0.08}>
+                <ProductFAQ faqs={product.faqs} />
+              </Reveal>
+            </div>
+          </div>
+        </section>
+
+        <section className={styles.infoSection}>
+          <Reveal className={styles.infoSectionHeader}>
+            <span className="section-label"><MessageCircleHeart size={13} style={{ marginRight: 6, verticalAlign: -2 }} />Iskustva kupaca</span>
+            <h2 className="section-title">Šta kažu kupci</h2>
+          </Reveal>
+          <TestimonialsCarousel items={reviews} />
+        </section>
 
         {related.length > 0 && (
           <section className={styles.relatedSection}>
@@ -383,18 +498,31 @@ export default function ProductDetailClient({ product, related }: Props) {
             exit={{ y: 100, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           >
-            <div className={styles.stickyInfo}>
-              <span className={styles.stickyTitle}>{product.title}</span>
-              <span className={styles.stickyPrice}>{formatPrice(price)}</span>
+            <div className={`container ${styles.stickyInner}`}>
+              <div className={styles.stickyInfo}>
+                <span className={styles.stickyTitle}>{product.title}</span>
+                <span className={styles.stickyPrice}>{formatPrice(bundleTotal)}</span>
+              </div>
+              <div className={styles.stickyActions}>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleBuyNow}
+                  disabled={!selectedVariant.availableForSale}
+                >
+                  {selectedVariant.availableForSale ? 'Kupi odmah' : 'Rasprodato'}
+                </button>
+                {selectedVariant.availableForSale && (
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    onClick={handleAddToCart}
+                  >
+                    Dodaj u korpu
+                  </button>
+                )}
+              </div>
             </div>
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={handleAddToCart}
-              disabled={!selectedVariant.availableForSale}
-            >
-              {selectedVariant.availableForSale ? 'Dodaj u korpu' : 'Rasprodato'}
-            </button>
           </motion.div>
         )}
       </AnimatePresence>

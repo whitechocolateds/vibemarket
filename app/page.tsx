@@ -9,58 +9,14 @@ import KineticHeading from '@/components/motion/KineticHeading';
 import RotatingEyebrow from '@/components/motion/RotatingEyebrow';
 import TestimonialsCarousel from '@/components/TestimonialsCarousel';
 import { getAllProducts, getProductByHandle } from '@/lib/productStore';
+import { TESTIMONIALS } from '@/lib/testimonials';
 import { Star, Truck, Wallet, ShieldCheck, LayoutGrid, MessageCircleHeart } from 'lucide-react';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
   title: 'VibeMarket - Prodavnica sa stavom',
-  description: 'Pažljivo odabrani proizvodi. Dostava 1–3 radna dana širom Srbije. Plaćanje pouzećem.',
+  description: 'Pažljivo odabrani proizvodi. Dostava 1-3 radna dana širom Srbije. Plaćanje pouzećem.',
 };
-
-const TESTIMONIALS = [
-  {
-    quote: 'Poručila sam u ponedeljak, paket stigao u sredu - tačno kako piše. Kvalitet proizvoda daleko iznad očekivanog. Svaka preporuka! 😍',
-    name: 'Milica R.',
-    city: 'Beograd',
-    time: '3 d',
-    likes: 42,
-  },
-  {
-    quote: 'Konačno prodavnica koja ne obećava lažno. Plaćanje pouzećem mi daje sigurnost, a podrška odgovara isti dan. 👏',
-    name: 'Nikola T.',
-    city: 'Novi Sad',
-    time: '5 d',
-    likes: 28,
-  },
-  {
-    quote: 'Ništa nije nasumično - svaki proizvod deluje promišljeno, ne kao gomila slučajnih artikala.',
-    name: 'Jovana M.',
-    city: 'Niš',
-    time: '1 ned',
-    likes: 17,
-  },
-  {
-    quote: 'Naručio sam popodne, kurir je zvao već sutradan ujutru. Ambalaža uredna, proizvod tačno kao na slici. 📦',
-    name: 'Stefan P.',
-    city: 'Kragujevac',
-    time: '1 ned',
-    likes: 35,
-  },
-  {
-    quote: 'Prijatno iznenađenje - očekivala sam običnu prodavnicu, a dobila sam pažnju do detalja i brz odgovor podrške.',
-    name: 'Ana V.',
-    city: 'Subotica',
-    time: '2 ned',
-    likes: 21,
-  },
-  {
-    quote: 'Vraćam se redovno. Cene su poštene, dostava tačna, a asortiman se stalno osvežava novim stvarima. 🔥',
-    name: 'Marko D.',
-    city: 'Novi Pazar',
-    time: '3 ned',
-    likes: 53,
-  },
-];
 
 const FEATURED_ORDER = [
   'bežične-slušalice-pro',
@@ -212,7 +168,7 @@ export default async function HomePage() {
               Otvori prodavnicu
             </Link>
             <div className={styles.ctaTrust}>
-              <span><Truck size={15} /> Dostava 1–3 dana</span>
+              <span><Truck size={15} /> Dostava 1-3 dana</span>
               <span><Wallet size={15} /> Plaćanje pouzećem</span>
               <span><ShieldCheck size={15} /> Sigurna kupovina</span>
             </div>

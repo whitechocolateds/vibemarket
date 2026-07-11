@@ -27,6 +27,6 @@ export function recordRecentlyViewed(item: RecentItem): void {
     const rest = readRecentlyViewed().filter((r) => r.handle !== item.handle);
     localStorage.setItem(KEY, JSON.stringify([item, ...rest].slice(0, MAX_ITEMS)));
   } catch {
-    /* localStorage nedostupan — preskačemo */
+    /* localStorage nedostupan - preskačemo */
   }
 }

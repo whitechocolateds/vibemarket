@@ -6,7 +6,7 @@ import { useHydrated } from '@/lib/useHydrated';
 const COLORS = ['#F0B00C', '#FFC838', '#1652BE', '#2E6FE6', '#C6890A'];
 const COUNT = 28;
 
-/* Deterministički pseudo-random — čist (bez Math.random u renderu), a vizuelno raspršen */
+/* Deterministički pseudo-random - čist (bez Math.random u renderu), a vizuelno raspršen */
 function prand(seed: number): number {
   const x = Math.sin(seed * 12.9898) * 43758.5453;
   return x - Math.floor(x);

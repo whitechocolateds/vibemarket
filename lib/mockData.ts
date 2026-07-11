@@ -37,6 +37,18 @@ export const MOCK_PRODUCTS: Product[] = [
     vendor: 'VibeMarket',
     productType: 'Elektronika',
     availableForSale: true,
+    comparisonPoints: [
+      'Aktivno poništavanje buke - ne samo pasivna izolacija zvuka',
+      'Baterija do 30h, drugi modeli retko prelaze 20h',
+      'Udobne za višesatno nošenje na sastancima i letovima',
+      'Brzo Bluetooth uparivanje bez isprekidanog zvuka',
+    ],
+    faqs: [
+      { question: 'Da li imaju aktivno poništavanje buke?', answer: 'Da, ANC se automatski uključuje i značajno prigušuje zvuk okoline.' },
+      { question: 'Koliko traje baterija?', answer: 'Do 30 sati reprodukcije uz uključen ANC, u zavisnosti od glasnoće.' },
+      { question: 'Da li su kompatibilne sa iPhone i Android telefonima?', answer: 'Da, rade preko Bluetooth-a sa svim uređajima koji ga podržavaju.' },
+      { question: 'Da li imaju mikrofon za pozive?', answer: 'Da, ugrađeni mikrofon je pogodan za pozive i video sastanke.' },
+    ],
   },
   {
     id: 'prod-2',
@@ -67,6 +79,18 @@ export const MOCK_PRODUCTS: Product[] = [
     vendor: 'VibeMarket',
     productType: 'Sport',
     availableForSale: true,
+    comparisonPoints: [
+      'Ugrađen GPS - precizno prati rutu bez telefona u džepu',
+      'Vodonepropusnost do 50m, može i na plivanje',
+      'Neprekidno merenje pulsa tokom treninga',
+      'Dostupan u crnoj i srebrnoj boji',
+    ],
+    faqs: [
+      { question: 'Da li mogu da plivam sa satom?', answer: 'Da, vodonepropustan je do 50m i pogodan za plivanje.' },
+      { question: 'Da li prati rutu trčanja bez telefona?', answer: 'Da, zahvaljujući ugrađenom GPS-u ne morate nositi telefon sa sobom.' },
+      { question: 'Koje boje su dostupne?', answer: 'Crna i srebrna.' },
+      { question: 'Da li meri puls tokom celog dana?', answer: 'Da, senzor pulsa radi kontinuirano, ne samo tokom treninga.' },
+    ],
   },
   {
     id: 'prod-3',
@@ -92,6 +116,18 @@ export const MOCK_PRODUCTS: Product[] = [
     vendor: 'VibeMarket',
     productType: 'Elektronika',
     availableForSale: true,
+    comparisonPoints: [
+      '360° zvuk puni prostor, ne samo jedan pravac',
+      'Vodootporan - bez brige na plaži ili pored bazena',
+      'Baterija do 20 sati neprekidne muzike',
+      'Kompaktan i lak za nošenje na putovanjima',
+    ],
+    faqs: [
+      { question: 'Da li je otporan na vodu i prskanje?', answer: 'Da, kućište je vodootporno i podnosi prskanje i kišu.' },
+      { question: 'Koliko dugo traje baterija?', answer: 'Do 20 sati reprodukcije na srednjoj jačini zvuka.' },
+      { question: 'Da li se lako povezuje sa telefonom?', answer: 'Da, Bluetooth uparivanje traje par sekundi i pamti poslednji povezani uređaj.' },
+      { question: 'Da li je pogodan za spoljnu upotrebu?', answer: 'Da, idealan je za plažu, piknik i dvorište zahvaljujući vodootpornosti.' },
+    ],
   },
   {
     id: 'prod-4',
@@ -117,6 +153,18 @@ export const MOCK_PRODUCTS: Product[] = [
     vendor: 'VibeMarket',
     productType: 'Kancelarija',
     availableForSale: true,
+    comparisonPoints: [
+      'Aluminijumska konstrukcija - stabilnija od plastičnih postolja',
+      'Podesiva visina i ugao za idealan položaj ekrana',
+      'Smanjuje bol u vratu i ramenima pri dužem radu',
+      'Lagan i sklopiv za nošenje na posao ili put',
+    ],
+    faqs: [
+      { question: 'Da li odgovara svim veličinama laptopa?', answer: 'Da, podesiv je i pristaje laptopovima od 11 do 17 inča.' },
+      { question: 'Da li stend može da se sklopi za nošenje?', answer: 'Da, sklapa se u ravan oblik i staje u torbu za laptop.' },
+      { question: 'Od kog materijala je napravljen?', answer: 'Od aluminijuma, stabilniji je i izdržljiviji od plastičnih alternativa.' },
+      { question: 'Da li poboljšava hlađenje laptopa?', answer: 'Da, podizanjem laptopa sa podloge poboljšava se protok vazduha ispod njega.' },
+    ],
   },
   {
     id: 'prod-5',
@@ -142,6 +190,18 @@ export const MOCK_PRODUCTS: Product[] = [
     vendor: 'VibeMarket',
     productType: 'Sport',
     availableForSale: true,
+    comparisonPoints: [
+      'AMOLED ekran - oštriji i vidljiviji na suncu od LCD narukvica',
+      'Baterija traje 7 dana bez punjenja',
+      'Prati san, stres i aktivnost, ne samo korake',
+      'Lagana za celodnevno nošenje, i tokom spavanja',
+    ],
+    faqs: [
+      { question: 'Koliko traje baterija?', answer: 'Do 7 dana uz normalno korišćenje, u zavisnosti od broja obaveštenja.' },
+      { question: 'Da li prati kvalitet sna?', answer: 'Da, analizira faze sna i prikazuje ih u pratećoj aplikaciji.' },
+      { question: 'Da li je vodootporna za tuširanje?', answer: 'Otporna je na znoj i kišu; nije predviđena za ronjenje.' },
+      { question: 'Da li radi sa iPhone i Android telefonima?', answer: 'Da, preko prateće aplikacije radi sa oba operativna sistema.' },
+    ],
   },
   {
     id: 'prod-6',
@@ -167,6 +227,18 @@ export const MOCK_PRODUCTS: Product[] = [
     vendor: 'VibeMarket',
     productType: 'Elektronika',
     availableForSale: true,
+    comparisonPoints: [
+      '15W za iPhone i 10W za Android - brže od standardnih 5W punjača',
+      'Kompatibilan sa svim Qi uređajima, ne samo jednim brendom',
+      'Bez potrebe za skidanjem tanje maskice telefona',
+      'Kompaktan dizajn koji se uklapa na svaki radni sto',
+    ],
+    faqs: [
+      { question: 'Da li radi sa maskicom na telefonu?', answer: 'Da, dok god je maskica tanja od 5mm i ne sadrži metal.' },
+      { question: 'Koja je brzina punjenja?', answer: 'Do 15W za iPhone i do 10W za Android uređaje sa Qi podrškom.' },
+      { question: 'Da li je potreban poseban adapter?', answer: 'Preporučuje se adapter od 18W ili jači za punu brzinu punjenja.' },
+      { question: 'Da li se pregreva pri dužem korišćenju?', answer: 'Ne, ima ugrađenu zaštitu od pregrevanja i previsokog napona.' },
+    ],
   },
   {
     id: 'prod-7',
@@ -192,6 +264,18 @@ export const MOCK_PRODUCTS: Product[] = [
     vendor: 'VibeMarket',
     productType: 'Elektronika',
     availableForSale: true,
+    comparisonPoints: [
+      'Pravi Cherry MX Red tasteri - brži i tiši od membranskih tastatura',
+      'RGB pozadinsko osvetljenje sa podesivim efektima',
+      'Izdržljivost od preko 50 miliona pritisaka po tasteru',
+      'Odziv dovoljno brz za konkurentno igranje',
+    ],
+    faqs: [
+      { question: 'Kakvi su Cherry MX Red tasteri?', answer: 'Linearni su i tihi, sa nižim otporom pritiska - pogodni za brzo igranje i kucanje.' },
+      { question: 'Da li se RGB osvetljenje može podesiti?', answer: 'Da, boje i efekti se menjaju preko kombinacija tastera ili pratećeg softvera.' },
+      { question: 'Da li je tastatura žičana ili bežična?', answer: 'Žičana je, radi stabilne konekcije bez kašnjenja.' },
+      { question: 'Da li je pogodna i za kucanje, ne samo igranje?', answer: 'Da, Cherry MX Red taster je tih i udoban i za dugotrajno kucanje.' },
+    ],
   },
   {
     id: 'prod-8',
@@ -217,5 +301,17 @@ export const MOCK_PRODUCTS: Product[] = [
     vendor: 'VibeMarket',
     productType: 'Elektronika',
     availableForSale: true,
+    comparisonPoints: [
+      'Snima u pravom 4K - oštrije od standardnih HD kamera',
+      'Autofokus prati pokret bez zamućenja',
+      'Mikrofon sa redukcijom buke za jasan zvuk na pozivima',
+      'Plug-and-play - bez instalacije dodatnog softvera',
+    ],
+    faqs: [
+      { question: 'Da li zahteva instalaciju drajvera?', answer: 'Ne, radi po plug-and-play principu preko USB porta.' },
+      { question: 'Da li snima u 4K rezoluciji?', answer: 'Da, podržava snimanje i strimovanje u 4K Ultra HD rezoluciji.' },
+      { question: 'Da li ima ugrađen mikrofon?', answer: 'Da, sa redukcijom buke iz okoline za čistiji zvuk.' },
+      { question: 'Da li se može postaviti na monitor ili tronožac?', answer: 'Da, dolazi sa klipsom za monitor i navojem za tronožac.' },
+    ],
   },
 ];

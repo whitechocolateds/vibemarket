@@ -24,6 +24,11 @@ export interface ProductVariant {
   }[];
 }
 
+export interface ProductFaq {
+  question: string;
+  answer: string;
+}
+
 export interface Product {
   id: string;
   handle: string;
@@ -48,6 +53,10 @@ export interface Product {
   productType: string;
   availableForSale: boolean;
   collections?: Collection[];
+  /** Zašto baš ovaj proizvod - specifično za njega, prikazano u tabeli poređenja na strani proizvoda */
+  comparisonPoints?: string[];
+  /** Pitanja i odgovori specifični za ovaj proizvod */
+  faqs?: ProductFaq[];
 }
 
 export interface Collection {
@@ -79,7 +88,7 @@ export interface Cart {
 export interface OrderForm {
   firstName: string;
   lastName: string;
-  email: string;
+  email?: string;
   phone: string;
   address: string;
   city: string;
@@ -153,5 +162,7 @@ export interface ProductInput {
   productType: string;
   quantity: number;
   availableForSale: boolean;
+  comparisonPoints?: string[];
+  faqs?: ProductFaq[];
 }
 

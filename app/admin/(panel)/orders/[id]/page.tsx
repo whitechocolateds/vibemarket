@@ -237,13 +237,15 @@ export default function AdminOrderDetailPage() {
             <h3><User size={14} strokeWidth={2} /> Podaci kupca</h3>
             <div className={styles.detailRow}><span>Ime</span><span>{c.firstName} {c.lastName}</span></div>
             <div className={styles.detailRow}>
-              <span>Email</span>
-              <span><a href={`mailto:${c.email}`}>{c.email}</a></span>
-            </div>
-            <div className={styles.detailRow}>
               <span>Telefon</span>
               <span><a href={`tel:${c.phone}`}>{c.phone}</a></span>
             </div>
+            {c.email && (
+              <div className={styles.detailRow}>
+                <span>Email</span>
+                <span><a href={`mailto:${c.email}`}>{c.email}</a></span>
+              </div>
+            )}
             <div className={styles.detailRow}><span>Adresa</span><span>{c.address}</span></div>
             <div className={styles.detailRow}><span>Grad</span><span>{c.city}, {c.postalCode}</span></div>
             <div className={styles.detailRow}><span>Plaćanje</span><span>Pouzeće</span></div>

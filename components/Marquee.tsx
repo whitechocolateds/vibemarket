@@ -2,7 +2,7 @@ import { Truck, ShieldCheck, Wallet, Sparkles, PackageCheck, Star } from 'lucide
 import styles from './Marquee.module.css';
 
 const ITEMS = [
-  { icon: Truck, label: 'Dostava 1–3 radna dana' },
+  { icon: Truck, label: 'Dostava 1-3 radna dana' },
   { icon: Wallet, label: 'Plaćanje pouzećem' },
   { icon: ShieldCheck, label: 'Sigurna kupovina' },
   { icon: Star, label: '4.9/5 prosečna ocena' },

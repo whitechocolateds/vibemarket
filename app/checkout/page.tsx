@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,6 +9,9 @@ import { useCartStore } from '@/lib/cart';
 import { formatPrice } from '@/lib/format';
 import { OrderForm } from '@/lib/types';
 import { FREE_SHIPPING_THRESHOLD, shippingCostFor } from '@/lib/shipping';
+import { BUNDLE_TIERS, bundleUnitPrice } from '@/lib/bundlePricing';
+import { isValidSerbianPhone } from '@/lib/phone';
+import { trackPixel, newEventId } from '@/lib/metaEvents';
 import Reveal from '@/components/motion/Reveal';
 import styles from './page.module.css';
 
@@ -24,9 +27,9 @@ function validateForm(form: OrderForm): FormErrors {
   const errors: FormErrors = {};
   if (!form.firstName.trim()) errors.firstName = 'Ime je obavezno';
   if (!form.lastName.trim()) errors.lastName = 'Prezime je obavezno';
-  if (!form.email.trim()) errors.email = 'Email je obavezan';
-  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errors.email = 'Email nije ispravan';
   if (!form.phone.trim()) errors.phone = 'Telefon je obavezan';
+  else if (!isValidSerbianPhone(form.phone)) errors.phone = 'Unesite ispravan broj telefona';
+  if (form.email?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errors.email = 'Email nije ispravan';
   if (!form.address.trim()) errors.address = 'Adresa je obavezna';
   if (!form.city.trim()) errors.city = 'Grad je obavezan';
   if (!form.postalCode.trim()) errors.postalCode = 'Poštanski broj je obavezan';
@@ -35,13 +38,33 @@ function validateForm(form: OrderForm): FormErrors {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { items, totalPrice, totalItems, clearCart } = useCartStore();
+  const { items, totalItems, clearCart, updateQuantity } = useCartStore();
   const [form, setForm] = useState<OrderForm>(INITIAL_FORM);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitting, setSubmitting] = useState(false);
+  const eventIdRef = useRef<string>(undefined);
+  if (!eventIdRef.current) eventIdRef.current = newEventId();
 
+  // Cene po stavci uključuju količinski popust (2 kom -10%, 3 kom -15%)
+  const discountedItems = items.map((item) => ({
+    ...item,
+    unitPrice: bundleUnitPrice(item.price, item.quantity),
+  }));
+  const totalPrice = discountedItems.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
+  const totalSavings = discountedItems.reduce((sum, i) => sum + (i.price - i.unitPrice) * i.quantity, 0);
   const shippingCost = shippingCostFor(totalPrice);
   const grandTotal = totalPrice + shippingCost;
+
+  useEffect(() => {
+    if (totalItems === 0) return;
+    trackPixel('InitiateCheckout', {
+      content_ids: discountedItems.map((i) => i.productId),
+      value: grandTotal,
+      currency: 'RSD',
+      num_items: totalItems,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (totalItems === 0) {
     return (
@@ -76,12 +99,15 @@ export default function CheckoutPage() {
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items, customerInfo: form, totalPrice: grandTotal }),
+        body: JSON.stringify({ items, customerInfo: form, totalPrice: grandTotal, eventId: eventIdRef.current }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       clearCart();
-      router.push(`/orders/${data.orderId}?name=${encodeURIComponent(form.firstName)}`);
+      const contentIds = discountedItems.map((i) => i.productId).join(',');
+      router.push(
+        `/orders/${data.orderId}?name=${encodeURIComponent(form.firstName)}&value=${grandTotal}&eventId=${eventIdRef.current}&contentIds=${encodeURIComponent(contentIds)}`
+      );
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Greška pri slanju');
     } finally {
@@ -94,7 +120,7 @@ export default function CheckoutPage() {
       <div className="container">
         <Link href="/products" className={styles.back}>← Nazad</Link>
         <h1 className={styles.title}>Plaćanje</h1>
-        <p className={styles.subtitle}>Dostava za 1–3 radna dana · Plaćanje pouzećem</p>
+        <p className={styles.subtitle}>Dostava za 1-3 radna dana · Plaćanje pouzećem</p>
 
         <div className={styles.layout}>
           <form onSubmit={handleSubmit} className={styles.form}>
@@ -112,14 +138,14 @@ export default function CheckoutPage() {
                   {errors.lastName && <span className="form-error">{errors.lastName}</span>}
                 </div>
                 <div className="form-group">
-                  <label className="form-label" htmlFor="email">Email</label>
-                  <input id="email" name="email" type="email" className={`input ${errors.email ? 'error' : ''}`} value={form.email} onChange={handleChange} />
-                  {errors.email && <span className="form-error">{errors.email}</span>}
+                  <label className="form-label" htmlFor="phone">Telefon</label>
+                  <input id="phone" name="phone" type="tel" placeholder="06X xxx xxxx" className={`input ${errors.phone ? 'error' : ''}`} value={form.phone} onChange={handleChange} />
+                  {errors.phone && <span className="form-error">{errors.phone}</span>}
                 </div>
                 <div className="form-group">
-                  <label className="form-label" htmlFor="phone">Telefon</label>
-                  <input id="phone" name="phone" type="tel" className={`input ${errors.phone ? 'error' : ''}`} value={form.phone} onChange={handleChange} />
-                  {errors.phone && <span className="form-error">{errors.phone}</span>}
+                  <label className="form-label" htmlFor="email">Email (opciono)</label>
+                  <input id="email" name="email" type="email" className={`input ${errors.email ? 'error' : ''}`} value={form.email} onChange={handleChange} />
+                  {errors.email && <span className="form-error">{errors.email}</span>}
                 </div>
               </div>
             </Reveal>
@@ -159,6 +185,9 @@ export default function CheckoutPage() {
 
             <div className={styles.mobileSummary}>
               <div className={styles.summaryRow}><span>Proizvodi</span><span>{formatPrice(totalPrice)}</span></div>
+              {totalSavings > 0 && (
+                <div className={`${styles.summaryRow} ${styles.savingsRow}`}><span>Ušteda</span><span>−{formatPrice(totalSavings)}</span></div>
+              )}
               <div className={styles.summaryRow}><span>Dostava</span><span>{shippingCost === 0 ? 'Besplatna' : formatPrice(shippingCost)}</span></div>
               <div className={`${styles.summaryRow} ${styles.summaryTotal}`}><span>Ukupno</span><span>{formatPrice(grandTotal)}</span></div>
             </div>
@@ -181,22 +210,44 @@ export default function CheckoutPage() {
             <Reveal delay={0.1} className={styles.summaryCard}>
               <h3 className={styles.summaryTitle}>Pregled</h3>
               <div className={styles.summaryItems}>
-                {items.map((item) => (
+                {discountedItems.map((item) => (
                   <div key={item.id} className={styles.summaryItem}>
-                    <div className={styles.imgWrap}>
-                      {item.image ? <img src={item.image.url} alt="" className={styles.summaryImg} /> : <div className={styles.summaryImg} />}
-                      <span className={styles.qtyBadge}>{item.quantity}</span>
+                    <div className={styles.itemRow}>
+                      <div className={styles.imgWrap}>
+                        {item.image ? <img src={item.image.url} alt="" className={styles.summaryImg} /> : <div className={styles.summaryImg} />}
+                        <span className={styles.qtyBadge}>{item.quantity}</span>
+                      </div>
+                      <div className={styles.itemInfo}>
+                        <p>{item.title}</p>
+                        {item.variantTitle && <p className={styles.itemVariant}>{item.variantTitle}</p>}
+                      </div>
+                      <span className={styles.itemPrice}>
+                        {item.unitPrice < item.price && (
+                          <span className={styles.itemPriceOld}>{formatPrice(item.price * item.quantity)}</span>
+                        )}
+                        {formatPrice(item.unitPrice * item.quantity)}
+                      </span>
                     </div>
-                    <div className={styles.itemInfo}>
-                      <p>{item.title}</p>
-                      {item.variantTitle && <p className={styles.itemVariant}>{item.variantTitle}</p>}
+                    <div className={styles.bundlePicker}>
+                      {BUNDLE_TIERS.map((tier) => (
+                        <button
+                          key={tier.quantity}
+                          type="button"
+                          className={`${styles.bundleOption} ${item.quantity === tier.quantity ? styles.bundleOptionActive : ''}`}
+                          onClick={() => updateQuantity(item.id, tier.quantity)}
+                        >
+                          {tier.quantity} kom{tier.discountPercent > 0 ? ` · -${tier.discountPercent}%` : ''}
+                        </button>
+                      ))}
                     </div>
-                    <span className={styles.itemPrice}>{formatPrice(item.price * item.quantity)}</span>
                   </div>
                 ))}
               </div>
               <div className={styles.divider} />
               <div className={styles.summaryRow}><span>Proizvodi</span><span>{formatPrice(totalPrice)}</span></div>
+              {totalSavings > 0 && (
+                <div className={`${styles.summaryRow} ${styles.savingsRow}`}><span>Ušteda</span><span>−{formatPrice(totalSavings)}</span></div>
+              )}
               <div className={styles.summaryRow}>
                 <span>Dostava</span>
                 <span className={shippingCost === 0 ? styles.free : ''}>{shippingCost === 0 ? 'Besplatna' : formatPrice(shippingCost)}</span>
@@ -205,7 +256,7 @@ export default function CheckoutPage() {
               <div className={`${styles.summaryRow} ${styles.summaryTotal}`}><span>Ukupno</span><span>{formatPrice(grandTotal)}</span></div>
               <div className={styles.trust}>
                 <span><ShieldCheck size={14} /> Sigurna porudžbina</span>
-                <span><Truck size={14} /> Dostava 1–3 dana</span>
+                <span><Truck size={14} /> Dostava 1-3 dana</span>
                 <span><PackageCheck size={14} /> Plaćanje pouzećem</span>
               </div>
             </Reveal>

@@ -88,7 +88,7 @@ export default function Footer() {
       </div>
       <div className={styles.bottom}>
         <div className="container">
-          <p>© {new Date().getFullYear()} VibeMarket · Dostava 1–3 dana · Pouzeće</p>
+          <p>© {new Date().getFullYear()} VibeMarket · Dostava 1-3 dana · Pouzeće</p>
         </div>
       </div>
     </footer>
