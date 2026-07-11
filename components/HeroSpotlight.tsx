@@ -2,18 +2,16 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { Star, Plus, Check } from 'lucide-react';
 import { Product } from '@/lib/types';
 import { useCartStore } from '@/lib/cart';
 import { formatPrice, getProductPrice } from '@/lib/format';
-import { isOptimizableImageUrl } from '@/lib/imageHost';
 import SparkleField from './SparkleField';
 import styles from '../app/page.module.css';
 
 const ROTATE_MS = 4200;
-const MotionImage = motion.create(Image);
+
 
 export default function HeroSpotlight({ products }: { products: Product[] }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -101,17 +99,14 @@ export default function HeroSpotlight({ products }: { products: Product[] }) {
           >
             <Link href={`/products/${accent.handle}`} className={styles.accentLink}>
               <AnimatePresence mode="wait">
-                <MotionImage
+                <motion.img
                   key={accent.id}
+                  src={accent.featuredImage.url}
+                  alt={accent.featuredImage.altText ?? accent.title}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.4 }}
-                  src={accent.featuredImage.url}
-                  alt={accent.featuredImage.altText ?? accent.title}
-                  fill
-                  sizes="160px"
-                  unoptimized={!isOptimizableImageUrl(accent.featuredImage.url)}
                   className={styles.accentImg}
                 />
               </AnimatePresence>
@@ -131,18 +126,14 @@ export default function HeroSpotlight({ products }: { products: Product[] }) {
         >
           <AnimatePresence mode="wait">
             {product.featuredImage && (
-              <MotionImage
+              <motion.img
                 key={product.id}
+                src={product.featuredImage.url}
+                alt={product.featuredImage.altText ?? product.title}
                 initial={{ opacity: 0, scale: 1.06 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.97 }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                src={product.featuredImage.url}
-                alt={product.featuredImage.altText ?? product.title}
-                fill
-                sizes="(max-width: 960px) 340px, 420px"
-                unoptimized={!isOptimizableImageUrl(product.featuredImage.url)}
-                priority
                 className={styles.stageImg}
               />
             )}

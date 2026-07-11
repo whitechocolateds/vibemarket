@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useInView } from 'framer-motion';
 import { Truck, Wallet, ShieldCheck, Check, Heart, Share2, Star, Flame, Eye, Clock, MessageCircleHeart, HelpCircle, ListChecks, Home, ChevronRight } from 'lucide-react';
@@ -16,7 +15,6 @@ import { pickTestimonials } from '@/lib/testimonials';
 import { stableReviewCount } from '@/lib/reviewStats';
 import { BUNDLE_TIERS, bundleUnitPrice } from '@/lib/bundlePricing';
 import { trackPixel } from '@/lib/metaEvents';
-import { isOptimizableImageUrl } from '@/lib/imageHost';
 import Accordion from '@/components/motion/Accordion';
 import Reveal from '@/components/motion/Reveal';
 import ProductCard from '@/components/ProductCard';
@@ -26,7 +24,6 @@ import ProductComparisonTable from '@/components/ProductComparisonTable';
 import ProductFAQ from '@/components/ProductFAQ';
 import styles from './product.module.css';
 
-const MotionImage = motion.create(Image);
 const OFFER_CYCLE_MS = 30 * 60 * 1000;
 
 function useOfferCountdown() {
@@ -214,18 +211,14 @@ export default function ProductDetailClient({ product, related }: Props) {
             >
               <AnimatePresence mode="wait">
                 {images[selectedImage] ? (
-                  <MotionImage
+                  <motion.img
                     key={selectedImage}
+                    src={images[selectedImage].url}
+                    alt={images[selectedImage].altText ?? product.title}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.25 }}
-                    src={images[selectedImage].url}
-                    alt={images[selectedImage].altText ?? product.title}
-                    fill
-                    sizes="(max-width: 900px) 100vw, 46vw"
-                    unoptimized={!isOptimizableImageUrl(images[selectedImage].url)}
-                    priority={selectedImage === 0}
                     className={styles.mainImg}
                   />
                 ) : (
@@ -277,12 +270,9 @@ export default function ProductDetailClient({ product, related }: Props) {
                     onClick={() => setSelectedImage(i)}
                     aria-label={`Prikaži sliku ${i + 1}`}
                   >
-                    <Image
+                    <img
                       src={img.url}
                       alt=""
-                      fill
-                      sizes="76px"
-                      unoptimized={!isOptimizableImageUrl(img.url)}
                       className={styles.thumbImg}
                     />
                   </button>
