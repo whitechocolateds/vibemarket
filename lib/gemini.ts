@@ -1,20 +1,47 @@
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
-// Lista kandidata modela po prioritetu
-const MODELS = [
+// Provereni i validni modeli za ovaj API ključ
+export const VALID_MODELS = [
+  'gemini-2.5-flash',
   'gemini-2.0-flash',
-  'gemini-1.5-flash',
-  'gemini-1.5-pro',
+  'gemini-2.5-pro',
+  'gemini-3.6-flash',
+  'gemini-3.5-flash',
+  'gemini-flash-latest',
 ];
 
-export async function callGemini(prompt: string, systemInstruction?: string): Promise<string> {
+export async function listAvailableGeminiModels(): Promise<{ name: string; displayName: string }[]> {
+  if (!GEMINI_API_KEY) return [];
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_API_KEY}`);
+    if (!res.ok) return VALID_MODELS.map(m => ({ name: m, displayName: m }));
+    const json = await res.json();
+    if (!json.models) return VALID_MODELS.map(m => ({ name: m, displayName: m }));
+    
+    return json.models
+      .filter((m: any) => m.supportedGenerationMethods?.includes('generateContent'))
+      .map((m: any) => ({
+        name: m.name.replace(/^models\//, ''),
+        displayName: m.displayName || m.name,
+      }));
+  } catch {
+    return VALID_MODELS.map(m => ({ name: m, displayName: m }));
+  }
+}
+
+export async function callGemini(prompt: string, systemInstruction?: string, preferredModel?: string): Promise<string> {
   if (!GEMINI_API_KEY) {
     throw new Error('GEMINI_API_KEY nije definisan u .env.local fajlu.');
   }
 
+  // Ako je naveden specifičan model, stavljamo ga na prvo mesto
+  const modelQueue = preferredModel && preferredModel !== 'auto'
+    ? [preferredModel, ...VALID_MODELS.filter(m => m !== preferredModel)]
+    : VALID_MODELS;
+
   let lastError: Error | null = null;
 
-  for (const model of MODELS) {
+  for (const model of modelQueue) {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
       const payload: any = {
@@ -39,8 +66,8 @@ export async function callGemini(prompt: string, systemInstruction?: string): Pr
 
       if (!res.ok) {
         const errorText = await res.text();
-        console.warn(`Model ${model} nije uspeo (${res.status}): ${errorText}. Pokušavam sledeći model...`);
-        lastError = new Error(`Model ${model} error: ${errorText}`);
+        console.warn(`Model ${model} vratio status ${res.status}: ${errorText}. Pokušavam sledeći model...`);
+        lastError = new Error(`Model ${model} (status ${res.status}): ${errorText}`);
         continue;
       }
 
@@ -50,12 +77,12 @@ export async function callGemini(prompt: string, systemInstruction?: string): Pr
         return text;
       }
     } catch (err: any) {
-      console.warn(`Model ${model} bacio izuzetak: ${err.message}. Pokušavam sledeći model...`);
+      console.warn(`Izuzetak pri pozivu ${model}: ${err.message}. Pokušavam sledeći model...`);
       lastError = err;
     }
   }
 
-  throw lastError || new Error('Nijedan Gemini AI model nije uspeo da vrati odgovor.');
+  throw lastError || new Error('Nijedan dostupan Gemini AI model nije uspeo da vrati odgovor.');
 }
 
 export interface GeneratedProduct {
@@ -80,10 +107,11 @@ const SAMPLE_IMAGES: Record<string, string> = {
   sport: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=800&auto=format&fit=crop&q=80',
   fudbal: 'https://images.unsplash.com/photo-1614632537190-23e4146777db?w=800&auto=format&fit=crop&q=80',
   kuhinja: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=800&auto=format&fit=crop&q=80',
+  lampa: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800&auto=format&fit=crop&q=80',
   default: 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=800&auto=format&fit=crop&q=80',
 };
 
-export async function generateProductWithAI(prompt: string): Promise<GeneratedProduct> {
+export async function generateProductWithAI(prompt: string, selectedModel?: string): Promise<GeneratedProduct> {
   const systemInstruction = `Si stručnjak za e-commerce i pisanje vrhunskih prodajnih opisa za proizvode na srpskom jeziku za e-commerce prodavnicu VibeMarket. 
 Tvoj zadatak je da na osnovu naziva ili kratkog opisa proizvoda generišeš potpun JSON objekat sa prodajnim naslovom, bogatim opisom, brendom (vendor), sugerisanom cenom u RSD, tagovima, ključnim prednostima, poređenjem sa konkurencijom i često postavljanim pitanjima (FAQ).
 
@@ -108,12 +136,11 @@ VRAĆAJ ISKLJUČIVO SVOJ ODGOVOR KAO ČIST JSON BEZ MARKDOWN CODE BLOCK-OVA KAKO
   ]
 }`;
 
-  const responseText = await callGemini(`Generiši kompletne podatke o proizvodu za: "${prompt}"`, systemInstruction);
+  const responseText = await callGemini(`Generiši kompletne podatke o proizvodu za: "${prompt}"`, systemInstruction, selectedModel);
   
   const cleanJson = responseText.replace(/^```json\s*/i, '').replace(/\s*```$/, '').trim();
   const parsed = JSON.parse(cleanJson) as GeneratedProduct;
 
-  // Pridruži adekvatnu demo sliku na osnovu tagova/naslova
   const lower = (parsed.title + ' ' + (parsed.tags || []).join(' ')).toLowerCase();
   let img = SAMPLE_IMAGES.default;
   for (const [key, url] of Object.entries(SAMPLE_IMAGES)) {
@@ -127,16 +154,16 @@ VRAĆAJ ISKLJUČIVO SVOJ ODGOVOR KAO ČIST JSON BEZ MARKDOWN CODE BLOCK-OVA KAKO
   return parsed;
 }
 
-export async function generateCustomerMessageAI(order: any): Promise<string> {
+export async function generateCustomerMessageAI(order: any, selectedModel?: string): Promise<string> {
   const systemInstruction = `Ti si profesionalni AI asistent za podršku kupcima prodavnice VibeMarket. Napiši toplu, profesionalnu i jasnu SMS ili Email poruku kupcu povodom njegove porudžbine na srpskom jeziku.`;
   const prompt = `Napiši poruku za kupca ${order.customerInfo?.firstName ?? 'kupca'} za porudžbinu #${order.orderNumber}. Status porudžbine je "${order.status}". Ukupan iznos je ${order.totalPrice} RSD. Plaćanje je pouzećem pri preuzimanju.`;
   
-  return await callGemini(prompt, systemInstruction);
+  return await callGemini(prompt, systemInstruction, selectedModel);
 }
 
-export async function generateSalesInsightsAI(stats: any): Promise<string> {
+export async function generateSalesInsightsAI(stats: any, selectedModel?: string): Promise<string> {
   const systemInstruction = `Ti si vrhunski AI E-commerce Analitičar za e-commerce prodavnicu VibeMarket. Na osnovu datih statističkih podataka generiši kratak, koncizan i izuzetno koristan izveštaj sa 3 ključna saveta kako povećati prodaju i prihode. Pisi na srpskom jeziku sa lepo uređenim stavkama.`;
   const prompt = `Evo statistike prodavnice: Ukupan prihod: ${stats.totalRevenue} RSD, Ukupno porudžbina: ${stats.totalOrders}, Porudžbine na čekanju: ${stats.pendingOrders}, Prihod danas: ${stats.todayRevenue} RSD, Broj proizvoda: ${stats.totalProducts}. Daj mi analizu i 3 konkretna saveta za povećanje konverzija.`;
 
-  return await callGemini(prompt, systemInstruction);
+  return await callGemini(prompt, systemInstruction, selectedModel);
 }
