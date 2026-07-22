@@ -391,9 +391,7 @@
   align-items: stretch;
 }
 
-@media (max-width: 520px) {
-  .bundleGrid { grid-template-columns: 1fr; }
-}
+
 
 .bundleCard {
   position: relative;
@@ -601,9 +599,7 @@
   box-shadow: 0 2px 10px rgba(18, 33, 59, 0.03);
 }
 
-@media (max-width: 640px) {
-  .perksGrid { grid-template-columns: 1fr; gap: var(--space-3); }
-}
+
 
 .perkCard {
   display: flex;
@@ -905,5 +901,64 @@
   }
   .relatedSection {
     text-align: center;
+  }
+
+  /* ─── Compact 3-Column Mobile Layouts for Bundles & Value Props ──────────── */
+  .bundleGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .bundleCard {
+    padding: 16px 4px 10px;
+    gap: 3px;
+  }
+  .bundleTag {
+    font-size: 0.52rem;
+    padding: 2px 7px;
+    top: -10px;
+  }
+  .bundleRadioIndicator {
+    width: 16px;
+    height: 16px;
+    top: 6px;
+    right: 6px;
+  }
+  .bundleQty {
+    font-size: 0.74rem;
+  }
+  .bundleTotal {
+    font-size: 0.95rem;
+  }
+  .bundleSave {
+    font-size: 0.56rem;
+    padding: 2px 6px;
+  }
+  .bundleStandardPrice {
+    font-size: 0.62rem;
+  }
+
+  .perksGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    padding: var(--space-3) 4px;
+  }
+  .perkCard {
+    gap: 4px;
+    padding: 2px;
+  }
+  .perkIconWrap {
+    width: 36px;
+    height: 36px;
+  }
+  .perkIconWrap svg {
+    width: 16px;
+    height: 16px;
+  }
+  .perkText strong {
+    font-size: 0.64rem;
+    letter-spacing: 0.04em;
+  }
+  .perkText span {
+    font-size: 0.7rem;
   }
 }
