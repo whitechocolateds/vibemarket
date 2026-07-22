@@ -474,15 +474,13 @@ a { color: inherit; text-decoration: none; }
   line-height: 1;
 }
 
-.icon-tile {
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--border-accent);
-  background: var(--champagne-glow);
-  color: var(--champagne);
-  border-radius: var(--radius-md);
-  flex-shrink: 0;
+/* ─── Global Mobile Touch & Viewport Optimizations ───────────────────────── */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 768px) {
+  .input, .select, .textarea, input[type="text"], input[type="email"], input[type="tel"] {
+    font-size: 16px !important;
+  }
 }
