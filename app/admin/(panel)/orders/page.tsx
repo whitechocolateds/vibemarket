@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import Link from 'next/link';
-import { Search, RefreshCw, ShoppingBag, Download, Phone, Mail, MapPin } from 'lucide-react';
+import { Search, RefreshCw, ShoppingBag, Download, Phone, Mail, MapPin, CheckSquare, Square, ChevronDown } from 'lucide-react';
 import { Order } from '@/lib/types';
 import { formatPrice } from '@/lib/format';
 import { STATUS_LABELS } from '@/components/admin/StatusBadge';
@@ -11,6 +11,8 @@ import { downloadXls, XlsColumn } from '@/lib/exportOrders';
 import styles from '../../admin.module.css';
 
 type SortKey = 'newest' | 'oldest' | 'amountDesc' | 'amountAsc';
+
+const AUTO_REFRESH_SECONDS = 60;
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString('sr-RS', {
@@ -29,19 +31,51 @@ export default function AdminOrdersPage() {
   const [updating, setUpdating] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
-  useEffect(() => {
-    let active = true;
+  // Bulk actions
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkStatus, setBulkStatus] = useState<Order['status']>('confirmed');
+  const [bulkUpdating, setBulkUpdating] = useState(false);
+
+  // Auto-refresh
+  const [secondsLeft, setSecondsLeft] = useState(AUTO_REFRESH_SECONDS);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const fetchOrders = (showLoading = true) => {
+    if (showLoading) setLoading(true);
+    setError(false);
     fetch('/api/admin/orders')
       .then((r) => r.json())
-      .then((json) => { if (active) setOrders(json.data ?? []); })
-      .catch(() => { if (active) setError(true); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+      .then((json) => { setOrders(json.data ?? []); })
+      .catch(() => { setError(true); })
+      .finally(() => { setLoading(false); });
+  };
+
+  // Initial load
+  useEffect(() => {
+    fetchOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reloadKey]);
+
+  // Auto-refresh countdown
+  useEffect(() => {
+    setSecondsLeft(AUTO_REFRESH_SECONDS);
+    timerRef.current = setInterval(() => {
+      setSecondsLeft((prev) => {
+        if (prev <= 1) {
+          fetchOrders(false);
+          return AUTO_REFRESH_SECONDS;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const load = () => {
     setLoading(true);
     setError(false);
+    setSecondsLeft(AUTO_REFRESH_SECONDS);
     setReloadKey((k) => k + 1);
   };
 
@@ -62,6 +96,46 @@ export default function AdminOrdersPage() {
     } finally {
       setUpdating(null);
     }
+  };
+
+  const handleBulkUpdate = async () => {
+    if (selected.size === 0) return;
+    setBulkUpdating(true);
+    let successCount = 0;
+    for (const id of Array.from(selected)) {
+      try {
+        const res = await fetch('/api/admin/orders', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, status: bulkStatus }),
+        });
+        const json = await res.json();
+        if (res.ok) {
+          setOrders((prev) => prev.map((o) => (o.id === id ? json.data : o)));
+          successCount++;
+        }
+      } catch { /* continue */ }
+    }
+    toast(`${successCount} porudžbina promenjena u „${STATUS_LABELS[bulkStatus]}"`);
+    setSelected(new Set());
+    setBulkUpdating(false);
+  };
+
+  const toggleSelectAll = () => {
+    if (selected.size === filtered.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(filtered.map((o) => o.id)));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   };
 
   const counts = useMemo(() => {
@@ -130,16 +204,25 @@ export default function AdminOrdersPage() {
     downloadXls(`porudzbine_${new Date().toISOString().slice(0, 10)}.xls`, columns, rows);
   };
 
+  const totalRevenue = orders.filter((o) => o.status !== 'cancelled').reduce((s, o) => s + o.totalPrice, 0);
+
   return (
     <>
       <div className={styles.pageHeader}>
         <div>
           <h1 className={styles.pageTitle}>Porudžbine</h1>
           <p className={styles.pageSubtitle}>
-            {loading ? 'Učitavanje...' : `${orders.length} porudžbina · ${formatPrice(orders.filter((o) => o.status !== 'cancelled').reduce((s, o) => s + o.totalPrice, 0))} prihoda`}
+            {loading
+              ? 'Učitavanje...'
+              : `${orders.length} porudžbina · ${formatPrice(totalRevenue)} prihoda`}
           </p>
         </div>
         <div className={styles.pageHeaderActions}>
+          {/* Auto-refresh indicator */}
+          <span className={styles.refreshIndicator}>
+            <span className={styles.refreshDot} />
+            Osveži za {secondsLeft}s
+          </span>
           <button type="button" className="btn btn-secondary btn-sm" onClick={exportXls} disabled={loading || filtered.length === 0}>
             <Download size={14} strokeWidth={2} /> Izvezi Excel
           </button>
@@ -188,11 +271,46 @@ export default function AdminOrdersPage() {
         </div>
       </div>
 
+      {/* Bulk actions toolbar — appears when rows selected */}
+      {selected.size > 0 && (
+        <div className={styles.bulkBar}>
+          <span className={styles.bulkBarText}>
+            {selected.size} {selected.size === 1 ? 'porudžbina izabrana' : 'porudžbina izabrano'}
+          </span>
+          <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.82rem' }}>→ Promeni status u:</span>
+          <select
+            className={styles.bulkSelect}
+            value={bulkStatus}
+            onChange={(e) => setBulkStatus(e.target.value as Order['status'])}
+            aria-label="Bulk status"
+          >
+            {Object.entries(STATUS_LABELS).map(([k, label]) => (
+              <option key={k} value={k}>{label}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            className="btn btn-primary btn-sm"
+            disabled={bulkUpdating}
+            onClick={handleBulkUpdate}
+            style={{ height: 36, padding: '0 16px', fontSize: '0.82rem' }}
+          >
+            {bulkUpdating ? 'Ažuriranje...' : 'Primeni na sve'}
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={() => setSelected(new Set())}
+            style={{ height: 36, padding: '0 12px', fontSize: '0.82rem', background: 'rgba(255,255,255,0.12)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}
+          >
+            Poništi
+          </button>
+        </div>
+      )}
+
       <div className={styles.card}>
         {loading ? (
-          <div>
-            {[...Array(5)].map((_, i) => <div key={i} className={styles.skeletonRow} />)}
-          </div>
+          <div>{[...Array(5)].map((_, i) => <div key={i} className={styles.skeletonRow} />)}</div>
         ) : error ? (
           <div className={styles.empty}>
             Greška pri učitavanju porudžbina
@@ -208,6 +326,15 @@ export default function AdminOrdersPage() {
             <table className={styles.table}>
               <thead>
                 <tr>
+                  <th style={{ width: 40 }}>
+                    <input
+                      type="checkbox"
+                      className={styles.rowCheckbox}
+                      checked={selected.size === filtered.length && filtered.length > 0}
+                      onChange={toggleSelectAll}
+                      aria-label="Izaberi sve"
+                    />
+                  </th>
                   <th>Broj</th>
                   <th>Kupac</th>
                   <th>Grad</th>
@@ -219,7 +346,16 @@ export default function AdminOrdersPage() {
               </thead>
               <tbody>
                 {filtered.map((order) => (
-                  <tr key={order.id}>
+                  <tr key={order.id} style={selected.has(order.id) ? { background: 'rgba(22, 82, 190, 0.05)' } : {}}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        className={styles.rowCheckbox}
+                        checked={selected.has(order.id)}
+                        onChange={() => toggleSelect(order.id)}
+                        aria-label={`Izaberi porudžbinu ${order.orderNumber}`}
+                      />
+                    </td>
                     <td>
                       <Link href={`/admin/orders/${order.id}`} className={styles.tableLink}>
                         {order.orderNumber}

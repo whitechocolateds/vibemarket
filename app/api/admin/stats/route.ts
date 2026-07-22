@@ -8,7 +8,15 @@ export async function GET() {
 
   try {
     const stats = await getAdminStats();
-    return NextResponse.json({ data: stats });
+    return NextResponse.json({
+      data: {
+        pendingOrders: stats.pendingOrders,
+        lowStockProducts: stats.lowStockCount,
+        totalOrders: stats.totalOrders,
+        todayRevenue: stats.todayRevenue,
+        totalRevenue: stats.totalRevenue,
+      },
+    });
   } catch (error) {
     console.error('Stats error:', error);
     return NextResponse.json({ error: 'Greška pri učitavanju statistike' }, { status: 500 });

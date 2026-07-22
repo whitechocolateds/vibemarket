@@ -72,6 +72,16 @@ export async function getAdminStats(): Promise<AdminStats> {
 
   const revenueOrders = orders.filter((o) => o.status !== 'cancelled');
 
+  // Yesterday stats for trend calculation
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday = (iso: string) => {
+    const d = new Date(iso);
+    return d.getDate() === yesterday.getDate() && d.getMonth() === yesterday.getMonth() && d.getFullYear() === yesterday.getFullYear();
+  };
+  const yesterdayOrdersList = orders.filter((o) => isYesterday(o.createdAt));
+  const yesterdayRevenue = yesterdayOrdersList.filter((o) => o.status !== 'cancelled').reduce((sum, o) => sum + o.totalPrice, 0);
+
   const totalRevenue = revenueOrders.reduce((sum, o) => sum + o.totalPrice, 0);
   const todayOrdersList = orders.filter((o) => isToday(o.createdAt));
   const todayRevenue = todayOrdersList
@@ -150,6 +160,8 @@ export async function getAdminStats(): Promise<AdminStats> {
     pendingOrders: statusCounts.pending,
     todayRevenue,
     todayOrders: todayOrdersList.length,
+    yesterdayRevenue,
+    yesterdayOrders: yesterdayOrdersList.length,
     totalProducts: products.length,
     activeProducts: products.filter((p) => p.availableForSale).length,
     avgOrderValue: revenueOrders.length ? Math.round(totalRevenue / revenueOrders.length) : 0,
@@ -158,6 +170,7 @@ export async function getAdminStats(): Promise<AdminStats> {
     revenueByDay: days,
     topProducts,
     lowStockProducts,
+    lowStockCount: lowStockProducts.length,
     recentOrders: orders.slice(0, 8),
   };
 }

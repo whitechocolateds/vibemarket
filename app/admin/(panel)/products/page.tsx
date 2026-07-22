@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, RefreshCw, Package, ExternalLink, Pencil, Trash2 } from 'lucide-react';
+import { Search, RefreshCw, Package, ExternalLink, Pencil, Trash2, LayoutGrid, List } from 'lucide-react';
 import { Product } from '@/lib/types';
 import { formatPrice } from '@/lib/format';
 import { toast } from '@/components/admin/Toaster';
@@ -29,6 +29,7 @@ export default function AdminProductsPage() {
   const [busy, setBusy] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<Product | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
 
   useEffect(() => {
     let active = true;
@@ -69,7 +70,7 @@ export default function AdminProductsPage() {
         case 'priceDesc': return getPrice(b) - getPrice(a);
         case 'priceAsc': return getPrice(a) - getPrice(b);
         case 'stockAsc': return getQty(a) - getQty(b);
-        default: return 0; // API već vraća najnovije prvo
+        default: return 0;
       }
     });
   }, [products, query, category, sort]);
@@ -125,6 +126,25 @@ export default function AdminProductsPage() {
           </p>
         </div>
         <div className={styles.headerActions}>
+          {/* View toggle */}
+          <div className={styles.viewToggle}>
+            <button
+              type="button"
+              className={`${styles.viewToggleBtn} ${viewMode === 'table' ? styles.viewToggleBtnActive : ''}`}
+              onClick={() => setViewMode('table')}
+              title="Prikaz tabele"
+            >
+              <List size={16} />
+            </button>
+            <button
+              type="button"
+              className={`${styles.viewToggleBtn} ${viewMode === 'grid' ? styles.viewToggleBtnActive : ''}`}
+              onClick={() => setViewMode('grid')}
+              title="Prikaz kartice"
+            >
+              <LayoutGrid size={16} />
+            </button>
+          </div>
           <button type="button" className="btn btn-secondary btn-sm" onClick={load} disabled={loading}>
             <RefreshCw size={14} strokeWidth={2} /> Osveži
           </button>
@@ -171,7 +191,21 @@ export default function AdminProductsPage() {
       <div className={styles.card}>
         {loading ? (
           <div>
-            {[...Array(5)].map((_, i) => <div key={i} className={styles.skeletonRow} />)}
+            {viewMode === 'grid' ? (
+              <div className={styles.productGrid}>
+                {[...Array(8)].map((_, i) => (
+                  <div key={i} className={styles.productCard} style={{ minHeight: 260 }}>
+                    <div className={styles.skeletonRow} style={{ height: 180, borderRadius: 0, margin: 0 }} />
+                    <div style={{ padding: 12 }}>
+                      <div className={styles.skeletonRow} style={{ height: 16, marginBottom: 8, borderRadius: 6 }} />
+                      <div className={styles.skeletonRow} style={{ height: 12, width: '60%', borderRadius: 6 }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              [...Array(5)].map((_, i) => <div key={i} className={styles.skeletonRow} />)
+            )}
           </div>
         ) : error ? (
           <div className={styles.empty}>
@@ -188,7 +222,68 @@ export default function AdminProductsPage() {
               </Link>
             )}
           </div>
+        ) : viewMode === 'grid' ? (
+          /* ─── GRID VIEW ─────────────────────────────────────────── */
+          <div className={styles.productGrid}>
+            {filtered.map((product) => {
+              const price = getPrice(product);
+              const compareAt = product.variants[0]?.compareAtPrice;
+              const qty = getQty(product);
+              return (
+                <div key={product.id} className={styles.productCard}>
+                  {product.featuredImage ? (
+                    <Image
+                      src={product.featuredImage.url}
+                      alt={product.title}
+                      width={300}
+                      height={300}
+                      className={styles.productCardImg}
+                    />
+                  ) : (
+                    <div className={styles.productCardImgPlaceholder}>
+                      <Package size={40} strokeWidth={1} />
+                    </div>
+                  )}
+                  <div className={styles.productCardBody}>
+                    <p className={styles.productCardTitle}>{product.title}</p>
+                    <p className={styles.productCardMeta}>{product.productType || 'Bez kategorije'}</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                      <strong style={{ fontSize: '0.9rem', color: '#0f172a' }}>{formatPrice(price)}</strong>
+                      {compareAt && (
+                        <span style={{ fontSize: '0.75rem', textDecoration: 'line-through', color: '#94a3b8' }}>
+                          {formatPrice(Number(compareAt.amount))}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className={styles.productCardFooter}>
+                    <span className={`${styles.stockPill} ${qty === 0 ? styles.stockOut : qty <= 3 ? styles.stockLow : styles.stockOk}`}>
+                      {qty === 0 ? 'Rasprodato' : `${qty} kom`}
+                    </span>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <Link href={`/products/${product.handle}`} className={styles.iconBtn} target="_blank" title="Pogledaj">
+                        <ExternalLink size={13} strokeWidth={2} />
+                      </Link>
+                      <Link href={`/admin/products/${product.id}/edit`} className={styles.iconBtn} title="Izmeni">
+                        <Pencil size={13} strokeWidth={2} />
+                      </Link>
+                      <button
+                        type="button"
+                        className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                        disabled={busy === product.id}
+                        onClick={() => setToDelete(product)}
+                        title="Obriši"
+                      >
+                        <Trash2 size={13} strokeWidth={2} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         ) : (
+          /* ─── TABLE VIEW ─────────────────────────────────────────── */
           <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
@@ -257,28 +352,16 @@ export default function AdminProductsPage() {
                       </td>
                       <td>
                         <div className={styles.actions}>
-                          <Link
-                            href={`/products/${product.handle}`}
-                            className={styles.iconBtn}
-                            title="Pogledaj u prodavnici"
-                            aria-label="Pogledaj u prodavnici"
-                            target="_blank"
-                          >
+                          <Link href={`/products/${product.handle}`} className={styles.iconBtn} title="Pogledaj u prodavnici" target="_blank">
                             <ExternalLink size={14} strokeWidth={2} />
                           </Link>
-                          <Link
-                            href={`/admin/products/${product.id}/edit`}
-                            className={styles.iconBtn}
-                            title="Izmeni"
-                            aria-label="Izmeni proizvod"
-                          >
+                          <Link href={`/admin/products/${product.id}/edit`} className={styles.iconBtn} title="Izmeni">
                             <Pencil size={14} strokeWidth={2} />
                           </Link>
                           <button
                             type="button"
                             className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
                             title="Obriši"
-                            aria-label="Obriši proizvod"
                             disabled={busy === product.id}
                             onClick={() => setToDelete(product)}
                           >
@@ -300,7 +383,7 @@ export default function AdminProductsPage() {
           <div className={styles.modal} role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
             <h2 className={styles.modalTitle}>Obriši proizvod?</h2>
             <p className={styles.modalText}>
-              Proizvod <strong>„{toDelete.title}“</strong> će biti trajno uklonjen iz kataloga.
+              Proizvod <strong>„{toDelete.title}"</strong> će biti trajno uklonjen iz kataloga.
               Ova akcija se ne može opozvati.
             </p>
             <div className={styles.modalActions}>

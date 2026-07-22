@@ -1415,3 +1415,210 @@
   .admin { background: #fff; }
   .card { border-color: #ddd; break-inside: avoid; }
 }
+
+/* ─── FAB Quick Actions ───────────────────────────────────────────────────── */
+.fab {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 200;
+}
+.fabMain {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--brand-gradient);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 28px rgba(22, 82, 190, 0.4);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  outline: none;
+}
+.fabMain:hover { transform: scale(1.1); box-shadow: 0 12px 36px rgba(22, 82, 190, 0.5); }
+.fabOpen { background: #1e293b !important; transform: rotate(45deg) !important; }
+.fabMenu {
+  position: absolute;
+  bottom: 68px;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-end;
+  animation: fabMenuIn 0.2s ease;
+}
+@keyframes fabMenuIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fabItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px 10px 14px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0f172a;
+  text-decoration: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+.fabItem:hover { background: #f0f7ff; border-color: var(--brand); color: var(--brand); transform: translateX(-3px); }
+.fabItemIcon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ─── Sticky top bar ─────────────────────────────────────────────────────── */
+.topBar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(248, 250, 252, 0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid #e2e8f0;
+  padding: 10px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: -32px -32px 28px;
+}
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
+}
+.breadcrumbSep { color: #cbd5e1; }
+.breadcrumbCurrent { color: #0f172a; font-weight: 700; }
+.topBarRight { display: flex; align-items: center; gap: 12px; }
+.topBarTime { font-size: 0.78rem; color: #94a3b8; font-weight: 600; letter-spacing: 0.04em; }
+
+/* ─── Grid View for Products ─────────────────────────────────────────────── */
+.viewToggle {
+  display: inline-flex;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.viewToggleBtn {
+  padding: 7px 12px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  transition: all 0.15s ease;
+}
+.viewToggleBtn:hover { background: #f8fafc; color: #475569; }
+.viewToggleBtnActive { background: var(--brand) !important; color: #fff !important; }
+
+.productGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 16px;
+  padding: 20px;
+}
+.productCard {
+  border-radius: 16px;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+.productCard:hover { border-color: var(--brand); box-shadow: 0 8px 24px rgba(22, 82, 190, 0.1); transform: translateY(-2px); }
+.productCardImg { width: 100%; aspect-ratio: 1; object-fit: cover; background: #f1f5f9; }
+.productCardImgPlaceholder {
+  width: 100%;
+  aspect-ratio: 1;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #cbd5e1;
+}
+.productCardBody { padding: 12px; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.productCardTitle { font-size: 0.85rem; font-weight: 700; color: #0f172a; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.productCardMeta { font-size: 0.75rem; color: #64748b; }
+.productCardFooter { padding: 8px 12px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border-top: 1px solid #f1f5f9; }
+
+/* ─── Bulk Actions ───────────────────────────────────────────────────────── */
+.bulkBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #091a38 0%, #0c234a 100%);
+  border-radius: 14px;
+  margin-bottom: 12px;
+  animation: slideInDown 0.2s ease;
+  flex-wrap: wrap;
+}
+@keyframes slideInDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.bulkBarText { font-size: 0.85rem; font-weight: 700; color: #ffffff; flex: 1; }
+.bulkSelect {
+  padding: 7px 12px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.12);
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.bulkSelect option { background: #0f172a; color: #fff; }
+
+/* ─── Auto-refresh indicator ─────────────────────────────────────────────── */
+.refreshIndicator { display: inline-flex; align-items: center; gap: 6px; font-size: 0.74rem; color: #94a3b8; font-weight: 600; }
+.refreshDot { width: 7px; height: 7px; border-radius: 50%; background: #16a34a; animation: pulseDot 2s infinite; }
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.8); }
+}
+
+/* ─── KPI Trend badges ───────────────────────────────────────────────────── */
+.trendUp { display: inline-flex; align-items: center; gap: 3px; font-size: 0.72rem; font-weight: 800; color: #16a34a; background: rgba(22,163,74,0.1); padding: 2px 8px; border-radius: 99px; }
+.trendDown { display: inline-flex; align-items: center; gap: 3px; font-size: 0.72rem; font-weight: 800; color: #dc2626; background: rgba(220,38,38,0.1); padding: 2px 8px; border-radius: 99px; }
+.trendNeutral { display: inline-flex; align-items: center; gap: 3px; font-size: 0.72rem; font-weight: 700; color: #64748b; background: #f1f5f9; padding: 2px 8px; border-radius: 99px; }
+
+/* ─── Low-stock sidebar badge ─────────────────────────────────────────────── */
+.navBadgeDanger {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+/* ─── Row checkbox ───────────────────────────────────────────────────────── */
+.rowCheckbox { width: 16px; height: 16px; cursor: pointer; accent-color: var(--brand); }

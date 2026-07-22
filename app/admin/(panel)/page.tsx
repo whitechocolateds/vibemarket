@@ -5,12 +5,14 @@ import {
   ShoppingBag,
   Clock3,
   TrendingUp,
+  TrendingDown,
   Package,
   Boxes,
   BarChart3,
   Trophy,
   AlertTriangle,
   ArrowUpRight,
+  Minus,
 } from 'lucide-react';
 import { getAdminStats } from '@/lib/orderStore';
 import { formatPrice } from '@/lib/format';
@@ -37,6 +39,19 @@ function formatDate(iso: string) {
   });
 }
 
+function TrendBadge({ current, previous, label }: { current: number; previous: number; label: string }) {
+  if (previous === 0 && current === 0) {
+    return <span className={styles.trendNeutral}><Minus size={11} /> {label}</span>;
+  }
+  if (previous === 0) {
+    return <span className={styles.trendUp}><TrendingUp size={11} /> Novo</span>;
+  }
+  const pct = Math.round(((current - previous) / previous) * 100);
+  if (pct > 0) return <span className={styles.trendUp}><TrendingUp size={11} /> +{pct}% vs juče</span>;
+  if (pct < 0) return <span className={styles.trendDown}><TrendingDown size={11} /> {pct}% vs juče</span>;
+  return <span className={styles.trendNeutral}><Minus size={11} /> 0% vs juče</span>;
+}
+
 export default async function AdminDashboardPage() {
   const stats = await getAdminStats();
 
@@ -44,12 +59,16 @@ export default async function AdminDashboardPage() {
   const chartTotal = stats.revenueByDay.reduce((s, d) => s + d.revenue, 0);
   const maxStatusCount = Math.max(...Object.values(stats.statusCounts), 1);
 
+  const deliveryRate = stats.totalOrders > 0
+    ? Math.round((stats.statusCounts.delivered / stats.totalOrders) * 100)
+    : 0;
+
   return (
     <>
       <div className={styles.pageHeader}>
         <div>
           <h1 className={styles.pageTitle}>Pregled prodaje</h1>
-          <p className={styles.pageSubtitle}>Dobrodošli nazad - evo šta se dešava u prodavnici</p>
+          <p className={styles.pageSubtitle}>Dobrodošli nazad — evo šta se dešava u prodavnici</p>
         </div>
         <div className={styles.headerActions}>
           <Link href="/admin/orders" className="btn btn-secondary btn-sm">Porudžbine</Link>
@@ -57,17 +76,17 @@ export default async function AdminDashboardPage() {
         </div>
       </div>
 
+      {/* KPI Grid */}
       <div className={styles.statsGrid}>
         <div className={`${styles.statCard} ${styles.statCardGold}`}>
           <div className={`${styles.statIcon} ${styles.statIconGold}`}><Wallet size={18} strokeWidth={1.75} /></div>
           <div>
             <p className={styles.statLabel}>Ukupan prihod</p>
-            <p className={`${styles.statValue} ${styles.statValueAccent}`}>
-              {formatPrice(stats.totalRevenue)}
-            </p>
+            <p className={`${styles.statValue} ${styles.statValueAccent}`}>{formatPrice(stats.totalRevenue)}</p>
             <p className={styles.statHint}>prosek {formatPrice(stats.avgOrderValue)} po porudžbini</p>
           </div>
         </div>
+
         <div className={`${styles.statCard} ${styles.statCardBlue}`}>
           <div className={`${styles.statIcon} ${styles.statIconBlue}`}><ShoppingBag size={18} strokeWidth={1.75} /></div>
           <div>
@@ -76,6 +95,7 @@ export default async function AdminDashboardPage() {
             <p className={styles.statHint}>{stats.itemsSold} prodatih artikala</p>
           </div>
         </div>
+
         <div className={`${styles.statCard} ${styles.statCardWarning}`}>
           <div className={`${styles.statIcon} ${styles.statIconWarning}`}><Clock3 size={18} strokeWidth={1.75} /></div>
           <div>
@@ -84,22 +104,41 @@ export default async function AdminDashboardPage() {
             <p className={styles.statHint}>čeka potvrdu</p>
           </div>
         </div>
+
         <div className={`${styles.statCard} ${styles.statCardSuccess}`}>
           <div className={`${styles.statIcon} ${styles.statIconSuccess}`}><TrendingUp size={18} strokeWidth={1.75} /></div>
           <div>
             <p className={styles.statLabel}>Danas</p>
-            <p className={`${styles.statValue} ${styles.statValueSuccess}`}>
-              {formatPrice(stats.todayRevenue)}
-            </p>
-            <p className={styles.statHint}>{stats.todayOrders} porudžbina danas</p>
+            <p className={`${styles.statValue} ${styles.statValueSuccess}`}>{formatPrice(stats.todayRevenue)}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+              <span className={styles.statHint} style={{ margin: 0 }}>{stats.todayOrders} porudžbina</span>
+              <TrendBadge current={stats.todayRevenue} previous={stats.yesterdayRevenue} label="vs juče" />
+            </div>
           </div>
         </div>
+
         <div className={`${styles.statCard} ${styles.statCardBlue}`}>
           <div className={`${styles.statIcon} ${styles.statIconBlue}`}><Boxes size={18} strokeWidth={1.75} /></div>
           <div>
             <p className={styles.statLabel}>Katalog</p>
             <p className={styles.statValue}>{stats.totalProducts}</p>
-            <p className={styles.statHint}>{stats.activeProducts} aktivnih proizvoda</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+              <span className={styles.statHint} style={{ margin: 0 }}>{stats.activeProducts} aktivnih</span>
+              {stats.lowStockCount > 0 && (
+                <span className={styles.trendDown}>
+                  <AlertTriangle size={10} /> {stats.lowStockCount} niske zalihe
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className={`${styles.statCard} ${styles.statCardSuccess}`}>
+          <div className={`${styles.statIcon} ${styles.statIconSuccess}`}><Package size={18} strokeWidth={1.75} /></div>
+          <div>
+            <p className={styles.statLabel}>Stopa isporuke</p>
+            <p className={`${styles.statValue} ${styles.statValueSuccess}`}>{deliveryRate}%</p>
+            <p className={styles.statHint}>{stats.statusCounts.delivered} dostavljeno od {stats.totalOrders}</p>
           </div>
         </div>
       </div>
@@ -111,7 +150,7 @@ export default async function AdminDashboardPage() {
       <div className={styles.dashGrid}>
         <div className={styles.card}>
           <div className={styles.cardHeader}>
-            <h2><BarChart3 size={16} strokeWidth={1.75} /> Prihod - poslednjih 14 dana</h2>
+            <h2><BarChart3 size={16} strokeWidth={1.75} /> Prihod — poslednjih 14 dana</h2>
             <span className={styles.cardHeaderHint}>{formatPrice(chartTotal)} ukupno</span>
           </div>
           <div className={styles.chart}>
@@ -119,19 +158,19 @@ export default async function AdminDashboardPage() {
               <div
                 key={day.date}
                 className={styles.chartCol}
-                title={`${day.label} - ${formatPrice(day.revenue)} (${day.orders} porudžbina)`}
+                title={`${day.label} — ${formatPrice(day.revenue)} (${day.orders} porudžbina)`}
               >
                 <div
                   className={`${styles.chartBar} ${day.revenue === 0 ? styles.chartBarEmpty : ''}`}
                   style={{ height: `${Math.max((day.revenue / maxDayRevenue) * 100, 2)}%` }}
                 />
-                <span className={styles.chartLabel}>{day.label.slice(0, 3)}</span>
+                <span className={styles.chartLabel}>{day.label.slice(0, 5)}</span>
               </div>
             ))}
           </div>
           <div className={styles.chartLegend}>
             <span>Bez otkazanih porudžbina</span>
-            <span>najbolji dan: {formatPrice(Math.max(...stats.revenueByDay.map((d) => d.revenue), 0))}</span>
+            <span>Najbolji dan: {formatPrice(Math.max(...stats.revenueByDay.map((d) => d.revenue), 0))}</span>
           </div>
         </div>
 
@@ -244,9 +283,7 @@ export default async function AdminDashboardPage() {
                     )}
                     <div className={styles.miniBody}>
                       <p className={styles.miniTitle}>{p.title}</p>
-                      <p className={styles.miniMeta}>
-                        {p.quantity === 0 ? 'rasprodato' : `još ${p.quantity} kom`}
-                      </p>
+                      <p className={styles.miniMeta}>{p.quantity === 0 ? 'rasprodato' : `još ${p.quantity} kom`}</p>
                     </div>
                     <span className={`${styles.stockPill} ${p.quantity === 0 ? styles.stockOut : styles.stockLow}`}>
                       {p.quantity} kom <ArrowUpRight size={13} />

@@ -137,10 +137,13 @@ export interface AdminStats {
   pendingOrders: number;
   todayRevenue: number;
   todayOrders: number;
+  yesterdayRevenue: number;
+  yesterdayOrders: number;
   totalProducts: number;
   activeProducts: number;
   avgOrderValue: number;
   itemsSold: number;
+  lowStockCount: number;
   statusCounts: Record<Order['status'], number>;
   revenueByDay: DailyStat[];
   topProducts: TopProduct[];

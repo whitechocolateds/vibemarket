@@ -11,29 +11,26 @@ import {
   Store,
   LogOut,
   Sparkles,
+  AlertTriangle,
 } from 'lucide-react';
 import { LogoMark } from '@/components/Logo';
 import styles from '@/app/admin/admin.module.css';
-
-const links = [
-  { href: '/admin', label: 'Pregled', icon: LayoutDashboard },
-  { href: '/admin/ai-studio', label: 'Gemini AI Studio', icon: Sparkles },
-  { href: '/admin/orders', label: 'Porudžbine', icon: ShoppingBag },
-  { href: '/admin/products', label: 'Proizvodi', icon: Package },
-  { href: '/admin/products/new', label: 'Novi proizvod', icon: PlusCircle },
-];
 
 export default function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [pendingCount, setPendingCount] = useState(0);
+  const [lowStockCount, setLowStockCount] = useState(0);
 
   useEffect(() => {
     let active = true;
     fetch('/api/admin/stats')
       .then((r) => r.json())
       .then((json) => {
-        if (active) setPendingCount(json.data?.pendingOrders ?? 0);
+        if (active) {
+          setPendingCount(json.data?.pendingOrders ?? 0);
+          setLowStockCount(json.data?.lowStockProducts ?? 0);
+        }
       })
       .catch(() => {});
     return () => { active = false; };
@@ -44,6 +41,14 @@ export default function AdminSidebar() {
     router.push('/admin/login');
     router.refresh();
   };
+
+  const links = [
+    { href: '/admin', label: 'Pregled', icon: LayoutDashboard, badge: null, badgeDanger: false },
+    { href: '/admin/ai-studio', label: 'Gemini AI Studio', icon: Sparkles, badge: null, badgeDanger: false },
+    { href: '/admin/orders', label: 'Porudžbine', icon: ShoppingBag, badge: pendingCount, badgeDanger: false },
+    { href: '/admin/products', label: 'Proizvodi', icon: Package, badge: lowStockCount, badgeDanger: true },
+    { href: '/admin/products/new', label: 'Novi proizvod', icon: PlusCircle, badge: null, badgeDanger: false },
+  ];
 
   return (
     <aside className={styles.sidebar}>
@@ -74,8 +79,10 @@ export default function AdminSidebar() {
             >
               <Icon size={17} strokeWidth={1.75} />
               <span className={styles.navLabel}>{link.label}</span>
-              {link.href === '/admin/orders' && pendingCount > 0 && (
-                <span className={styles.navBadge}>{pendingCount}</span>
+              {link.badge != null && link.badge > 0 && (
+                <span className={link.badgeDanger ? styles.navBadgeDanger : styles.navBadge}>
+                  {link.badge}
+                </span>
               )}
             </Link>
           );
