@@ -878,13 +878,32 @@
 .infoSectionHeader { margin-bottom: var(--space-8); display: block; }
 .infoSectionHeader :global(.section-label) { display: inline-flex; align-items: center; }
 
-.compareFaqGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-12);
-  align-items: start;
-}
-
 @media (max-width: 960px) {
   .compareFaqGrid { grid-template-columns: 1fr; gap: var(--space-16); }
+}
+
+@media (max-width: 768px) {
+  .info {
+    text-align: center;
+    align-items: center;
+  }
+  .vendor { text-align: center; }
+  .title { text-align: center; }
+  .ratingRow { justify-content: center; }
+  .viewers { justify-content: center; width: 100%; border-left: none; padding-left: 0; }
+  .priceBlock { justify-content: center; text-align: center; width: 100%; }
+  .offerTimerBadge { margin: 0 auto; }
+  .stock { justify-content: center; width: 100%; text-align: center; }
+  .thumbnails { justify-content: center; }
+  .tags { justify-content: center; }
+  .infoSectionHeader {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: var(--space-6);
+  }
+  .relatedSection {
+    text-align: center;
+  }
 }
