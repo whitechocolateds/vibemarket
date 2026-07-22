@@ -143,13 +143,6 @@
   filter: brightness(1.08);
 }
 
-@media (max-width: 768px) {
-  .newsletterCard { flex-direction: column; text-align: center; padding: var(--space-6); }
-  .newsletterInfo { align-items: center; }
-  .newsletterForm { min-width: 100%; flex-direction: column; }
-  .subscribeBtn { width: 100%; }
-}
-
 .top {
   display: grid;
   grid-template-columns: 1.3fr 2fr;
@@ -157,10 +150,6 @@
   padding-bottom: var(--space-14);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding-top: var(--space-12);
-}
-
-@media (max-width: 900px) {
-  .top { grid-template-columns: 1fr; gap: var(--space-10); }
 }
 
 .logo {
@@ -206,53 +195,6 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--space-8);
-}
-
-@media (max-width: 640px) {
-  .cols { grid-template-columns: 1fr; gap: var(--space-8); }
-}
-
-@media (max-width: 768px) {
-  .brand {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
-  .brandDesc {
-    text-align: center;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  .social {
-    justify-content: center;
-  }
-  .cols {
-    text-align: center;
-  }
-  .col {
-    align-items: center;
-    text-align: center;
-  }
-  .colTitle::after {
-    left: 50%;
-    transform: translateX(-50%);
-  }
-  .link {
-    justify-content: center;
-  }
-  .contactLink {
-    justify-content: center;
-  }
-  .bottomInner {
-    flex-direction: column;
-    text-align: center;
-    justify-content: center;
-    padding-bottom: 50px;
-  }
-  .trustPills {
-    justify-content: center;
-  }
 }
 
 .col {
@@ -372,4 +314,60 @@
   letter-spacing: 0.03em;
 }
 
+/* ─── Media Queries (Placed at end so they strictly override base styles) ──── */
+@media (max-width: 900px) {
+  .top { grid-template-columns: 1fr; gap: var(--space-10); }
+}
 
+@media (max-width: 768px) {
+  .newsletterCard { flex-direction: column; text-align: center; padding: var(--space-6); }
+  .newsletterInfo { align-items: center; }
+  .newsletterForm { min-width: 100%; flex-direction: column; }
+  .subscribeBtn { width: 100%; }
+  
+  .brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .brandDesc {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .social {
+    justify-content: center;
+  }
+  .cols {
+    text-align: center;
+    grid-template-columns: 1fr !important;
+    gap: var(--space-8);
+  }
+  .col {
+    align-items: center !important;
+    text-align: center !important;
+  }
+  .colTitle {
+    text-align: center;
+  }
+  .colTitle::after {
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+  }
+  .link {
+    justify-content: center !important;
+  }
+  .contactLink {
+    justify-content: center !important;
+  }
+  .bottomInner {
+    flex-direction: column;
+    text-align: center;
+    justify-content: center;
+    padding-bottom: 50px;
+  }
+  .trustPills {
+    justify-content: center;
+  }
+}
