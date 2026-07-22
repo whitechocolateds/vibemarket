@@ -10,12 +10,14 @@ import {
   PlusCircle,
   Store,
   LogOut,
+  Sparkles,
 } from 'lucide-react';
 import { LogoMark } from '@/components/Logo';
 import styles from '@/app/admin/admin.module.css';
 
 const links = [
   { href: '/admin', label: 'Pregled', icon: LayoutDashboard },
+  { href: '/admin/ai-studio', label: 'Gemini AI Studio', icon: Sparkles },
   { href: '/admin/orders', label: 'Porudžbine', icon: ShoppingBag },
   { href: '/admin/products', label: 'Proizvodi', icon: Package },
   { href: '/admin/products/new', label: 'Novi proizvod', icon: PlusCircle },

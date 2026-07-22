@@ -150,7 +150,9 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
     if (generated.features?.length || generated.comparisonPoints?.length) {
       const points = [
         ...(generated.features || []),
-        ...(generated.comparisonPoints || []).map((cp) => `${cp.us} (naspram: ${cp.competitor})`),
+        ...(generated.comparisonPoints || []).map((cp: any) =>
+          typeof cp === 'string' ? cp : `${cp.us || ''} (naspram: ${cp.competitor || ''})`
+        ),
       ];
       setComparisonPointsStr(points.join('\n'));
     }
