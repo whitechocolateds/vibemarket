@@ -10,7 +10,7 @@ import RotatingEyebrow from '@/components/motion/RotatingEyebrow';
 import TestimonialsCarousel from '@/components/TestimonialsCarousel';
 import { getAllProducts, getProductByHandle } from '@/lib/productStore';
 import { TESTIMONIALS } from '@/lib/testimonials';
-import { Star, Truck, Wallet, ShieldCheck, LayoutGrid, MessageCircleHeart, Zap, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Star, Truck, Wallet, ShieldCheck, LayoutGrid, MessageCircleHeart, Zap, Sparkles, CheckCircle2, ArrowRight } from 'lucide-react';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
@@ -112,7 +112,7 @@ export default async function HomePage() {
                 <span className={styles.sectionRule} />
               </div>
               <Link href="/products" className="btn btn-outline">
-                Svi proizvodi
+                <span>Svi proizvodi</span> <ArrowRight size={16} />
               </Link>
             </header>
           </Reveal>
