@@ -421,14 +421,15 @@ a { color: inherit; text-decoration: none; }
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px 8px 8px;
-  border: 1px solid var(--border-accent);
-  background: var(--champagne-glow);
+  padding: 8px 16px 8px 12px;
+  border: 1.5px solid rgba(var(--brand-rgb), 0.25);
+  background: linear-gradient(135deg, rgba(var(--brand-rgb), 0.08) 0%, rgba(var(--gold-rgb), 0.10) 100%);
   border-radius: var(--radius-full);
-  font-size: 0.72rem;
-  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 700;
   letter-spacing: 0.06em;
-  color: var(--champagne);
+  color: var(--brand);
+  box-shadow: 0 4px 14px rgba(var(--brand-rgb), 0.08);
 }
 
 .marquee-track {

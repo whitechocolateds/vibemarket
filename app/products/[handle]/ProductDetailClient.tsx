@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useInView } from 'framer-motion';
-import { Truck, Wallet, ShieldCheck, Check, Heart, Share2, Star, Flame, Eye, Clock, MessageCircleHeart, HelpCircle, ListChecks, Home, ChevronRight } from 'lucide-react';
+import { Truck, Wallet, ShieldCheck, Check, Heart, Share2, Star, Flame, Eye, Clock, MessageCircleHeart, HelpCircle, ListChecks, Home, ChevronRight, Zap, ShoppingCart, CheckCircle2, Tag, Sparkles } from 'lucide-react';
 import { Product, ProductVariant } from '@/lib/types';
 import { useCartStore } from '@/lib/cart';
 import { useWishlist } from '@/lib/useWishlist';
@@ -78,6 +78,7 @@ export default function ProductDetailClient({ product, related }: Props) {
   const [quantity, setQuantity] = useState(1);
   const [copied, setCopied] = useState(false);
   const ctaRef = useRef<HTMLDivElement>(null);
+  const reviewsRef = useRef<HTMLDivElement>(null);
   const ctaInView = useInView(ctaRef, { margin: '-100px 0px 0px 0px' });
   const offerCountdown = useOfferCountdown();
   const reviews = pickTestimonials(product.handle).map((r, i) =>
@@ -180,14 +181,25 @@ export default function ProductDetailClient({ product, related }: Props) {
 
   const optionNames = Array.from(new Set(product.variants.flatMap((v) => v.selectedOptions.map((o) => o.name))));
 
-  const accordionItems = product.descriptionHtml
-    ? splitDescriptionSections(product.descriptionHtml).map((s) => ({
-      title: s.title,
-      content: <div dangerouslySetInnerHTML={{ __html: s.content }} />,
-    }))
-    : product.description
-      ? [{ title: 'O proizvodu', content: <p>{product.description}</p> }]
-      : [];
+  const extraSections = product.descriptionHtml
+    ? splitDescriptionSections(product.descriptionHtml).filter((s) => s.title !== 'O proizvodu' && s.content.trim().length > 0)
+    : [];
+
+  const accordionItems = extraSections.length > 0
+    ? extraSections.map((s) => ({
+        title: s.title,
+        content: <div dangerouslySetInnerHTML={{ __html: s.content }} />,
+      }))
+    : [{
+        title: 'Specifikacije i pakovanje',
+        content: (
+          <ul style={{ margin: 0, paddingLeft: 20 }}>
+            <li>1x Originalni proizvod {product.title}</li>
+            <li>1x Uputstvo za upotrebu na srpskom jeziku</li>
+            <li>1x Garantni list i deklaracija uvoznika</li>
+          </ul>
+        ),
+      }];
 
   return (
     <div className={styles.page}>
@@ -286,12 +298,19 @@ export default function ProductDetailClient({ product, related }: Props) {
             <h1 className={styles.title}>{product.title}</h1>
 
             <div className={styles.ratingRow}>
-              <div className={styles.stars}>
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} size={13} fill="currentColor" strokeWidth={0} />
-                ))}
-              </div>
-              <span>4.9 · {reviewCount} recenzija</span>
+              <button
+                type="button"
+                className={styles.ratingStarsBtn}
+                onClick={() => reviewsRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                title="Pogledaj sve recenzije kupaca"
+              >
+                <div className={styles.stars}>
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} size={13} fill="currentColor" strokeWidth={0} />
+                  ))}
+                </div>
+                <span>4.9 · {reviewCount} recenzija</span>
+              </button>
               <span className={styles.viewers}>
                 <Eye size={13} /> {viewers} {viewersLabel(viewers)} upravo sada
               </span>
@@ -300,12 +319,21 @@ export default function ProductDetailClient({ product, related }: Props) {
             <div className={styles.priceBlock}>
               <span className={styles.price}>{formatPrice(price)}</span>
               {compareAtPrice && <span className="price-compare">{formatPrice(compareAtPrice)}</span>}
-              {discountPercent && <span className="price-discount">Ušteda {discountPercent}%</span>}
+              {compareAtPrice && compareAtPrice > price && (
+                <span className={styles.savingsAmountBadge}>
+                  Ušteda {formatPrice(compareAtPrice - price)} ({discountPercent}%)
+                </span>
+              )}
             </div>
 
-            <div className={styles.offerTimer}>
-              <Clock size={14} />
-              Ponuda ističe za <strong>{offerCountdown}</strong>
+            <div className={styles.offerTimerBadge}>
+              <div className={styles.offerLiveDot} />
+              <Flame size={15} className={styles.offerFlameIcon} />
+              <span className={styles.offerLabel}>Ponuda ističe za:</span>
+              <div className={styles.offerCountdownBox}>
+                <Clock size={13} />
+                <span>{offerCountdown}</span>
+              </div>
             </div>
 
             <div className={styles.stockRow}>
@@ -317,6 +345,18 @@ export default function ProductDetailClient({ product, related }: Props) {
               {lowStock && (
                 <span className={styles.lowStock}><Flame size={12} /> Još samo {selectedVariant.quantityAvailable} na stanju</span>
               )}
+            </div>
+
+            <div className={styles.topDescriptionBox}>
+              <div className={styles.topDescriptionHeader}>
+                <Sparkles size={14} className={styles.topDescriptionIcon} />
+                <span>O PROIZVODU</span>
+              </div>
+              <p className={styles.topDescriptionText}>
+                {product.description || (
+                  <>Premium proizvod sa visokim performansama, napravljen od vrhunskih materijala za dugotrajnu upotrebu.</>
+                )}
+              </p>
             </div>
 
             {optionNames.map((optName) => {
@@ -368,9 +408,18 @@ export default function ProductDetailClient({ product, related }: Props) {
                     >
                       {tier.quantity === 2 && <span className={styles.bundleTag}>Najpopularnije</span>}
                       {tier.quantity === 3 && <span className={`${styles.bundleTag} ${styles.bundleTagBest}`}>Najveća ušteda</span>}
+                      
+                      <div className={styles.bundleRadioIndicator}>
+                        {isSelected && <Check size={12} strokeWidth={3} />}
+                      </div>
+
                       <span className={styles.bundleQty}>{tier.quantity} {tier.quantity === 1 ? 'komad' : 'komada'}</span>
                       <span className={styles.bundleTotal}>{formatPrice(total)}</span>
-                      {tier.discountPercent > 0 && <span className={styles.bundleSave}>Ušteda {tier.discountPercent}%</span>}
+                      {tier.discountPercent > 0 ? (
+                        <span className={styles.bundleSave}>UŠTEDA {tier.discountPercent}%</span>
+                      ) : (
+                        <span className={styles.bundleStandardPrice}>Standardna cena</span>
+                      )}
                     </button>
                   );
                 })}
@@ -381,35 +430,76 @@ export default function ProductDetailClient({ product, related }: Props) {
               <motion.button
                 type="button"
                 whileTap={{ scale: 0.97 }}
-                className={`btn btn-primary btn-full ${styles.addBtn}`}
+                className={`btn ${styles.buyNowBtn}`}
                 onClick={handleBuyNow}
                 disabled={!selectedVariant.availableForSale}
               >
-                {selectedVariant.availableForSale ? `Kupi odmah · ${formatPrice(bundleTotal)}` : 'Rasprodato'}
+                <Zap size={18} fill="currentColor" />
+                {selectedVariant.availableForSale ? `KUPI ODMAH · ${formatPrice(bundleTotal)}` : 'Rasprodato'}
               </motion.button>
               {selectedVariant.availableForSale && (
                 <motion.button
                   type="button"
                   whileTap={{ scale: 0.97 }}
-                  className={`btn btn-outline btn-full ${styles.addBtn}`}
+                  className={`btn ${styles.cartBtn}`}
                   onClick={handleAddToCart}
                 >
-                  Dodaj u korpu
+                  <ShoppingCart size={18} />
+                  DODAJ U KORPU
                 </motion.button>
               )}
-              <p className={styles.shippingHint}>
+              <div className={styles.shippingHintBar}>
                 {bundleTotal >= FREE_SHIPPING_THRESHOLD ? (
-                  <><Truck size={13} /> Ostvarujete <strong>besplatnu dostavu</strong></>
+                  <div className={styles.freeShippingActive}>
+                    <CheckCircle2 size={15} />
+                    <span>Ostvarujete <strong>besplatnu dostavu</strong> za ovu porudžbinu!</span>
+                  </div>
                 ) : (
-                  <><Truck size={13} /> Besplatna dostava za porudžbine iznad {formatPrice(FREE_SHIPPING_THRESHOLD)}</>
+                  <div className={styles.freeShippingPending}>
+                    <Truck size={15} />
+                    <span>Besplatna dostava za porudžbine iznad <strong>{formatPrice(FREE_SHIPPING_THRESHOLD)}</strong></span>
+                  </div>
                 )}
-              </p>
+              </div>
             </div>
 
-            <div className={styles.perks}>
-              <div className={styles.perk}><Truck size={18} /><strong>Dostava</strong>1-3 radna dana</div>
-              <div className={styles.perk}><Wallet size={18} /><strong>Plaćanje</strong>Pouzećem</div>
-              <div className={styles.perk}><ShieldCheck size={18} /><strong>Garancija</strong>Zadovoljstvo</div>
+            <div className={styles.perksGrid}>
+              <div className={styles.perkCard}>
+                <div className={styles.perkIconWrap}><Truck size={20} /></div>
+                <div className={styles.perkText}>
+                  <strong>DOSTAVA</strong>
+                  <span>1-3 radna dana</span>
+                </div>
+              </div>
+              <div className={styles.perkCard}>
+                <div className={styles.perkIconWrap}><Wallet size={20} /></div>
+                <div className={styles.perkText}>
+                  <strong>PLAĆANJE</strong>
+                  <span>Pouzećem</span>
+                </div>
+              </div>
+              <div className={styles.perkCard}>
+                <div className={styles.perkIconWrap}><ShieldCheck size={20} /></div>
+                <div className={styles.perkText}>
+                  <strong>GARANCIJA</strong>
+                  <span>100% Zadovoljstvo</span>
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.trustBadgesBar}>
+              <div className={styles.trustItem}>
+                <ShieldCheck size={14} className={styles.trustIcon} />
+                <span>100% Sigurna kupovina</span>
+              </div>
+              <div className={styles.trustItem}>
+                <CheckCircle2 size={14} className={styles.trustIcon} />
+                <span>Garancija povraćaja novca</span>
+              </div>
+              <div className={styles.trustItem}>
+                <Truck size={14} className={styles.trustIcon} />
+                <span>Brza isporuka na kućnu adresu</span>
+              </div>
             </div>
 
             {accordionItems.length > 0 && (
@@ -421,7 +511,10 @@ export default function ProductDetailClient({ product, related }: Props) {
             {product.tags.length > 0 && (
               <div className={styles.tags}>
                 {product.tags.map((tag) => (
-                  <span key={tag} className="tag-pill">{tag}</span>
+                  <span key={tag} className={styles.tagPill}>
+                    <Tag size={12} className={styles.tagIcon} />
+                    {tag}
+                  </span>
                 ))}
               </div>
             )}
@@ -452,7 +545,7 @@ export default function ProductDetailClient({ product, related }: Props) {
           </div>
         </section>
 
-        <section className={styles.infoSection}>
+        <section className={styles.infoSection} ref={reviewsRef}>
           <Reveal className={styles.infoSectionHeader}>
             <span className="section-label"><MessageCircleHeart size={13} style={{ marginRight: 6, verticalAlign: -2 }} />Iskustva kupaca</span>
             <h2 className="section-title">Šta kažu kupci</h2>
@@ -489,27 +582,41 @@ export default function ProductDetailClient({ product, related }: Props) {
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           >
             <div className={`container ${styles.stickyInner}`}>
-              <div className={styles.stickyInfo}>
-                <span className={styles.stickyTitle}>{product.title}</span>
-                <span className={styles.stickyPrice}>{formatPrice(bundleTotal)}</span>
+              <div className={styles.stickyProductWrap}>
+                {product.featuredImage && (
+                  <img src={product.featuredImage.url} alt="" className={styles.stickyThumb} />
+                )}
+                <div className={styles.stickyInfo}>
+                  <span className={styles.stickyTitle}>{product.title}</span>
+                  <div className={styles.stickyMeta}>
+                    <span className={styles.stickyPrice}>{formatPrice(bundleTotal)}</span>
+                    <span className={styles.stickyShippingBadge}>
+                      <Truck size={12} /> Free shipping
+                    </span>
+                  </div>
+                </div>
               </div>
               <div className={styles.stickyActions}>
-                <button
+                <motion.button
                   type="button"
-                  className="btn btn-primary"
+                  whileTap={{ scale: 0.96 }}
+                  className={`btn ${styles.stickyBuyBtn}`}
                   onClick={handleBuyNow}
                   disabled={!selectedVariant.availableForSale}
                 >
-                  {selectedVariant.availableForSale ? 'Kupi odmah' : 'Rasprodato'}
-                </button>
+                  <Zap size={15} fill="currentColor" />
+                  {selectedVariant.availableForSale ? 'KUPI ODMAH' : 'Rasprodato'}
+                </motion.button>
                 {selectedVariant.availableForSale && (
-                  <button
+                  <motion.button
                     type="button"
-                    className="btn btn-outline"
+                    whileTap={{ scale: 0.96 }}
+                    className={`btn ${styles.stickyCartBtn}`}
                     onClick={handleAddToCart}
                   >
-                    Dodaj u korpu
-                  </button>
+                    <ShoppingCart size={15} />
+                    Dodaj
+                  </motion.button>
                 )}
               </div>
             </div>

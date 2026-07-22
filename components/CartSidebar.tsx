@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, Minus, Plus, Trash2, ShoppingBag, Truck, PartyPopper } from 'lucide-react';
+import { X, Minus, Plus, Trash2, ShoppingBag, Truck, PartyPopper, ArrowRight, Sparkles, ShieldCheck } from 'lucide-react';
 import { useCartStore } from '@/lib/cart';
 import { formatPrice, getProductPrice } from '@/lib/format';
 import { FREE_SHIPPING_THRESHOLD } from '@/lib/shipping';
@@ -20,7 +20,9 @@ function UpsellList({ title, products, onAdd, onNavigate, className = '' }: {
 }) {
   return (
     <div className={`${styles.upsell} ${className}`}>
-      <p className={styles.upsellTitle}>{title}</p>
+      <p className={styles.upsellTitle}>
+        <Sparkles size={12} className={styles.upsellSparkle} /> {title}
+      </p>
       {products.map((p) => {
         const sp = getProductPrice(p);
         return (
@@ -240,9 +242,12 @@ export default function CartSidebar() {
                     <span className={styles.totalLabel}>Ukupno</span>
                     <span className={styles.totalPrice}>{formatPrice(totalPrice)}</span>
                   </div>
-                  <p className={styles.note}>Dostava 1-3 dana · Plaćanje pouzećem</p>
+                  <p className={styles.note}>
+                    <span><ShieldCheck size={13} /> Plaćanje pouzećem</span>
+                    <span><Truck size={13} /> Dostava 1-3 dana</span>
+                  </p>
                   <Link href="/checkout" className={`btn btn-primary btn-full ${styles.checkoutBtn}`} onClick={closeCart}>
-                    Nastavi na plaćanje
+                    <span>Nastavi na plaćanje</span> <ArrowRight size={18} />
                   </Link>
                 </div>
               </>

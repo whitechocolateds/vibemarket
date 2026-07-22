@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Sparkles, Clock, Flame } from 'lucide-react';
+import { Sparkles, Clock, Flame, Zap, ShoppingCart, CheckCircle2 } from 'lucide-react';
 import { Product } from '@/lib/types';
 import { useCartStore } from '@/lib/cart';
 import { formatPrice, getProductPrice } from '@/lib/format';
@@ -94,18 +94,20 @@ export default function ProductCard({ product, spotlight = false }: Props) {
   const actionButtons = (
     <div className={styles.btnGroup}>
       <button
-        className={`btn btn-primary ${styles.actionBtn}`}
+        className={styles.buyNowBtn}
         onClick={handleBuyNow}
         disabled={!product.availableForSale}
       >
-        {product.availableForSale ? 'Kupi odmah' : 'Rasprodato'}
+        <Zap size={13} fill="currentColor" />
+        <span>{product.availableForSale ? 'KUPI ODMAH' : 'Rasprodato'}</span>
       </button>
       {product.availableForSale && (
         <button
-          className={`btn btn-secondary ${styles.actionBtn}`}
+          className={styles.cartBtn}
           onClick={handleAddToCart}
         >
-          Dodaj u korpu
+          <ShoppingCart size={13} />
+          <span>DODAJ U KORPU</span>
         </button>
       )}
     </div>
@@ -201,9 +203,9 @@ export default function ProductCard({ product, spotlight = false }: Props) {
             <div className={styles.placeholder}>◆</div>
           )}
           <div className={styles.badges}>
-            {discountPercent && <span className="badge badge-red">−{discountPercent}%</span>}
+            {discountPercent && <span className={styles.discountPill}>−{discountPercent}%</span>}
             {product.tags.includes('novo') && !discountPercent && (
-              <span className="badge badge-blue">Novo</span>
+              <span className={styles.newPill}>NOVO</span>
             )}
           </div>
           <div className={styles.quickAdd}>{actionButtons}</div>
@@ -212,14 +214,14 @@ export default function ProductCard({ product, spotlight = false }: Props) {
           <span className={styles.vendor}>{product.vendor}</span>
           <h3 className={styles.title}>{product.title}</h3>
           <div className={styles.priceRow}>
-            <span className="price">{formatPrice(price)}</span>
-            {compareAtPrice && <span className="price-compare">{formatPrice(compareAtPrice)}</span>}
+            <span className={styles.price}>{formatPrice(price)}</span>
+            {compareAtPrice && <span className={styles.comparePrice}>{formatPrice(compareAtPrice)}</span>}
           </div>
           {product.availableForSale ? (
             lowStock ? (
-              <span className={styles.lowStock}><Flame size={11} /> Još samo {stockQty} kom</span>
+              <span className={styles.lowStock}><Flame size={12} /> Još samo {stockQty} kom</span>
             ) : (
-              <span className={styles.stock}>Na stanju</span>
+              <span className={styles.stock}><CheckCircle2 size={12} /> Na stanju</span>
             )
           ) : (
             <span className={styles.unavailable}>Nije dostupno</span>

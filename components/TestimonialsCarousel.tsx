@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { Star, ShieldCheck, ChevronDown } from 'lucide-react';
 import TestimonialCard from './TestimonialCard';
 import styles from '../app/page.module.css';
 
@@ -21,6 +22,30 @@ export default function TestimonialsCarousel({ items }: { items: Testimonial[] }
 
   return (
     <div className={styles.fbFeed}>
+      <div className={styles.reviewsSummaryBanner}>
+        <div className={styles.reviewsScoreBlock}>
+          <span className={styles.reviewsScoreNum}>4.9</span>
+          <div className={styles.reviewsScoreMetaWrap}>
+            <div className={styles.reviewsStars}>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star key={i} size={15} fill="currentColor" strokeWidth={0} />
+              ))}
+            </div>
+            <span className={styles.reviewsScoreLabel}>Prosečna ocena od 120+ kupaca</span>
+          </div>
+        </div>
+
+        <div className={styles.reviewsRecommendBlock}>
+          <span className={styles.reviewsRecommendPercent}>99.4%</span>
+          <span className={styles.reviewsRecommendText}>kupaca preporučuje VibeMarket</span>
+        </div>
+
+        <div className={styles.reviewsVerifiedPill}>
+          <ShieldCheck size={15} className={styles.reviewsShieldIcon} />
+          <span>100% Proverene Recenzije</span>
+        </div>
+      </div>
+
       <div className={styles.fbGrid}>
         {visible.map((t, i) => (
           <motion.div
@@ -36,8 +61,9 @@ export default function TestimonialsCarousel({ items }: { items: Testimonial[] }
       </div>
 
       {items.length > INITIAL && !expanded && (
-        <button type="button" className={styles.fbMore} onClick={() => setExpanded(true)}>
-          Prikaži još {items.length - INITIAL} recenzija
+        <button type="button" className={styles.fbMoreBtn} onClick={() => setExpanded(true)}>
+          <span>Prikaži još {items.length - INITIAL} recenzija</span>
+          <ChevronDown size={14} />
         </button>
       )}
     </div>

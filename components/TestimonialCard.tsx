@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ThumbsUp, Star } from 'lucide-react';
+import { ThumbsUp, Star, CheckCircle2 } from 'lucide-react';
 import styles from '../app/page.module.css';
 
 interface Props {
@@ -56,7 +56,12 @@ export default function TestimonialCard({ quote, name, city, time, likes, image 
           {initials(name)}
         </span>
         <div className={styles.fbMeta}>
-          <span className={styles.fbName}>{name}</span>
+          <div className={styles.fbNameRow}>
+            <span className={styles.fbName}>{name}</span>
+            <span className={styles.fbVerifiedBadge}>
+              <CheckCircle2 size={11} /> Proverena kupovina
+            </span>
+          </div>
           <span className={styles.fbSub}>{city} · {time}</span>
         </div>
         <FbBadge />

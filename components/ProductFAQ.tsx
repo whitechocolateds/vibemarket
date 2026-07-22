@@ -36,11 +36,17 @@ export default function ProductFAQ({ faqs }: { faqs?: ProductFaq[] }) {
               onClick={() => setOpen(isOpen ? -1 : i)}
               aria-expanded={isOpen}
             >
-              <span className={styles.icon}><HelpCircle size={16} /></span>
+              <div className={styles.iconWrap}>
+                <HelpCircle size={18} />
+              </div>
               <span className={styles.question}>{f.question}</span>
-              <motion.span animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.3 }} className={styles.chevron}>
+              <motion.div
+                animate={{ rotate: isOpen ? 180 : 0 }}
+                transition={{ duration: 0.3, ease: 'easeInOut' }}
+                className={styles.chevronWrap}
+              >
                 <ChevronDown size={18} />
-              </motion.span>
+              </motion.div>
             </button>
             <AnimatePresence initial={false}>
               {isOpen && (
@@ -51,7 +57,9 @@ export default function ProductFAQ({ faqs }: { faqs?: ProductFaq[] }) {
                   transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
                   className={styles.panelWrap}
                 >
-                  <p className={styles.panel}>{f.answer}</p>
+                  <div className={styles.panelInner}>
+                    <p className={styles.panel}>{f.answer}</p>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>

@@ -10,7 +10,7 @@ import RotatingEyebrow from '@/components/motion/RotatingEyebrow';
 import TestimonialsCarousel from '@/components/TestimonialsCarousel';
 import { getAllProducts, getProductByHandle } from '@/lib/productStore';
 import { TESTIMONIALS } from '@/lib/testimonials';
-import { Star, Truck, Wallet, ShieldCheck, LayoutGrid, MessageCircleHeart } from 'lucide-react';
+import { Star, Truck, Wallet, ShieldCheck, LayoutGrid, MessageCircleHeart, Zap, Sparkles, CheckCircle2 } from 'lucide-react';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
@@ -68,7 +68,7 @@ export default async function HomePage() {
             <Reveal delay={0.65}>
               <div className={styles.heroActions}>
                 <Link href="/products" className="btn btn-primary btn-lg">
-                  Pogledaj ponudu
+                  <Zap size={16} fill="currentColor" /> Pogledaj ponudu
                 </Link>
                 <Link href="/products?tag=novo" className="btn btn-ghost btn-lg">
                   Šta je novo →
@@ -132,25 +132,6 @@ export default async function HomePage() {
             <span className={styles.sectionEyebrow}><MessageCircleHeart size={13} /> Iskustva kupaca</span>
             <h2 className="section-title">Šta kažu kupci</h2>
             <span className={styles.sectionRule} />
-          </Reveal>
-
-          <Reveal>
-            <div className={styles.reviewsSummary}>
-              <div className={styles.reviewsScore}>
-                <span className={styles.reviewsScoreNum}>4,9</span>
-                <div>
-                  <div className={styles.reviewsStars}>
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star key={i} size={16} fill="currentColor" strokeWidth={0} />
-                    ))}
-                  </div>
-                  <p className={styles.reviewsScoreMeta}>na osnovu 2.417 recenzija</p>
-                </div>
-              </div>
-              <div className={styles.reviewsRecommend}>
-                <strong>98%</strong> kupaca preporučuje VibeMarket
-              </div>
-            </div>
           </Reveal>
 
           <TestimonialsCarousel items={TESTIMONIALS} />

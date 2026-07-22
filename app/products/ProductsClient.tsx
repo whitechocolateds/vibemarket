@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, X, PackageSearch, ArrowUpDown, Loader2,
-  LayoutGrid, Flame, Sparkles, Dumbbell, Cpu, UtensilsCrossed, ShoppingBag,
+  LayoutGrid, Flame, Sparkles, Dumbbell, Cpu, UtensilsCrossed, ShoppingBag, Truck, ShieldCheck, CheckCircle2,
   type LucideIcon,
 } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
@@ -101,20 +101,58 @@ export default function ProductsClient() {
 
   return (
     <div className={styles.page}>
+      <div className={styles.heroSection}>
+        <div className="container">
+          <Reveal>
+            <div className={styles.heroCard}>
+              <div className={styles.heroGlowAccent} />
+              <div className={styles.heroBadge}>
+                <Sparkles size={14} className={styles.heroSparkleIcon} />
+                <span>EKSKLUZIVNI KATALOG</span>
+              </div>
+              <h1 className={styles.heroTitle}>
+                Svi Proizvodi na <span className={styles.heroTitleHighlight}>Jednom Mestu</span>
+              </h1>
+              <p className={styles.heroSubtitle}>
+                Pregledajte našu pažljivo odabranu kolekciju premium artikala. Brza dostava 1-3 radna dana, garancija kvaliteta i sigurno plaćanje pouzećem.
+              </p>
+              <div className={styles.heroPillsRow}>
+                <div className={styles.heroFeatureChip}>
+                  <div className={styles.chipIconWrap}><Truck size={14} /></div>
+                  <span>Besplatna dostava od 5.000 RSD</span>
+                </div>
+                <div className={styles.heroFeatureChip}>
+                  <div className={styles.chipIconWrap}><ShieldCheck size={14} /></div>
+                  <span>Plaćanje pouzećem pri preuzimanju</span>
+                </div>
+                <div className={styles.heroFeatureChip}>
+                  <div className={styles.chipIconWrap}><CheckCircle2 size={14} /></div>
+                  <span>100% Garancija zadovoljstva</span>
+                </div>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </div>
+
       <div className={styles.toolbar}>
         <div className="container">
           <Reveal>
             <div className={styles.toolbarHead}>
               <div className={styles.titleBlock}>
-                <h1 className={styles.pageTitle}>Kolekcija</h1>
+                <h2 className={styles.pageTitle}>Kolekcija</h2>
                 <span className={styles.countBadge}>
                   {initialLoading ? 'Učitavanje...' : `${products.length} artikala`}
                 </span>
               </div>
 
               {visibleTags.length > 0 && (
-                <div className={styles.tags}>
-                  <button type="button" className={`tag-pill ${styles.tagPill} ${!selectedTag ? 'active' : ''}`} onClick={() => setSelectedTag('')}>
+                <div className={styles.tagsBar}>
+                  <button
+                    type="button"
+                    className={`${styles.filterChip} ${!selectedTag ? styles.filterChipActive : ''}`}
+                    onClick={() => setSelectedTag('')}
+                  >
                     <LayoutGrid size={13} /> Sve
                   </button>
                   {visibleTags.map((tag) => {
@@ -123,7 +161,7 @@ export default function ProductsClient() {
                       <button
                         type="button"
                         key={tag}
-                        className={`tag-pill ${styles.tagPill} ${selectedTag === tag ? 'active' : ''}`}
+                        className={`${styles.filterChip} ${selectedTag === tag ? styles.filterChipActive : ''}`}
                         onClick={() => setSelectedTag(selectedTag === tag ? '' : tag)}
                       >
                         {Icon && <Icon size={13} />} {tag.charAt(0).toUpperCase() + tag.slice(1)}
@@ -136,9 +174,9 @@ export default function ProductsClient() {
                         type="button"
                         className={styles.resetInline}
                         onClick={resetFilters}
-                        initial={{ opacity: 0, width: 0 }}
-                        animate={{ opacity: 1, width: 'auto' }}
-                        exit={{ opacity: 0, width: 0 }}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
                       >
                         <X size={12} /> Resetuj
                       </motion.button>
@@ -164,7 +202,7 @@ export default function ProductsClient() {
                   <Search size={16} className={styles.searchIcon} />
                   <input
                     type="text"
-                    className={`input ${styles.searchInput}`}
+                    className={styles.searchInput}
                     placeholder="Pretraži proizvode..."
                     aria-label="Pretraži proizvode"
                     value={searchInput}
@@ -189,15 +227,15 @@ export default function ProductsClient() {
                 <div className={styles.sortWrap}>
                   <ArrowUpDown size={14} className={styles.sortIcon} />
                   <select
-                    className={`select ${styles.sort}`}
+                    className={styles.sortSelect}
                     aria-label="Sortiraj proizvode"
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
                   >
                     <option value="">Podrazumevano</option>
-                    <option value="price-asc">Cena ↑</option>
-                    <option value="price-desc">Cena ↓</option>
-                    <option value="name">Naziv</option>
+                    <option value="price-asc">Cena: rastuće ↑</option>
+                    <option value="price-desc">Cena: opadajuće ↓</option>
+                    <option value="name">Naziv A-Z</option>
                   </select>
                 </div>
               </div>

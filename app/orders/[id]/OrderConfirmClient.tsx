@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { PackageCheck, Truck, Home } from 'lucide-react';
+import { PackageCheck, Truck, Home, CheckCircle2, ShoppingBag, Sparkles, Phone, Mail, Copy, Check, Clock, ShieldCheck } from 'lucide-react';
 import { trackPixel } from '@/lib/metaEvents';
 import ConfettiBurst from '@/components/motion/ConfettiBurst';
 import styles from './order.module.css';
@@ -13,8 +13,9 @@ export default function OrderConfirmClient() {
   const params = useParams();
   const searchParams = useSearchParams();
   const orderId = params.id as string;
-  const name = searchParams.get('name') ?? 'korisniče';
+  const name = searchParams.get('name') ?? 'kupče';
   const firedRef = useRef(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (firedRef.current) return;
@@ -26,10 +27,16 @@ export default function OrderConfirmClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const handleCopyOrder = () => {
+    navigator.clipboard.writeText(orderId);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const steps = [
-    { icon: PackageCheck, label: 'Pakovanje', active: true },
-    { icon: Truck, label: 'Kurir', active: false },
-    { icon: Home, label: 'Dostava', active: false },
+    { icon: PackageCheck, title: 'Pakovanje i Priprema', desc: 'U toku', active: true },
+    { icon: Truck, title: 'Preuzimanje Kurira', desc: 'Uskoro', active: false },
+    { icon: Home, title: 'Dostava na Vrata', desc: '1-3 radna dana', active: false },
   ];
 
   return (
@@ -38,65 +45,98 @@ export default function OrderConfirmClient() {
       <div className="container">
         <motion.div
           className={styles.card}
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          initial={{ opacity: 0, scale: 0.95, y: 24 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         >
-          <div className={styles.icon}>
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-              <motion.path
-                d="M6 14.5L11.5 20L22 8"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                initial={{ pathLength: 0 }}
-                animate={{ pathLength: 1 }}
-                transition={{ duration: 0.6, delay: 0.3, ease: 'easeOut' }}
-              />
-            </svg>
+          <div className={styles.successBadgeWrap}>
+            <div className={styles.successIcon}>
+              <CheckCircle2 size={44} strokeWidth={2.2} />
+            </div>
           </div>
-          <h1 className={styles.title}>Hvala, {name}</h1>
-          <p className={styles.subtitle}>Vaša porudžbina je primljena i biće obrađena u najkraćem roku.</p>
+
+          <span className={styles.celebrationTag}>
+            <Sparkles size={13} /> PORUDŽBINA USPEŠNO POTVRĐENA
+          </span>
+
+          <h1 className={styles.title}>Hvala na poverenju, {name}!</h1>
+          <p className={styles.subtitle}>
+            Vaša porudžbina je primljena i naš tim priprema paket za slanje.
+          </p>
 
           <div className={styles.orderBox}>
-            <p className={styles.orderLabel}>Broj porudžbine</p>
-            <p className={styles.orderNum}>#{orderId}</p>
+            <div className={styles.orderBoxLeft}>
+              <span className={styles.orderLabel}>Broj porudžbine</span>
+              <p className={styles.orderNum}>#{orderId}</p>
+            </div>
+            <button type="button" onClick={handleCopyOrder} className={styles.copyBtn}>
+              {copied ? <><Check size={14} /> Kopirano</> : <><Copy size={14} /> Kopiraj broj</>}
+            </button>
           </div>
 
-          <div className={styles.delivery}>
-            <h3>Praćenje dostave</h3>
+          <div className={styles.deliveryCard}>
+            <h3 className={styles.sectionTitle}>
+              <Clock size={16} /> Status Praćenja Dostave
+            </h3>
             <div className={styles.steps}>
               {steps.map((s, i) => (
                 <div key={i} className={`${styles.step} ${s.active ? styles.stepActive : ''}`}>
-                  <span className={styles.stepIcon}><s.icon size={22} strokeWidth={1.5} /></span>
-                  {s.label}
+                  <div className={styles.stepIconWrap}>
+                    <s.icon size={20} strokeWidth={2} />
+                  </div>
+                  <span className={styles.stepTitle}>{s.title}</span>
+                  <span className={styles.stepDesc}>{s.desc}</span>
                 </div>
               ))}
             </div>
-            <p style={{ marginTop: 16, fontSize: '0.85rem', color: 'var(--color-success)' }}>
-              Očekivano: 1-3 radna dana
-            </p>
+            <div className={styles.estimateBadge}>
+              <Truck size={15} />
+              <span>Očekivana isporuka: <strong>1 - 3 radna dana</strong> (Plaćanje gotovinom kuriru pri preuzimanju)</span>
+            </div>
           </div>
 
-          <div className={styles.next}>
-            <h3>Šta sledi</h3>
-            <ul>
-              <li>Pozvaćemo vas radi potvrde</li>
-              <li>Paket se priprema u roku od 24h</li>
-              <li>Kurir dostavlja na vašu adresu</li>
-              <li>Plaćate pouzećem pri preuzimanju</li>
+          <div className={styles.nextCard}>
+            <h3 className={styles.sectionTitle}>
+              <ShieldCheck size={16} /> Šta sledi u narednim koracima?
+            </h3>
+            <ul className={styles.checklist}>
+              <li>
+                <div className={styles.checkIcon}><CheckCircle2 size={16} /></div>
+                <div>
+                  <strong>Telefonska ili SMS potvrda:</strong> Naša služba će vas pozvati ukoliko bude potrebna dodatna provera adrese.
+                </div>
+              </li>
+              <li>
+                <div className={styles.checkIcon}><CheckCircle2 size={16} /></div>
+                <div>
+                  <strong>Brzo pakovanje:</strong> Proizvod se pažljivo pakuje i šalje kurirskom službom u roku od 24h.
+                </div>
+              </li>
+              <li>
+                <div className={styles.checkIcon}><CheckCircle2 size={16} /></div>
+                <div>
+                  <strong>Plaćanje pouzećem:</strong> Nema rizika ni avansnog plaćanja — platite kuriru gotovinom tek kad preuzmete paket.
+                </div>
+              </li>
             </ul>
           </div>
 
           <div className={styles.actions}>
-            <Link href="/products" className="btn btn-primary btn-lg">Nastavi kupovinu</Link>
-            <Link href="/" className="btn btn-outline btn-lg">Početna</Link>
+            <Link href="/products" className={`btn btn-primary btn-lg ${styles.primaryBtn}`}>
+              <ShoppingBag size={18} /> Nastavi kupovinu
+            </Link>
+            <Link href="/" className={`btn btn-outline btn-lg ${styles.secondaryBtn}`}>
+              Vrati se na početnu
+            </Link>
           </div>
 
-          <p className={styles.support}>
-            Pitanja? <a href="mailto:podrska@vibemarket.rs">podrska@vibemarket.rs</a>
-          </p>
+          <div className={styles.support}>
+            <span>Imate pitanje u vezi porudžbine?</span>
+            <div className={styles.supportLinks}>
+              <a href="mailto:stupardavid3@gmail.com"><Mail size={13} /> stupardavid3@gmail.com</a>
+              <a href="tel:+3816121446605"><Phone size={13} /> +381 61 2144 6605</a>
+            </div>
+          </div>
         </motion.div>
       </div>
     </div>
