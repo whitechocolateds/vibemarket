@@ -16,6 +16,7 @@ import { getAdminStats } from '@/lib/orderStore';
 import { formatPrice } from '@/lib/format';
 import { Order } from '@/lib/types';
 import StatusBadge, { STATUS_LABELS } from '@/components/admin/StatusBadge';
+import GeminiInsightsWidget from '@/components/admin/GeminiInsightsWidget';
 import styles from '../admin.module.css';
 
 const STATUS_DOTS: Record<Order['status'], string> = {
@@ -101,6 +102,10 @@ export default async function AdminDashboardPage() {
             <p className={styles.statHint}>{stats.activeProducts} aktivnih proizvoda</p>
           </div>
         </div>
+      </div>
+
+      <div style={{ marginBottom: 'var(--space-6)' }}>
+        <GeminiInsightsWidget />
       </div>
 
       <div className={styles.dashGrid}>

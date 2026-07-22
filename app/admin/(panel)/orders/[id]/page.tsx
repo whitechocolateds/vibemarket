@@ -21,6 +21,7 @@ import { Order } from '@/lib/types';
 import { formatPrice } from '@/lib/format';
 import StatusBadge, { STATUS_LABELS } from '@/components/admin/StatusBadge';
 import { toast } from '@/components/admin/Toaster';
+import GeminiCustomerMessageBox from '@/components/admin/GeminiCustomerMessageBox';
 import styles from '@/app/admin/admin.module.css';
 
 const FLOW = ['pending', 'confirmed', 'shipped', 'delivered'] as const;
@@ -181,10 +182,14 @@ export default function AdminOrderDetailPage() {
             disabled={saving}
             aria-label="Promeni status"
           >
-            {(Object.keys(STATUS_LABELS) as Order['status'][]).map((s) => (
-              <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+            {Object.entries(STATUS_LABELS).map(([k, label]) => (
+              <option key={k} value={k}>{label}</option>
             ))}
           </select>
+        </div>
+
+        <div style={{ padding: '0 var(--space-6) var(--space-6)' }}>
+          <GeminiCustomerMessageBox order={order} />
         </div>
       </div>
 

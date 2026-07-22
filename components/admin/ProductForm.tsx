@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { FileText, Banknote, ImageIcon, Tags, ListChecks, HelpCircle } from 'lucide-react';
 import { Product, ProductInput, ProductFaq } from '@/lib/types';
 import { slugify } from '@/lib/slugify';
+import GeminiProductGenerator from '@/components/admin/GeminiProductGenerator';
+import { GeneratedProduct } from '@/lib/gemini';
 import styles from '@/app/admin/admin.module.css';
 
 interface Props {
@@ -133,9 +135,35 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
     }
   };
 
+  const handleAIGenerated = (generated: GeneratedProduct) => {
+    setForm((prev) => ({
+      ...prev,
+      title: generated.title || prev.title,
+      description: generated.description || prev.description,
+      vendor: generated.vendor || prev.vendor,
+      price: generated.price || prev.price,
+      compareAtPrice: generated.compareAtPrice || prev.compareAtPrice,
+    }));
+    if (generated.tags?.length) {
+      setTagsStr(generated.tags.join(', '));
+    }
+    if (generated.features?.length || generated.comparisonPoints?.length) {
+      const points = [
+        ...(generated.features || []),
+        ...(generated.comparisonPoints || []).map((cp) => `${cp.us} (naspram: ${cp.competitor})`),
+      ];
+      setComparisonPointsStr(points.join('\n'));
+    }
+    if (generated.faqs?.length) {
+      setFaqsStr(faqsToStr(generated.faqs));
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className={styles.form}>
       {error && <div className={styles.loginError}>{error}</div>}
+
+      <GeminiProductGenerator onGenerated={handleAIGenerated} />
 
       <div className={styles.formSection}>
         <div className={styles.formSectionTitle}>
