@@ -141,10 +141,16 @@ export default function CheckoutPage() {
         </div>
 
         <div className={styles.titleWrap}>
-          <h1 className={styles.title}>Sigurna Kupovina</h1>
-          <p className={styles.subtitle}>
-            <Lock size={14} className={styles.lockIcon} /> 256-bit Enkripcija · Plaćanje pouzećem pri preuzimanju paketa
-          </p>
+          <span className={styles.titleBadge}>
+            <ShieldCheck size={13} /> 100% BEZBEDNA PORUDŽBINA
+          </span>
+          <h1 className={styles.title}>
+            Sigurna <span className={styles.titleHighlight}>Kupovina</span>
+          </h1>
+          <div className={styles.subtitlePill}>
+            <Lock size={14} className={styles.lockIcon} />
+            <span>256-bit SSL Enkripcija · Plaćanje pouzećem pri preuzimanju paketa</span>
+          </div>
         </div>
 
         <div className={styles.layout}>

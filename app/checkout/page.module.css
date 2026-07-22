@@ -95,27 +95,59 @@
 
 .titleWrap {
   margin-bottom: var(--space-10);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.titleBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: var(--radius-full);
+  background: rgba(22, 163, 74, 0.1);
+  border: 1px solid rgba(22, 163, 74, 0.3);
+  color: #15803d;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
 }
 
 .title {
   font-family: 'Prata', serif;
   font-size: clamp(2.2rem, 4vw, 3.2rem);
   color: #0f172a;
-  margin-bottom: 6px;
+  margin-bottom: 2px;
   letter-spacing: -0.01em;
+  line-height: 1.15;
 }
 
-.subtitle {
-  color: var(--text-secondary);
-  font-size: 0.94rem;
-  display: flex;
+.titleHighlight {
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.subtitlePill {
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-weight: 500;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: var(--radius-full);
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  box-shadow: 0 4px 14px rgba(10, 42, 107, 0.04);
+  color: #475569;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-top: 4px;
 }
 
 .lockIcon {
-  color: #d97706;
+  color: #16a34a;
+  flex-shrink: 0;
 }
 
 .layout {
@@ -589,12 +621,15 @@
   }
 
   .titleWrap {
+    align-items: center;
     text-align: center;
     margin-bottom: var(--space-6);
   }
 
-  .subtitle {
-    justify-content: center;
+  .subtitlePill {
+    font-size: 0.78rem;
+    padding: 6px 14px;
+    text-align: center;
   }
 
   .section {
