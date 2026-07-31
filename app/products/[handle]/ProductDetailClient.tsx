@@ -349,14 +349,24 @@ export default function ProductDetailClient({ product, related }: Props) {
 
             <div className={styles.topDescriptionBox}>
               <div className={styles.topDescriptionHeader}>
-                <Sparkles size={14} className={styles.topDescriptionIcon} />
+                <span className={styles.topDescriptionIconWrap}>
+                  <Sparkles size={13} className={styles.topDescriptionIcon} />
+                </span>
                 <span>O PROIZVODU</span>
               </div>
-              <p className={styles.topDescriptionText}>
-                {product.description || (
-                  <>Premium proizvod sa visokim performansama, napravljen od vrhunskih materijala za dugotrajnu upotrebu.</>
-                )}
-              </p>
+              {product.descriptionHtml ? (
+                <div
+                  className={styles.topDescriptionText}
+                  dangerouslySetInnerHTML={{ __html: product.descriptionHtml }}
+                />
+              ) : (
+                <div className={styles.topDescriptionText}>
+                  <p>
+                    {product.description ||
+                      'Premium proizvod sa visokim performansama, napravljen od vrhunskih materijala za dugotrajnu upotrebu.'}
+                  </p>
+                </div>
+              )}
             </div>
 
             {optionNames.map((optName) => {

@@ -17,7 +17,7 @@ export const MOCK_PRODUCTS: Product[] = [
     handle: 'bežične-slušalice-pro',
     title: 'Bežične Slušalice Pro',
     description: 'Premium bežične slušalice sa aktivnim poništavanjem buke. Baterija traje do 30 sati. Idealne za rad od kuće i putovanje.',
-    descriptionHtml: '<p>Premium bežične slušalice sa <strong>aktivnim poništavanjem buke</strong>. Baterija traje do 30 sati. Idealne za rad od kuće i putovanje.</p>',
+    descriptionHtml: '<p>Premium bežične slušalice sa <strong>aktivnim poništavanjem buke</strong>, napravljene za koncentraciju bez okoline.</p><h3>Zvuk</h3><p>ANC se uključuje automatski i prigušuje buku okoline — ne oslanja se samo na pasivnu izolaciju.</p><h3>Baterija</h3><p>Do <strong>30 sati</strong> reprodukcije po punjenju, uz uključen ANC.</p><h3>Za koga je</h3><p>Rad od kuće, putovanja i višesatni sastanci. Ugrađeni mikrofon pokriva pozive i video konferencije.</p>',
     featuredImage: {
       url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&q=80',
       altText: 'Bežične slušalice Pro',
@@ -55,7 +55,7 @@ export const MOCK_PRODUCTS: Product[] = [
     handle: 'pametni-sat-sport',
     title: 'Pametni Sat Sport X5',
     description: 'Sportski pametni sat sa GPS-om, merenjem pulsa i vodonepropusnošću do 50m. Savršen za trčanje i plivanje.',
-    descriptionHtml: '<p>Sportski pametni sat sa <strong>GPS-om</strong>, merenjem pulsa i vodonepropusnošću do 50m.</p>',
+    descriptionHtml: '<p>Sportski pametni sat sa <strong>GPS-om</strong> i merenjem pulsa, napravljen za trening na otvorenom.</p><h3>Merenja</h3><p>Ugrađeni GPS prati rutu i tempo, uz kontinuirano merenje pulsa tokom aktivnosti.</p><h3>Vodootpornost</h3><p>Otporan na vodu do <strong>50 metara</strong> — plivanje ne zahteva skidanje sata.</p><h3>Za koga je</h3><p>Trčanje i plivanje, odnosno svako ko trenira više od jedne discipline.</p>',
     featuredImage: {
       url: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80',
       altText: 'Pametni sat Sport X5',
@@ -97,7 +97,7 @@ export const MOCK_PRODUCTS: Product[] = [
     handle: 'bluetooth-zvucnik',
     title: 'Bluetooth Zvučnik Boost',
     description: 'Vodootporni Bluetooth zvučnik sa 360° zvukom i baterijom od 20 sati. Idealan za piknik i plažu.',
-    descriptionHtml: '<p>Vodootporni Bluetooth zvučnik sa <strong>360° zvukom</strong> i baterijom od 20 sati.</p>',
+    descriptionHtml: '<p>Vodootporni Bluetooth zvučnik sa <strong>360° zvukom</strong> koji ne zavisi od toga gde ga postavite.</p><h3>Zvuk</h3><p>Zvuk se širi u svim pravcima, pa je pokrivenost ista bez obzira na orijentaciju zvučnika.</p><h3>Baterija</h3><p>Do <strong>20 sati</strong> reprodukcije po punjenju.</p><h3>Za koga je</h3><p>Piknik, plaža i svaka situacija gde zvučnik može pokisnuti ili završiti u pesku.</p>',
     featuredImage: {
       url: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=600&q=80',
       altText: 'Bluetooth zvučnik',
@@ -134,7 +134,7 @@ export const MOCK_PRODUCTS: Product[] = [
     handle: 'laptop-stend',
     title: 'Ergonomski Laptop Stend',
     description: 'Aluminijumski laptop stend sa podesivim visinom i uglom. Poboljšava držanje i smanjuje bol u vratu.',
-    descriptionHtml: '<p>Aluminijumski laptop stend sa podesivim visinom i uglom.</p>',
+    descriptionHtml: '<p>Aluminijumski laptop stend sa <strong>podesivom visinom i uglom</strong>.</p><h3>Materijal</h3><p>Aluminijumska konstrukcija — stabilna pod težinom laptopa i pomaže odvođenju toplote.</p><h3>Podešavanje</h3><p>Visina i ugao se nezavisno podešavaju, pa se ekran podiže na nivo očiju.</p><h3>Zašto pomaže</h3><p>Poboljšava držanje tokom rada i smanjuje bol u vratu pri dugom sedenju.</p>',
     featuredImage: {
       url: 'https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=600&q=80',
       altText: 'Laptop stend',
@@ -171,7 +171,7 @@ export const MOCK_PRODUCTS: Product[] = [
     handle: 'fitnes-narukvica',
     title: 'Fitnes Narukvica Ultra',
     description: 'Fitnes narukvica sa praćenjem sna, aktivnosti i stresa. Baterija 7 dana, AMOLED ekran.',
-    descriptionHtml: '<p>Fitnes narukvica sa praćenjem sna, aktivnosti i stresa.</p>',
+    descriptionHtml: '<p>Fitnes narukvica koja prati <strong>san, aktivnost i stres</strong> kroz ceo dan.</p><h3>Praćenje</h3><p>San, dnevna aktivnost i nivo stresa se beleže kontinuirano, bez ručnog pokretanja.</p><h3>Ekran</h3><p>AMOLED ekran ostaje čitljiv i na direktnom suncu.</p><h3>Baterija</h3><p>Do <strong>7 dana</strong> rada po punjenju — punjenje jednom nedeljno.</p>',
     featuredImage: {
       url: 'https://images.unsplash.com/photo-1575311373937-040b8e1fd5b6?w=600&q=80',
       altText: 'Fitnes narukvica',
@@ -208,7 +208,7 @@ export const MOCK_PRODUCTS: Product[] = [
     handle: 'wireless-punjač',
     title: 'Wireless Punjač 15W',
     description: 'Brzi bežični punjač kompatibilan sa svim Qi uređajima. Punjenje 15W za iPhone i 10W za Android.',
-    descriptionHtml: '<p>Brzi bežični punjač kompatibilan sa svim Qi uređajima.</p>',
+    descriptionHtml: '<p>Brzi bežični punjač kompatibilan sa <strong>svim Qi uređajima</strong>.</p><h3>Brzina punjenja</h3><p>Do <strong>15W</strong> za iPhone i <strong>10W</strong> za Android uređaje.</p><h3>Kompatibilnost</h3><p>Radi sa svakim telefonom koji podržava Qi standard — bez posebnog adaptera ili kabla po uređaju.</p>',
     featuredImage: {
       url: 'https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=600&q=80',
       altText: 'Wireless punjač',
@@ -245,7 +245,7 @@ export const MOCK_PRODUCTS: Product[] = [
     handle: 'mehanička-tastatura',
     title: 'Mehanička Gaming Tastatura',
     description: 'RGB mehanička tastatura sa Cherry MX Red tasterima. Idealna za gaming i brzo kucanje.',
-    descriptionHtml: '<p>RGB mehanička tastatura sa <strong>Cherry MX Red</strong> tasterima.</p>',
+    descriptionHtml: '<p>Mehanička tastatura sa <strong>Cherry MX Red</strong> tasterima i RGB osvetljenjem.</p><h3>Tasteri</h3><p>Cherry MX Red su linearni prekidači — bez otpora na sredini hoda, pa je pritisak brz i tih.</p><h3>Osvetljenje</h3><p>RGB pozadinsko osvetljenje po tasteru.</p><h3>Za koga je</h3><p>Gaming i brzo kucanje, odnosno svako ko provodi sate za tastaturom.</p>',
     featuredImage: {
       url: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=600&q=80',
       altText: 'Mehanička tastatura',
@@ -282,7 +282,7 @@ export const MOCK_PRODUCTS: Product[] = [
     handle: 'web-kamera-4k',
     title: 'Web Kamera 4K Ultra HD',
     description: '4K web kamera sa autofokusom i redukcijom buke mikrofona. Savršena za video pozive i streaming.',
-    descriptionHtml: '<p>4K web kamera sa autofokusom i redukcijom buke mikrofona.</p>',
+    descriptionHtml: '<p>Web kamera sa <strong>4K</strong> rezolucijom i autofokusom.</p><h3>Slika</h3><p>4K Ultra HD uz autofokus koji drži lice u fokusu i kada se pomerate.</p><h3>Zvuk</h3><p>Ugrađena redukcija buke mikrofona filtrira pozadinske zvukove prostorije.</p><h3>Za koga je</h3><p>Video pozivi i streaming — svuda gde slika i zvuk moraju biti čisti bez dodatne opreme.</p>',
     featuredImage: {
       url: 'https://images.unsplash.com/photo-1587826080692-f439cd0b70da?w=600&q=80',
       altText: 'Web kamera 4K',
