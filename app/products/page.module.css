@@ -9,9 +9,9 @@
   overflow: hidden;
   padding: var(--space-10) var(--space-8);
   border-radius: 24px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(246, 248, 252, 0.95) 100%);
-  border: 1.5px solid rgba(var(--brand-rgb), 0.18);
-  box-shadow: 0 16px 48px rgba(18, 33, 59, 0.06), 0 2px 8px rgba(18, 33, 59, 0.03);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(224, 235, 252, 0.96) 100%);
+  border: 1.5px solid rgba(var(--brand-rgb), 0.28);
+  box-shadow: 0 16px 48px rgba(var(--brand-rgb), 0.14), 0 2px 8px rgba(11, 42, 107, 0.06);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -28,7 +28,7 @@
   width: 440px;
   height: 180px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(46, 111, 230, 0.22) 0%, rgba(217, 155, 0, 0.14) 45%, rgba(22, 82, 190, 0) 75%);
+  background: radial-gradient(circle, rgba(46, 111, 230, 0.38) 0%, rgba(22, 82, 190, 0.22) 45%, rgba(22, 82, 190, 0) 75%);
   pointer-events: none;
   filter: blur(24px);
   animation: meshGlow 8s ease-in-out infinite alternate;
@@ -55,14 +55,14 @@
   gap: 8px;
   padding: 7px 18px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, rgba(22, 82, 190, 0.08) 0%, rgba(217, 155, 0, 0.10) 100%);
-  border: 1px solid rgba(22, 82, 190, 0.25);
-  color: var(--brand);
+  background: linear-gradient(135deg, rgba(22, 82, 190, 0.12) 0%, rgba(46, 111, 230, 0.18) 100%);
+  border: 1.5px solid rgba(22, 82, 190, 0.32);
+  color: var(--brand-dark);
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  box-shadow: 0 4px 14px rgba(22, 82, 190, 0.08);
+  box-shadow: 0 4px 14px rgba(22, 82, 190, 0.14);
 }
 
 .heroSparkleIcon {
@@ -88,11 +88,11 @@
 .heroTitleHighlight {
   background: linear-gradient(
     120deg,
-    #1652be 0%,
-    #2e6fe6 25%,
-    #d99b00 50%,
-    #2e6fe6 75%,
-    #1652be 100%
+    #0f3e9a 0%,
+    #1652be 25%,
+    #5b9dff 50%,
+    #1652be 75%,
+    #0f3e9a 100%
   );
   background-size: 250% auto;
   -webkit-background-clip: text;
@@ -129,19 +129,19 @@
   gap: 8px;
   padding: 8px 16px;
   border-radius: var(--radius-full);
-  background: #ffffff;
-  border: 1.5px solid var(--border-subtle);
+  background: linear-gradient(135deg, #ffffff 0%, var(--bg-tint) 100%);
+  border: 1.5px solid var(--border-medium);
   color: var(--text-primary);
   font-size: 0.8rem;
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(18, 33, 59, 0.04);
+  box-shadow: 0 4px 12px rgba(var(--brand-rgb), 0.10);
   transition: all 0.25s ease;
 }
 
 .heroFeatureChip:hover {
-  border-color: var(--brand-light);
+  border-color: var(--brand);
   transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(18, 33, 59, 0.08);
+  box-shadow: 0 6px 18px rgba(var(--brand-rgb), 0.20);
 }
 
 .chipIconWrap {
@@ -160,13 +160,13 @@
   position: sticky;
   top: var(--header-height);
   z-index: 20;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(233, 240, 252, 0.88);
   backdrop-filter: blur(16px);
   border-top: 1px solid var(--border-subtle);
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1.5px solid var(--border-medium);
   padding: var(--space-4) 0;
   margin-bottom: var(--space-10);
-  box-shadow: 0 8px 24px rgba(18, 33, 59, 0.05);
+  box-shadow: 0 8px 24px rgba(var(--brand-rgb), 0.12);
 }
 
 .toolbarHead {
@@ -207,8 +207,9 @@
   display: inline-flex;
   padding: 4px 12px;
   border-radius: var(--radius-full);
-  background: rgba(var(--gold-rgb), 0.12);
-  color: var(--gold-dark);
+  background: rgba(var(--brand-rgb), 0.12);
+  border: 1px solid rgba(var(--brand-rgb), 0.22);
+  color: var(--brand-dark);
   font-size: 0.75rem;
   font-weight: 700;
   white-space: nowrap;
@@ -227,14 +228,14 @@
   gap: 6px;
   padding: 8px 16px;
   border-radius: var(--radius-full);
-  background: var(--bg-elevated);
-  border: 1.5px solid var(--border-subtle);
-  color: var(--text-secondary);
+  background: var(--bg-tint);
+  border: 1.5px solid var(--border-medium);
+  color: var(--brand-dark);
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 2px 6px rgba(18, 33, 59, 0.02);
+  box-shadow: 0 2px 6px rgba(var(--brand-rgb), 0.08);
   font-family: inherit;
 }
 
@@ -311,7 +312,7 @@
   height: 44px;
   padding-left: 40px;
   padding-right: 36px;
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-full);
   border: 1.5px solid var(--border-medium);
   background: var(--bg-elevated);
   color: var(--text-primary);
@@ -367,7 +368,7 @@
   height: 44px;
   padding-left: 38px;
   padding-right: 36px;
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-full);
   border: 1.5px solid var(--border-medium);
   background: var(--bg-elevated);
   color: var(--text-primary);
@@ -415,7 +416,7 @@
 .skeletonCard {
   aspect-ratio: 3/4;
   border-radius: var(--radius-xl);
-  background: var(--bg-elevated);
+  background: var(--blue-wash);
   border: 1px solid var(--border-subtle);
 }
 

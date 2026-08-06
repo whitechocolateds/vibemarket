@@ -6,11 +6,11 @@
   width: 450px;
   max-width: 100vw;
   background: #ffffff;
-  border-left: 1.5px solid #cbd5e1;
+  border-left: 1.5px solid rgba(22, 82, 190, 0.26);
   z-index: 110;
   display: flex;
   flex-direction: column;
-  box-shadow: -20px 0 60px rgba(10, 42, 107, 0.16);
+  box-shadow: -20px 0 60px rgba(10, 42, 107, 0.24);
 }
 
 .sidebar::before {
@@ -20,7 +20,7 @@
   left: 0;
   right: 0;
   height: 3.5px;
-  background: var(--gold-gradient);
+  background: var(--brand-gradient);
   z-index: 10;
 }
 
@@ -29,14 +29,14 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-6) var(--space-8);
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid rgba(22, 82, 190, 0.18);
   background: #ffffff;
 }
 
 .title {
   font-family: 'Prata', serif;
   font-size: 1.35rem;
-  color: #0f172a;
+  color: var(--text-primary);
 }
 
 .count {
@@ -59,7 +59,7 @@
   gap: var(--space-5);
   padding: var(--space-10);
   text-align: center;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .items {
@@ -69,7 +69,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  background: #f8fafc;
+  background: var(--blue-wash);
 }
 
 .item {
@@ -78,9 +78,9 @@
   gap: var(--space-4);
   padding: var(--space-4);
   border-radius: 16px;
-  border: 1.5px solid #e2e8f0;
-  background: #ffffff;
-  box-shadow: 0 4px 14px rgba(10, 42, 107, 0.03);
+  border: 1.5px solid rgba(22, 82, 190, 0.18);
+  background: linear-gradient(180deg, #ffffff 0%, var(--bg-tint) 100%);
+  box-shadow: 0 4px 14px rgba(10, 42, 107, 0.08);
   transition: all 0.2s ease;
 }
 
@@ -95,7 +95,7 @@
   object-fit: cover;
   border-radius: 12px;
   background: var(--bg-surface);
-  border: 1px solid #e2e8f0;
+  border: 1px solid rgba(22, 82, 190, 0.18);
 }
 
 .itemInfo h4 {
@@ -103,13 +103,13 @@
   font-size: 0.88rem;
   font-weight: 700;
   margin-bottom: 3px;
-  color: #0f172a;
+  color: var(--text-primary);
   line-height: 1.3;
 }
 
-.itemVariant { font-size: 0.74rem; color: #64748b; }
-.itemPrice { font-size: 0.92rem; font-weight: 800; color: #0f172a; margin-top: 4px; }
-.itemPriceOld { font-weight: 400; color: #94a3b8; text-decoration: line-through; margin-right: 6px; font-size: 0.74rem; }
+.itemVariant { font-size: 0.74rem; color: var(--text-muted); }
+.itemPrice { font-size: 0.92rem; font-weight: 800; color: var(--text-primary); margin-top: 4px; }
+.itemPriceOld { font-weight: 400; color: #8CA1C8; text-decoration: line-through; margin-right: 6px; font-size: 0.74rem; }
 .itemSaveTag { display: inline-block; font-size: 0.68rem; font-weight: 700; color: #16a34a; background: rgba(22, 163, 74, 0.08); padding: 2px 8px; border-radius: var(--radius-full); margin-top: 4px; }
 
 .itemActions {
@@ -210,7 +210,7 @@
 .upsellName {
   font-size: 0.82rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -222,11 +222,11 @@
   gap: 6px;
 }
 
-.upsellPrice { font-size: 0.82rem; font-weight: 800; color: #0f172a; }
+.upsellPrice { font-size: 0.82rem; font-weight: 800; color: var(--text-primary); }
 
 .upsellCompare {
   font-size: 0.7rem;
-  color: #94a3b8;
+  color: #8CA1C8;
   text-decoration: line-through;
 }
 
@@ -253,12 +253,12 @@
 
 .footer {
   padding: var(--space-6) var(--space-8);
-  border-top: 1px solid #e2e8f0;
-  background: #ffffff;
+  border-top: 1.5px solid rgba(22, 82, 190, 0.18);
+  background: linear-gradient(180deg, #ffffff 0%, var(--bg-tint) 100%);
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 -8px 24px rgba(11, 42, 107, 0.10);
 }
 
 .shipProgress {
@@ -281,7 +281,7 @@
 }
 
 .shipMsg svg { color: #d97706; flex-shrink: 0; }
-.shipMsg strong { color: #0f172a; }
+.shipMsg strong { color: var(--text-primary); }
 
 .shipFree { color: #16a34a; }
 .shipFree svg { color: #16a34a; }
@@ -312,20 +312,20 @@
   font-size: 0.75rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #64748b;
+  color: var(--text-muted);
   font-weight: 700;
 }
 
 .totalPrice {
   font-family: 'Prata', serif;
   font-size: 1.55rem;
-  color: #0f172a;
+  color: var(--text-primary);
   font-weight: 400;
 }
 
 .note {
   font-size: 0.76rem;
-  color: #64748b;
+  color: var(--text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -340,7 +340,7 @@
 }
 
 .note svg {
-  color: var(--gold-light);
+  color: var(--brand);
 }
 
 .checkoutBtn {

@@ -1,6 +1,9 @@
 .page {
   padding: var(--space-8) 0 var(--space-24);
-  background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+  background:
+    radial-gradient(900px circle at 15% 0%, rgba(var(--brand-rgb), 0.14) 0%, transparent 55%),
+    radial-gradient(760px circle at 88% 20%, rgba(46, 111, 230, 0.12) 0%, transparent 58%),
+    linear-gradient(180deg, #E7EFFD 0%, #D5E3F8 100%);
   min-height: 100vh;
 }
 
@@ -22,11 +25,11 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-secondary);
-  background: #ffffff;
+  background: linear-gradient(135deg, #ffffff 0%, var(--bg-tint) 100%);
   padding: 8px 18px;
   border-radius: var(--radius-full);
-  border: 1px solid #cbd5e1;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1.5px solid rgba(22, 82, 190, 0.26);
+  box-shadow: 0 2px 8px rgba(11, 42, 107, 0.10);
   transition: all 0.2s ease;
 }
 
@@ -41,11 +44,11 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  background: #ffffff;
+  background: linear-gradient(135deg, #ffffff 0%, var(--bg-tint) 100%);
   padding: 8px 18px;
   border-radius: var(--radius-full);
-  border: 1px solid #cbd5e1;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1.5px solid rgba(22, 82, 190, 0.26);
+  box-shadow: 0 2px 8px rgba(11, 42, 107, 0.10);
 }
 
 .step {
@@ -90,7 +93,7 @@
 .stepLine {
   width: 24px;
   height: 2px;
-  background: #cbd5e1;
+  background: rgba(22, 82, 190, 0.26);
 }
 
 .titleWrap {
@@ -118,7 +121,7 @@
 .title {
   font-family: 'Prata', serif;
   font-size: clamp(2.2rem, 4vw, 3.2rem);
-  color: #0f172a;
+  color: var(--text-primary);
   margin-bottom: 2px;
   letter-spacing: -0.01em;
   line-height: 1.15;
@@ -136,10 +139,10 @@
   gap: 8px;
   padding: 8px 18px;
   border-radius: var(--radius-full);
-  background: #ffffff;
-  border: 1.5px solid #cbd5e1;
-  box-shadow: 0 4px 14px rgba(10, 42, 107, 0.04);
-  color: #475569;
+  background: linear-gradient(135deg, #ffffff 0%, var(--bg-tint) 100%);
+  border: 1.5px solid rgba(22, 82, 190, 0.26);
+  box-shadow: 0 4px 14px rgba(10, 42, 107, 0.10);
+  color: var(--text-secondary);
   font-size: 0.85rem;
   font-weight: 600;
   margin-top: 4px;
@@ -174,9 +177,9 @@
   overflow: hidden;
   padding: var(--space-8);
   border-radius: 24px;
-  border: 1.5px solid #cbd5e1;
-  background: #ffffff;
-  box-shadow: 0 16px 40px rgba(10, 42, 107, 0.05);
+  border: 1.5px solid rgba(22, 82, 190, 0.26);
+  background: linear-gradient(180deg, #ffffff 0%, var(--bg-tint) 100%);
+  box-shadow: 0 16px 40px rgba(10, 42, 107, 0.12);
 }
 
 .section::before {
@@ -196,7 +199,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  color: #0f172a;
+  color: var(--text-primary);
 }
 
 .sectionIconWrap {
@@ -231,7 +234,7 @@
   left: 16px;
   top: 50%;
   transform: translateY(-50%);
-  color: #94a3b8;
+  color: #8CA1C8;
   pointer-events: none;
   transition: color 0.2s ease;
 }
@@ -246,9 +249,9 @@
   padding-left: 46px;
   padding-right: 16px;
   border-radius: 12px;
-  background: #f8fafc;
-  border: 1.5px solid #cbd5e1;
-  color: #0f172a;
+  background: var(--bg-tint);
+  border: 1.5px solid rgba(22, 82, 190, 0.26);
+  color: var(--text-primary);
   font-family: inherit;
   font-size: 0.92rem;
   font-weight: 500;
@@ -264,7 +267,7 @@
 }
 
 .customInput::placeholder {
-  color: #94a3b8;
+  color: #8CA1C8;
 }
 
 .inputError {
@@ -276,9 +279,9 @@
   width: 100%;
   padding: 14px 16px;
   border-radius: 12px;
-  background: #f8fafc;
-  border: 1.5px solid #cbd5e1;
-  color: #0f172a;
+  background: var(--bg-tint);
+  border: 1.5px solid rgba(22, 82, 190, 0.26);
+  color: var(--text-primary);
   font-family: inherit;
   font-size: 0.9rem;
   transition: all 0.2s ease;
@@ -324,13 +327,13 @@
 .paymentInfo strong {
   display: block;
   font-size: 0.98rem;
-  color: #0f172a;
+  color: var(--text-primary);
   margin-bottom: 2px;
 }
 
 .paymentInfo p {
   font-size: 0.84rem;
-  color: #475569;
+  color: var(--text-secondary);
   margin: 0;
   line-height: 1.45;
 }
@@ -344,8 +347,8 @@
   display: none;
   padding: var(--space-6);
   border-radius: 16px;
-  border: 1px solid #cbd5e1;
-  background: #ffffff;
+  border: 1.5px solid rgba(22, 82, 190, 0.26);
+  background: linear-gradient(180deg, #ffffff 0%, var(--bg-tint) 100%);
   flex-direction: column;
   gap: var(--space-3);
 }
@@ -378,12 +381,12 @@
   overflow: hidden;
   padding: var(--space-8);
   border-radius: 24px;
-  border: 1.5px solid #cbd5e1;
-  background: #ffffff;
+  border: 1.5px solid rgba(22, 82, 190, 0.26);
+  background: linear-gradient(180deg, #ffffff 0%, var(--bg-tint) 100%);
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
-  box-shadow: 0 20px 48px rgba(10, 42, 107, 0.08);
+  box-shadow: 0 20px 48px rgba(10, 42, 107, 0.16);
 }
 
 .summaryCard::before {
@@ -393,18 +396,18 @@
   left: 0;
   right: 0;
   height: 3.5px;
-  background: var(--gold-gradient);
+  background: var(--brand-gradient);
 }
 
 .summaryTitle {
   font-family: 'Prata', serif;
   font-size: 1.25rem;
   padding-bottom: var(--space-4);
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid rgba(22, 82, 190, 0.18);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: #0f172a;
+  color: var(--text-primary);
 }
 
 .summaryItemCount {
@@ -442,7 +445,7 @@
   object-fit: cover;
   border-radius: 12px;
   background: var(--bg-surface);
-  border: 1px solid #cbd5e1;
+  border: 1px solid rgba(22, 82, 190, 0.26);
 }
 
 .qtyBadge {
@@ -463,13 +466,13 @@
 }
 
 .itemInfo { flex: 1; min-width: 0; }
-.itemInfo p { font-size: 0.9rem; font-weight: 700; color: #0f172a; margin-bottom: 2px; }
-.itemVariant { font-size: 0.76rem !important; color: #64748b !important; font-weight: 400 !important; }
+.itemInfo p { font-size: 0.9rem; font-weight: 700; color: var(--text-primary); margin-bottom: 2px; }
+.itemVariant { font-size: 0.76rem !important; color: var(--text-muted) !important; font-weight: 400 !important; }
 
 .itemPrice {
   font-size: 0.95rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text-primary);
   white-space: nowrap;
   text-align: right;
 }
@@ -478,7 +481,7 @@
   display: block;
   font-size: 0.74rem;
   font-weight: 400;
-  color: #94a3b8;
+  color: #8CA1C8;
   text-decoration: line-through;
 }
 
@@ -498,16 +501,16 @@
   font-weight: 700;
   letter-spacing: 0.01em;
   text-align: center;
-  color: #475569;
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
+  color: var(--text-secondary);
+  background: var(--bg-tint);
+  border: 1px solid rgba(22, 82, 190, 0.26);
   border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
 }
 
-.bundleOption:hover { border-color: var(--gold-light); color: var(--brand); background: #ffffff; }
+.bundleOption:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-glow); }
 
 .bundleOptionActive {
   background: var(--brand);
@@ -522,15 +525,15 @@
   display: flex;
   justify-content: space-between;
   font-size: 0.9rem;
-  color: #475569;
+  color: var(--text-secondary);
 }
 
 .summaryTotal {
   font-size: 1.1rem !important;
   font-weight: 800 !important;
-  color: #0f172a !important;
+  color: var(--text-primary) !important;
   padding-top: var(--space-4);
-  border-top: 1.5px dashed #cbd5e1;
+  border-top: 1.5px dashed rgba(22, 82, 190, 0.26);
 }
 
 .savingsRow { color: #16a34a !important; font-weight: 700; }
@@ -573,19 +576,19 @@
 .trust {
   padding: var(--space-5);
   border-radius: 16px;
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
+  background: linear-gradient(135deg, rgba(var(--brand-rgb), 0.07) 0%, rgba(46, 111, 230, 0.11) 100%);
+  border: 1.5px solid rgba(22, 82, 190, 0.26);
   font-size: 0.8rem;
-  color: #475569;
+  color: var(--text-secondary);
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
 }
 
 .trust span { display: flex; align-items: center; gap: 10px; font-weight: 600; }
-.trust svg { color: var(--gold-light); flex-shrink: 0; }
+.trust svg { color: var(--brand); flex-shrink: 0; }
 
-.divider { height: 1px; background: #e2e8f0; }
+.divider { height: 1px; background: rgba(22, 82, 190, 0.18); }
 
 /* ─── Mobile Media Queries ────────────────────────────────────────────────── */
 @media (max-width: 768px) {
