@@ -45,5 +45,9 @@ next-env.d.ts
 /data/admin-credentials.txt
 !data/.gitkeep
 
+# locally uploaded product images (na Vercelu idu u Blob)
+/public/uploads/*
+!public/uploads/.gitkeep
+
 .vercel
 .env*

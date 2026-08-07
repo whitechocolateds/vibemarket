@@ -7,6 +7,10 @@ const OPTIMIZABLE_HOST_SUFFIXES = ['.public.blob.vercel-storage.com'];
  * kao obican <img>, bez greske) umesto da rezerviste na poznate domene.
  */
 export function isOptimizableImageUrl(url: string): boolean {
+  // Lokalno otpremljene slike su relativne putanje - new URL() bi na njima puklo.
+  // Drži usklađeno sa images.localPatterns u next.config.ts.
+  if (url.startsWith('/uploads/')) return true;
+
   try {
     const { hostname } = new URL(url);
     if (OPTIMIZABLE_HOSTS.includes(hostname)) return true;

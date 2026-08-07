@@ -154,11 +154,14 @@ function pickCuratedImage(title: string, tags: string[], imageQuery: string): st
 export interface GeneratedProduct {
   title: string;
   description: string;
+  /** Strukturiran HTML (<p>/<h3>/<strong>/<ul>/<li>) kad ga izvor može dati; inače se izvodi iz `description`. */
+  descriptionHtml?: string;
   vendor: string;
   productType: string;
   price: number;
   compareAtPrice?: number;
   imageUrl?: string;
+  imageUrls?: string[];
   imageSearchQuery?: string;
   tags: string[];
   features: string[];

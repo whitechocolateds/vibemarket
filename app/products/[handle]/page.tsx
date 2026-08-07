@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import ProductDetailClient from './ProductDetailClient';
 import { getProductByHandle, getAllProducts } from '@/lib/productStore';
 import { stableReviewCount, STORE_RATING } from '@/lib/reviewStats';
+import { escapeJsonLd } from '@/lib/sanitizeHtml';
 import { Product } from '@/lib/types';
 
 interface Props {
@@ -73,7 +74,7 @@ export default async function ProductDetailPage({ params }: Props) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildProductSchema(product)) }}
+        dangerouslySetInnerHTML={{ __html: escapeJsonLd(JSON.stringify(buildProductSchema(product))) }}
       />
       <ProductDetailClient product={product} related={fallbackRelated} />
     </>

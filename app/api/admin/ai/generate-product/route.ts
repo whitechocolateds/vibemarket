@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateProductWithAI } from '@/lib/gemini';
+import { requireAdmin } from '@/lib/adminAuth';
 
 export async function POST(req: NextRequest) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
+
   try {
     const { prompt, model } = await req.json();
     if (!prompt || typeof prompt !== 'string') {
@@ -10,7 +14,8 @@ export async function POST(req: NextRequest) {
 
     const data = await generateProductWithAI(prompt, model);
     return NextResponse.json({ success: true, data });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Greška pri generisanju proizvoda.' }, { status: 500 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Greška pri generisanju proizvoda.';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

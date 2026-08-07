@@ -2,13 +2,26 @@ import { MOCK_PRODUCTS } from './mockData';
 import { readJsonFile, writeJsonFile } from './db';
 import { Product, ProductInput } from './types';
 import { slugify } from './slugify';
+import { sanitizeProductHtml, htmlToPlainText, escapeHtml } from './sanitizeHtml';
 
 const FILE = 'products.json';
+
+/**
+ * Sanitizacija i na čitanju, ne samo na upisu: proizvodi upisani pre nego što je
+ * sanitizer postojao (ili direktnim POST-om koji zaobilazi formu) i dalje idu u
+ * dangerouslySetInnerHTML na stranici proizvoda.
+ */
+function harden(product: Product): Product {
+  const html = product.descriptionHtml;
+  if (!html) return product;
+  const safe = sanitizeProductHtml(html);
+  return safe === html ? product : { ...product, descriptionHtml: safe };
+}
 
 async function loadProducts(): Promise<Product[]> {
   try {
     const stored = await readJsonFile<Product[] | null>(FILE, null);
-    if (stored && stored.length > 0) return stored;
+    if (stored && stored.length > 0) return stored.map(harden);
   } catch (error) {
     console.error('Failed to read products store:', error);
   }
@@ -60,12 +73,17 @@ function buildProduct(input: ProductInput, id?: string): Product {
   const priceStr = String(Math.round(input.price));
   const compareStr = input.compareAtPrice ? String(Math.round(input.compareAtPrice)) : null;
 
+  // Ako nema gotovog HTML-a, čist opis se ESKEJPUJE pre umotavanja - inače je '<' u opisu injection.
+  const rawHtml = input.descriptionHtml?.trim() || `<p>${escapeHtml(input.description.trim())}</p>`;
+  const descriptionHtml = sanitizeProductHtml(rawHtml);
+  const description = input.description.trim() || htmlToPlainText(descriptionHtml);
+
   return {
     id: productId,
     handle,
     title: input.title.trim(),
-    description: input.description.trim(),
-    descriptionHtml: input.descriptionHtml?.trim() || `<p>${input.description.trim()}</p>`,
+    description,
+    descriptionHtml,
     featuredImage: images[0] ?? null,
     images,
     variants: [{

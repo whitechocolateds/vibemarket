@@ -6,6 +6,7 @@ import { FileText, Banknote, ImageIcon, Tags, ListChecks, HelpCircle } from 'luc
 import { Product, ProductInput, ProductFaq } from '@/lib/types';
 import { slugify } from '@/lib/slugify';
 import GeminiProductGenerator from '@/components/admin/GeminiProductGenerator';
+import ImageUploader from '@/components/admin/ImageUploader';
 import { GeneratedProduct } from '@/lib/gemini';
 import styles from '@/app/admin/admin.module.css';
 
@@ -71,9 +72,8 @@ function productToInput(p: Product): ProductInput {
 export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
   const [form, setForm] = useState<ProductInput>(initial ? productToInput(initial) : EMPTY);
   const [tagsStr, setTagsStr] = useState(initial?.tags.join(', ') ?? '');
-  const [extraImages, setExtraImages] = useState(
-    initial ? initial.images.slice(1).map((i) => i.url).join('\n') : ''
-  );
+  // Jedan izvor istine za slike; images[0] je glavna
+  const [images, setImages] = useState<string[]>(initial ? initial.images.map((i) => i.url) : []);
   const [comparisonPointsStr, setComparisonPointsStr] = useState(
     (initial?.comparisonPoints ?? []).join('\n')
   );
@@ -101,27 +101,24 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
     return Math.round((1 - form.price / form.compareAtPrice) * 100);
   }, [form.price, form.compareAtPrice]);
 
-  const previewUrls = useMemo(() => {
-    const extras = extraImages.split('\n').map((u) => u.trim()).filter(Boolean);
-    return [form.imageUrl.trim(), ...extras].filter(Boolean);
-  }, [form.imageUrl, extraImages]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSaving(true);
     try {
+      const cleanImages = images.map((u) => u.trim()).filter(Boolean);
       const data: ProductInput = {
         ...form,
         handle: effectiveSlug,
         tags: tagsStr.split(',').map((t) => t.trim()).filter(Boolean),
-        imageUrls: extraImages.split('\n').map((u) => u.trim()).filter(Boolean),
+        imageUrl: cleanImages[0] ?? '',
+        imageUrls: cleanImages.slice(1),
         compareAtPrice: form.compareAtPrice || null,
         comparisonPoints: comparisonPointsStr.split('\n').map((p) => p.trim()).filter(Boolean),
         faqs: parseFaqs(faqsStr),
       };
       if (!data.title.trim()) throw new Error('Naziv je obavezan');
-      if (!data.imageUrl.trim()) throw new Error('Glavna slika je obavezna');
+      if (!data.imageUrl) throw new Error('Glavna slika je obavezna');
       if (data.price <= 0) throw new Error('Cena mora biti veća od 0');
       if (data.compareAtPrice && data.compareAtPrice <= data.price) {
         throw new Error('Stara cena mora biti veća od trenutne cene');
@@ -140,19 +137,33 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
       ...prev,
       title: generated.title || prev.title,
       description: generated.description || prev.description,
+      descriptionHtml: generated.descriptionHtml || prev.descriptionHtml,
       vendor: generated.vendor || prev.vendor,
+      productType: generated.productType || prev.productType,
       price: generated.price || prev.price,
       compareAtPrice: generated.compareAtPrice || prev.compareAtPrice,
     }));
+
+    // Generator je do sada nalazio sliku pa je forma tiho odbacivala
+    const fromAI = [generated.imageUrl, ...(generated.imageUrls ?? [])].filter(
+      (u): u is string => typeof u === 'string' && u.trim().length > 0
+    );
+    if (fromAI.length) {
+      setImages((prev) => [...prev, ...fromAI.filter((u) => !prev.includes(u))]);
+    }
+
     if (generated.tags?.length) {
       setTagsStr(generated.tags.join(', '));
     }
     if (generated.features?.length || generated.comparisonPoints?.length) {
       const points = [
         ...(generated.features || []),
-        ...(generated.comparisonPoints || []).map((cp: any) =>
-          typeof cp === 'string' ? cp : `${cp.us || ''} (naspram: ${cp.competitor || ''})`
-        ),
+        // Model ponekad vrati {us, competitor} umesto stringa
+        ...(generated.comparisonPoints || []).map((cp: unknown) => {
+          if (typeof cp === 'string') return cp;
+          const pair = cp as { us?: string; competitor?: string };
+          return `${pair.us ?? ''} (naspram: ${pair.competitor ?? ''})`;
+        }),
       ];
       setComparisonPointsStr(points.join('\n'));
     }
@@ -250,32 +261,10 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
         <div className={styles.formSectionTitle}>
           <ImageIcon size={14} strokeWidth={2} /> Slike
         </div>
-        <div className={styles.formGrid}>
-          <div className={`form-group ${styles.formGridFull}`}>
-            <label className="form-label" htmlFor="imageUrl">Glavna slika (URL) *</label>
-            <input id="imageUrl" name="imageUrl" className="input" value={form.imageUrl} onChange={handleChange} placeholder="https://..." required />
-          </div>
-
-          <div className={`form-group ${styles.formGridFull}`}>
-            <label className="form-label" htmlFor="extraImages">Dodatne slike (URL, jedna po liniji)</label>
-            <textarea id="extraImages" className="textarea" rows={3} value={extraImages} onChange={(e) => setExtraImages(e.target.value)} placeholder={'https://...\nhttps://...'} />
-          </div>
-        </div>
-
-        {previewUrls.length > 0 && (
-          <div className={styles.imagePreviewGrid}>
-            {previewUrls.map((url, i) => (
-              // eslint-disable-next-line @next/next/no-img-element -- pregled proizvoljnog URL-a van remotePatterns liste
-              <img
-                key={`${url}-${i}`}
-                src={url}
-                alt={i === 0 ? 'Glavna slika' : `Slika ${i + 1}`}
-                className={`${styles.imagePreview} ${i === 0 ? styles.imagePreviewMain : ''}`}
-                title={i === 0 ? 'Glavna slika' : `Slika ${i + 1}`}
-              />
-            ))}
-          </div>
-        )}
+        <ImageUploader value={images} onChange={setImages} disabled={saving} />
+        <span className={styles.fieldHint}>
+          Prva slika je glavna i prikazuje se u katalogu. Prevuci je strelicama ili klikni zvezdicu da promeniš redosled.
+        </span>
       </div>
 
       <div className={styles.formSection}>
