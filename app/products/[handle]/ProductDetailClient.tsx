@@ -181,9 +181,17 @@ export default function ProductDetailClient({ product, related }: Props) {
 
   const optionNames = Array.from(new Set(product.variants.flatMap((v) => v.selectedOptions.map((o) => o.name))));
 
-  const extraSections = product.descriptionHtml
-    ? splitDescriptionSections(product.descriptionHtml).filter((s) => s.title !== 'O proizvodu' && s.content.trim().length > 0)
+  const descriptionSections = product.descriptionHtml
+    ? splitDescriptionSections(product.descriptionHtml)
     : [];
+
+  // Gornja kartica dobija samo uvod; <h3> sekcije idu u akordeon, da se opis ne
+  // renderuje dvaput na istoj stranici.
+  const leadHtml = descriptionSections[0]?.content.trim() ?? '';
+
+  const extraSections = descriptionSections.filter(
+    (s) => s.title !== 'O proizvodu' && s.content.trim().length > 0
+  );
 
   const accordionItems = extraSections.length > 0
     ? extraSections.map((s) => ({
@@ -354,10 +362,10 @@ export default function ProductDetailClient({ product, related }: Props) {
                 </span>
                 <span>O PROIZVODU</span>
               </div>
-              {product.descriptionHtml ? (
+              {leadHtml ? (
                 <div
                   className={styles.topDescriptionText}
-                  dangerouslySetInnerHTML={{ __html: product.descriptionHtml }}
+                  dangerouslySetInnerHTML={{ __html: leadHtml }}
                 />
               ) : (
                 <div className={styles.topDescriptionText}>

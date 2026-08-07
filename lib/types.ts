@@ -151,6 +151,17 @@ export interface AdminStats {
   recentOrders: Order[];
 }
 
+/** Podaci o izvoru pri uvozu sa konkurentskog linka - prikazuju se kao kontekst uz formu. */
+export interface ImportSourceMeta {
+  sourceUrl: string;
+  platform: string;
+  /** Cena kod konkurenta, u NJIHOVOJ valuti. Nikad se ne konvertuje automatski. */
+  price?: number;
+  compareAtPrice?: number;
+  currency?: string;
+  images: string[];
+}
+
 export interface ProductInput {
   title: string;
   handle?: string;

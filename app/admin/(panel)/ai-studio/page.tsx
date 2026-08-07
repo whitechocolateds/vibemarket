@@ -11,14 +11,15 @@ import {
   Zap,
   Bot,
   ChevronDown,
-  RefreshCw,
   Package,
   Check,
-  AlertCircle,
   Info,
+  Download,
+  Link2 as LinkIcon,
 } from 'lucide-react';
 import { toast } from '@/components/admin/Toaster';
 import { GeneratedProduct } from '@/lib/gemini';
+import type { Product } from '@/lib/types';
 import styles from '../../admin.module.css';
 
 const PRESET_IDEAS = [
@@ -66,8 +67,13 @@ export default function GeminiAiStudioPage() {
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
-  const [createdProduct, setCreatedProduct] = useState<any | null>(null);
+  const [createdProduct, setCreatedProduct] = useState<Product | null>(null);
   const [generatedData, setGeneratedData] = useState<GeneratedProduct | null>(null);
+
+  // Uvoz sa konkurentskog linka
+  const [importUrl, setImportUrl] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
 
   // Model selection state
   const [models, setModels] = useState<GeminiModel[]>([]);
@@ -98,6 +104,40 @@ export default function GeminiAiStudioPage() {
     selectedModel === 'auto'
       ? '⚡ Auto (Pametni Fallback)'
       : (models.find(m => m.name === selectedModel)?.displayName || selectedModel);
+
+  const handleImportAndPublish = async () => {
+    const url = importUrl.trim();
+    if (!url || importing) return;
+
+    setImporting(true);
+    setImportError(null);
+    setCreatedProduct(null);
+    setGeneratedData(null);
+
+    try {
+      const res = await fetch('/api/admin/import-product', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url,
+          model: selectedModel === 'auto' ? undefined : selectedModel,
+          publish: true,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Uvoz nije uspeo.');
+
+      setCreatedProduct(json.product);
+      setImportUrl('');
+      toast(`✅ Proizvod „${json.product?.title}" je uvezen i objavljen!`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Uvoz nije uspeo.';
+      setImportError(message);
+      toast(`❌ ${message}`);
+    } finally {
+      setImporting(false);
+    }
+  };
 
   const handleGenerateAndSave = async (ideaPrompt?: string) => {
     const targetPrompt = ideaPrompt || prompt;
@@ -162,9 +202,9 @@ export default function GeminiAiStudioPage() {
       setCreatedProduct(saveJson.data);
       toast(`✅ Proizvod „${data.title}" je uspešno kreiran i objavljen!`);
       setPrompt('');
-    } catch (err: any) {
+    } catch (err) {
       clearInterval(stepInterval);
-      toast(err.message || 'Greška u AI Studio obradi', 'error');
+      toast(err instanceof Error ? err.message : 'Greška u AI Studio obradi', 'error');
     } finally {
       setLoading(false);
     }
@@ -369,6 +409,76 @@ export default function GeminiAiStudioPage() {
           </button>
         </div>
 
+        {/* Uvoz sa konkurentskog linka */}
+        <div style={{
+          padding: 16, borderRadius: 16, marginBottom: 20,
+          background: 'rgba(255,255,255,0.06)',
+          border: '1.5px dashed rgba(255,255,255,0.25)',
+        }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10,
+            fontSize: '0.74rem', fontWeight: 800, letterSpacing: '0.1em',
+            textTransform: 'uppercase', color: 'rgba(255,255,255,0.65)',
+          }}>
+            <LinkIcon size={13} style={{ color: '#fbbf24' }} /> ILI UVEZI SA POSTOJEĆEG LINKA
+          </div>
+
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <input
+              type="url"
+              placeholder="https://prodavnica.rs/products/naziv-proizvoda"
+              value={importUrl}
+              onChange={(e) => setImportUrl(e.target.value)}
+              disabled={importing}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') { e.preventDefault(); handleImportAndPublish(); }
+              }}
+              style={{
+                flex: 1, minWidth: 280, height: 50,
+                padding: '0 18px', borderRadius: 14,
+                background: 'rgba(255,255,255,0.09)',
+                border: '1.5px solid rgba(255,255,255,0.2)',
+                color: '#ffffff', fontSize: '0.92rem', outline: 'none',
+              }}
+            />
+            <button
+              type="button"
+              onClick={handleImportAndPublish}
+              disabled={importing || !importUrl.trim()}
+              style={{
+                height: 50, padding: '0 26px', borderRadius: 14,
+                background: 'rgba(255,255,255,0.14)',
+                color: '#ffffff', fontSize: '0.9rem', fontWeight: 800,
+                letterSpacing: '0.04em', border: '1.5px solid rgba(255,255,255,0.3)',
+                cursor: importing ? 'not-allowed' : 'pointer',
+                display: 'inline-flex', alignItems: 'center', gap: 10,
+                opacity: importing || !importUrl.trim() ? 0.55 : 1,
+                transition: 'all 0.2s ease',
+              }}
+            >
+              {importing
+                ? <><Loader2 size={18} className="spin" /> Uvozim...</>
+                : <><Download size={18} /> Uvezi i Objavi</>}
+            </button>
+          </div>
+
+          <p style={{ margin: '10px 0 0', fontSize: '0.74rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
+            Objavljuje odmah, bez provere. Ako želiš prvo da pregledaš tekst i cenu, koristi
+            {' '}<strong style={{ color: 'rgba(255,255,255,0.75)' }}>Uvezi i pregledaj</strong> na stranici za novi proizvod.
+          </p>
+
+          {importError && (
+            <div style={{
+              marginTop: 10, padding: '10px 14px', borderRadius: 10,
+              background: 'rgba(239, 68, 68, 0.16)',
+              border: '1px solid rgba(239, 68, 68, 0.35)',
+              color: '#fecaca', fontSize: '0.8rem',
+            }}>
+              {importError}
+            </div>
+          )}
+        </div>
+
         {/* Live step progress */}
         {loading && (
           <div style={{
@@ -453,7 +563,9 @@ export default function GeminiAiStudioPage() {
                 {createdProduct.title}
               </h3>
               <p style={{ fontSize: '0.88rem', color: '#475569', margin: 0 }}>
-                Cena: <strong style={{ color: '#0f172a' }}>{createdProduct.price} RSD</strong>
+                Cena: <strong style={{ color: '#0f172a' }}>
+                  {Number(createdProduct.priceRange.minVariantPrice.amount).toLocaleString('sr-RS')} RSD
+                </strong>
                 {' · '}Status: <span style={{ color: '#16a34a', fontWeight: 700 }}>Aktivno u ponudi</span>
                 {selectedModel !== 'auto' && (
                   <span style={{ marginLeft: 8, padding: '2px 10px', borderRadius: 99, fontSize: '0.72rem', fontWeight: 700, background: '#f1f5f9', color: '#475569' }}>
@@ -507,7 +619,7 @@ export default function GeminiAiStudioPage() {
                 Ključne Prednosti & Poređenja:
               </h4>
               <ul style={{ paddingLeft: 0, listStyle: 'none', margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {(generatedData.comparisonPoints || []).map((cp: any, i: number) => (
+                {(generatedData.comparisonPoints || []).map((cp: unknown, i: number) => (
                   <li key={i} style={{
                     display: 'flex', alignItems: 'flex-start', gap: 8,
                     fontSize: '0.86rem', color: '#334155',
@@ -515,7 +627,14 @@ export default function GeminiAiStudioPage() {
                     borderRadius: 12, border: '1px solid #e2e8f0',
                   }}>
                     <Check size={16} style={{ color: '#16a34a', flexShrink: 0, marginTop: 2 }} />
-                    <span>{typeof cp === 'string' ? cp : `${cp.us || ''} (naspram: ${cp.competitor || ''})`}</span>
+                    <span>
+                      {typeof cp === 'string'
+                        ? cp
+                        : (() => {
+                            const pair = cp as { us?: string; competitor?: string };
+                            return `${pair.us ?? ''} (naspram: ${pair.competitor ?? ''})`;
+                          })()}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -554,7 +673,7 @@ export default function GeminiAiStudioPage() {
                   Često Postavljana Pitanja (FAQ):
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {generatedData.faqs.map((faq: any, i: number) => (
+                  {generatedData.faqs.map((faq: { question: string; answer: string }, i: number) => (
                     <div key={i} style={{
                       background: '#f8fafc', padding: '12px 16px', borderRadius: 12,
                       border: '1px solid #e2e8f0',

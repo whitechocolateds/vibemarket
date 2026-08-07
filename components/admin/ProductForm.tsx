@@ -3,9 +3,10 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { FileText, Banknote, ImageIcon, Tags, ListChecks, HelpCircle } from 'lucide-react';
-import { Product, ProductInput, ProductFaq } from '@/lib/types';
+import { Product, ProductInput, ProductFaq, ImportSourceMeta } from '@/lib/types';
 import { slugify } from '@/lib/slugify';
 import GeminiProductGenerator from '@/components/admin/GeminiProductGenerator';
+import CompetitorImport from '@/components/admin/CompetitorImport';
 import ImageUploader from '@/components/admin/ImageUploader';
 import { GeneratedProduct } from '@/lib/gemini';
 import styles from '@/app/admin/admin.module.css';
@@ -80,6 +81,7 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
   const [faqsStr, setFaqsStr] = useState(faqsToStr(initial?.faqs));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [source, setSource] = useState<ImportSourceMeta | null>(null);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -172,10 +174,22 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
     }
   };
 
+  const handleImported = (draft: ProductInput, meta: ImportSourceMeta) => {
+    setForm((prev) => ({ ...prev, ...draft }));
+    setTagsStr(draft.tags.join(', '));
+    setComparisonPointsStr((draft.comparisonPoints ?? []).join('\n'));
+    setFaqsStr(faqsToStr(draft.faqs));
+    setImages([draft.imageUrl, ...(draft.imageUrls ?? [])].filter(Boolean));
+    setSource(meta);
+    setError('');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <form onSubmit={handleSubmit} className={styles.form}>
       {error && <div className={styles.loginError}>{error}</div>}
 
+      <CompetitorImport onImported={handleImported} />
       <GeminiProductGenerator onGenerated={handleAIGenerated} />
 
       <div className={styles.formSection}>
@@ -233,6 +247,20 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
           <div className="form-group">
             <label className="form-label" htmlFor="price">Cena (RSD) *</label>
             <input id="price" name="price" type="number" min="1" className="input" value={form.price || ''} onChange={handleChange} required />
+            {source?.price !== undefined && (
+              <span className={styles.sourceHint}>
+                {source.currency && source.currency !== 'RSD' ? (
+                  <span className={styles.sourceHintWarn}>
+                    Izvor traži <strong>{source.price.toLocaleString('sr-RS')} {source.currency}</strong> — nije RSD, unesi cenu ručno
+                  </span>
+                ) : (
+                  <>
+                    Izvor traži <strong>{source.price.toLocaleString('sr-RS')} {source.currency ?? 'RSD'}</strong>
+                    {source.compareAtPrice ? ` (stara ${source.compareAtPrice.toLocaleString('sr-RS')})` : ''}
+                  </>
+                )}
+              </span>
+            )}
           </div>
 
           <div className="form-group">
