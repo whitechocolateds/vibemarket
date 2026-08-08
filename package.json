@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "setup": "node scripts/init-store.mjs && npx tsx scripts/seed-products.ts",
+    "gemini:check": "npx tsx scripts/check-gemini.ts",
     "seed:blob": "npx tsx scripts/seed-blob.ts",
     "postinstall": "node scripts/init-store.mjs"
   },

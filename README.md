@@ -1,20 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VibeMarket
 
-## Getting Started
+Online prodavnica na srpskom — Next.js 16, React 19, plaćanje pouzećem.
+Admin panel na `/admin`.
 
-First, run the development server:
+## Pokretanje
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Otvori [http://localhost:3000](http://localhost:3000). Podaci se čuvaju u
+`data/*.json` lokalno, odnosno u Vercel Blob kad je konfigurisan (`lib/db.ts`).
+
+## Podešavanje okruženja
+
+Sve varijable idu u `.env.local` — fajl je u `.gitignore` i sam sebe dokumentuje.
+Ništa nije obavezno za lokalni rad osim onoga što koristiš.
+
+| Varijabla | Čemu služi | Bez nje |
+|---|---|---|
+| `ADMIN_PASSWORD` | prijava na `/admin` | pada na `admin123` |
+| `GEMINI_API_KEY` | AI Studio i uvoz sa linka | AI koraci vraćaju grešku |
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob za podatke i slike | piše u `data/` i `public/uploads/` |
+| `UNSPLASH_ACCESS_KEY` | slike pri generisanju iz slobodnog teksta | pada na kuriranu listu |
+
+> `ADMIN_PASSWORD=` sa **praznom** vrednošću je gore od nepostavljene —
+> `lib/adminAuth.ts` koristi `??`, pa prazan string prolazi kao validna lozinka
+> i svako se uloguje. Ili upiši vrednost, ili ostavi red zakomentarisan.
+
+### Gemini
+
+Ključ se uzima na [aistudio.google.com/apikey](https://aistudio.google.com/apikey).
+Kad ga upišeš u `.env.local`, proveri da radi:
+
+```bash
+npm run gemini:check
+```
+
+Alat javlja koji modeli iz `VALID_MODELS` zaista postoje, da li rade
+`responseSchema` (uvoz sa linka) i `google_search` (generisanje iz slobodnog
+teksta), pa predloži pročišćen redosled. Vredi ga pokrenuti jer fallback petlja
+u `callGemini` tiho preskače nepostojeće modele — svaki od njih troši po jedan
+uzaludan round-trip pri svakom zahtevu.
+
+## Uvoz proizvoda sa linka
+
+Nalepiš link proizvoda sa druge prodavnice, Gemini iz njega izvuče činjenice i
+napiše **nov** opis na srpskom sa podnaslovima.
+
+- **Uvezi i pregledaj** — `/admin/products/new`, popuni formu za proveru
+- **Uvezi i objavi** — `/admin/ai-studio`, objavljuje odmah
+
+Za Shopify prodavnice se koristi `<putanja>.json`, koji vraća gotov strukturiran
+podatak. Za ostale se redom pokušavaju JSON-LD, OpenGraph pa goli tekst.
+
+Model **nikad ne emituje HTML** — vraća strukturirana polja, a tagove sastavlja
+`lib/productHtml.ts`. Zato je nemoguće da u opis dospe tag koji CSS ne stilizuje.
+
+Tekst se prepisuje, ne kopira: doslovna kopija nosi duplicate-content kaznu na
+Google-u i pravni rizik. Cena se uvozi kao **predlog** — ako valuta izvora nije
+RSD, polje to izričito naznači i traži da uneseš iznos ručno.
+
+## Slike
+
+Otpremaju se sa računara na `/admin/products/new` (drag-drop, redosled, glavna
+slika). Tip se određuje po *magic bytes*, ne po ekstenziji; SVG je namerno
+odbijen jer se lokalne slike serviraju sa istog domena.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
