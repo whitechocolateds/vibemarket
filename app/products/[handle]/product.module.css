@@ -93,10 +93,72 @@
   pointer-events: none;
 }
 
+.mainImgWrap {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/**
+ * Ranije je ovde stajalo object-fit: cover, pa je uspravni 3:4 ram sekao svaku
+ * sliku drugog odnosa - baneri i široke fotografije su gubili ivice.
+ * Sada `contain` prikazuje CELU sliku, a zamućena kopija popunjava ostatak rama
+ * da ne stoje prazne trake.
+ */
 .mainImg {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  position: relative;
+  z-index: 1;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.mainImgBackdrop {
+  position: absolute;
+  inset: -8%;
+  background-size: cover;
+  background-position: center;
+  filter: blur(26px) saturate(1.15);
+  opacity: 0.5;
+  transform: scale(1.08);
+  pointer-events: none;
+}
+
+.zoomHint {
+  position: absolute;
+  left: 50%;
+  bottom: var(--space-4);
+  transform: translateX(-50%) translateY(6px);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--radius-full);
+  background: rgba(6, 20, 48, 0.72);
+  backdrop-filter: blur(6px);
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.mainImage:hover .zoomHint,
+.mainImage:focus-visible .zoomHint {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+@media (hover: none) {
+  .zoomHint { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 .noImage {

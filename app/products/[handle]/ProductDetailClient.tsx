@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useInView } from 'framer-motion';
-import { Truck, Wallet, ShieldCheck, Check, Heart, Share2, Star, Flame, Eye, Clock, MessageCircleHeart, HelpCircle, ListChecks, Home, ChevronRight, Zap, ShoppingCart, CheckCircle2, Tag, Sparkles } from 'lucide-react';
+import { Truck, Wallet, ShieldCheck, Check, Heart, Share2, Star, Flame, Eye, Clock, MessageCircleHeart, HelpCircle, ListChecks, Home, ChevronRight, Zap, ShoppingCart, CheckCircle2, Tag, Sparkles, Maximize2 } from 'lucide-react';
 import { Product, ProductVariant } from '@/lib/types';
 import { useCartStore } from '@/lib/cart';
 import { useWishlist } from '@/lib/useWishlist';
@@ -22,6 +22,7 @@ import RecentlyViewed from '@/components/RecentlyViewed';
 import TestimonialsCarousel from '@/components/TestimonialsCarousel';
 import ProductComparisonTable from '@/components/ProductComparisonTable';
 import ProductFAQ from '@/components/ProductFAQ';
+import ImageLightbox from '@/components/ImageLightbox';
 import styles from './product.module.css';
 
 const OFFER_CYCLE_MS = 30 * 60 * 1000;
@@ -75,6 +76,18 @@ export default function ProductDetailClient({ product, related }: Props) {
   const { isWished, toggle: toggleWishlist } = useWishlist(product.id);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(product.variants[0]);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  // Ram se prilagođava odnosu stranica slike, ali ostaje u razumnim granicama
+  // da vrlo široka ili vrlo uska slika ne razvuče stranicu.
+  const [frameRatio, setFrameRatio] = useState<number | null>(null);
+
+  const applyFrameRatio = (el: HTMLImageElement) => {
+    const { naturalWidth: w, naturalHeight: h } = el;
+    if (!w || !h) return;
+    // od 3:4 (uspravno) do 4:3 (položeno)
+    const ratio = Math.min(4 / 3, Math.max(3 / 4, w / h));
+    setFrameRatio((prev) => (prev !== null && Math.abs(prev - ratio) < 0.01 ? prev : ratio));
+  };
   const [quantity, setQuantity] = useState(1);
   const [copied, setCopied] = useState(false);
   const ctaRef = useRef<HTMLDivElement>(null);
@@ -211,6 +224,15 @@ export default function ProductDetailClient({ product, related }: Props) {
 
   return (
     <div className={styles.page}>
+      {lightboxOpen && images.length > 0 && (
+        <ImageLightbox
+          images={images}
+          index={selectedImage}
+          onIndexChange={setSelectedImage}
+          onClose={() => setLightboxOpen(false)}
+        />
+      )}
+
       <div className="container">
         <nav className={styles.breadcrumb} aria-label="Putanja">
           <Link href="/" className={styles.crumb}>
@@ -226,25 +248,52 @@ export default function ProductDetailClient({ product, related }: Props) {
           <div className={styles.gallery}>
             <motion.div
               className={styles.mainImage}
-              whileHover={{ scale: 1.02 }}
+              style={frameRatio ? { aspectRatio: String(frameRatio) } : undefined}
               transition={{ duration: 0.4 }}
+              role="button"
+              tabIndex={0}
+              aria-label="Otvori sliku preko celog ekrana"
+              onClick={() => images[selectedImage] && setLightboxOpen(true)}
+              onKeyDown={(e) => {
+                if ((e.key === 'Enter' || e.key === ' ') && images[selectedImage]) {
+                  e.preventDefault();
+                  setLightboxOpen(true);
+                }
+              }}
             >
               <AnimatePresence mode="wait">
                 {images[selectedImage] ? (
-                  <motion.img
+                  <motion.div
                     key={selectedImage}
-                    src={images[selectedImage].url}
-                    alt={images[selectedImage].altText ?? product.title}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.25 }}
-                    className={styles.mainImg}
-                  />
+                    className={styles.mainImgWrap}
+                  >
+                    {/* Zamućena kopija popunjava ram - inače bi oko slike stajale prazne trake */}
+                    <span
+                      className={styles.mainImgBackdrop}
+                      style={{ backgroundImage: `url(${JSON.stringify(images[selectedImage].url)})` }}
+                      aria-hidden="true"
+                    />
+                    <img
+                      src={images[selectedImage].url}
+                      alt={images[selectedImage].altText ?? product.title}
+                      className={styles.mainImg}
+                      onLoad={(e) => applyFrameRatio(e.currentTarget)}
+                      // Kad je slika već u kešu, onLoad ne opali - ref hvata taj slučaj
+                      ref={(el) => { if (el?.complete) applyFrameRatio(el); }}
+                    />
+                  </motion.div>
                 ) : (
                   <div className={styles.noImage}>◇</div>
                 )}
               </AnimatePresence>
+
+              <span className={styles.zoomHint}>
+                <Maximize2 size={13} /> Klikni za uvećanje
+              </span>
               {discountPercent && (
                 <span className={`badge badge-red ${styles.discountBadge}`}>−{discountPercent}%</span>
               )}
@@ -253,7 +302,7 @@ export default function ProductDetailClient({ product, related }: Props) {
                   type="button"
                   whileTap={{ scale: 0.9 }}
                   className={`${styles.iconRoundBtn} ${isWished ? styles.iconRoundBtnActive : ''}`}
-                  onClick={toggleWishlist}
+                  onClick={(e) => { e.stopPropagation(); toggleWishlist(); }}
                   aria-label={isWished ? 'Ukloni iz omiljenih' : 'Dodaj u omiljene'}
                   aria-pressed={isWished}
                 >
@@ -263,7 +312,7 @@ export default function ProductDetailClient({ product, related }: Props) {
                   type="button"
                   whileTap={{ scale: 0.9 }}
                   className={styles.iconRoundBtn}
-                  onClick={handleShare}
+                  onClick={(e) => { e.stopPropagation(); handleShare(); }}
                   aria-label="Kopiraj link ka proizvodu"
                 >
                   <AnimatePresence mode="wait" initial={false}>
