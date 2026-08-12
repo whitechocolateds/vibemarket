@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { FileText, Banknote, ImageIcon, Tags, ListChecks, HelpCircle, CheckCircle2, X } from 'lucide-react';
 import { Product, ProductInput, ProductFaq, ImportSourceMeta } from '@/lib/types';
 import { slugify } from '@/lib/slugify';
+import { editableTextToHtml, htmlToEditableText } from '@/lib/productHtml';
+import { htmlToPlainText } from '@/lib/sanitizeHtml';
 import GeminiProductGenerator from '@/components/admin/GeminiProductGenerator';
 import CompetitorImport from '@/components/admin/CompetitorImport';
 import ImageUploader from '@/components/admin/ImageUploader';
@@ -87,6 +89,11 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
     (initial?.comparisonPoints ?? []).join('\n')
   );
   const [faqsStr, setFaqsStr] = useState(faqsToStr(initial?.faqs));
+  // Stranica proizvoda prikazuje descriptionHtml, pa forma mora da uredjuje NJEGA,
+  // a ne `description` - inace admin menja jedno a u prodavnici se vidi drugo.
+  const [descriptionText, setDescriptionText] = useState(
+    initial ? htmlToEditableText(initial.descriptionHtml ?? '') || initial.description : ''
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [source, setSource] = useState<ImportSourceMeta | null>(null);
@@ -118,8 +125,11 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
     setSaving(true);
     try {
       const cleanImages = images.map((u) => u.trim()).filter(Boolean);
+      const descriptionHtml = editableTextToHtml(descriptionText);
       const data: ProductInput = {
         ...form,
+        descriptionHtml,
+        description: htmlToPlainText(descriptionHtml).slice(0, 2000),
         handle: effectiveSlug,
         tags: tagsStr.split(',').map((t) => t.trim()).filter(Boolean),
         imageUrl: cleanImages[0] ?? '',
@@ -129,6 +139,7 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
         faqs: parseFaqs(faqsStr),
       };
       if (!data.title.trim()) throw new Error('Naziv je obavezan');
+      if (!data.description.trim()) throw new Error('Opis je obavezan');
       if (!data.imageUrl) throw new Error('Glavna slika je obavezna');
       if (data.price <= 0) throw new Error('Cena mora biti veća od 0');
       if (data.compareAtPrice && data.compareAtPrice <= data.price) {
@@ -154,6 +165,12 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
       price: generated.price || prev.price,
       compareAtPrice: generated.compareAtPrice || prev.compareAtPrice,
     }));
+
+    if (generated.descriptionHtml || generated.description) {
+      setDescriptionText(
+        htmlToEditableText(generated.descriptionHtml ?? '') || generated.description
+      );
+    }
 
     // Generator je do sada nalazio sliku pa je forma tiho odbacivala
     const fromAI = [generated.imageUrl, ...(generated.imageUrls ?? [])].filter(
@@ -185,6 +202,7 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
 
   const handleImported = (draft: ProductInput, meta: ImportSourceMeta) => {
     setForm((prev) => ({ ...prev, ...draft }));
+    setDescriptionText(htmlToEditableText(draft.descriptionHtml ?? '') || draft.description);
     setTagsStr(draft.tags.join(', '));
     setComparisonPointsStr((draft.comparisonPoints ?? []).join('\n'));
     setFaqsStr(faqsToStr(draft.faqs));
@@ -249,16 +267,22 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
           </div>
 
           <div className={`form-group ${styles.formGridFull}`}>
-            <label className="form-label" htmlFor="description">Opis *</label>
+            <label className="form-label" htmlFor="description">Opis * (prikazuje se na stranici proizvoda)</label>
             <textarea
               id="description"
               name="description"
               className="textarea"
-              rows={4}
-              value={form.description}
-              onChange={handleChange}
+              rows={12}
+              value={descriptionText}
+              onChange={(e) => setDescriptionText(e.target.value)}
+              placeholder={'Uvodni pasus sa **podebljanom** ključnom rečju.\n\n## Podnaslov\nTekst ispod podnaslova.\n\n- stavka specifikacije\n- druga stavka'}
               required
             />
+            <span className={styles.fieldHint}>
+              <strong>## Podnaslov</strong> pravi naslov sekcije · prazan red razdvaja pasuse ·
+              {' '}<strong>- stavka</strong> pravi listu · <strong>**tekst**</strong> podebljava.
+              Ovo je tačno ono što kupac vidi.
+            </span>
           </div>
         </div>
       </div>
