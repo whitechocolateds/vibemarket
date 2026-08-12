@@ -14,9 +14,8 @@ export default function GeminiProductGenerator({ onGenerated }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
 
-  const handleGenerate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!prompt.trim()) return;
+  const handleGenerate = async () => {
+    if (!prompt.trim() || loading) return;
     setLoading(true);
     setError(null);
     try {
@@ -30,8 +29,8 @@ export default function GeminiProductGenerator({ onGenerated }: Props) {
       onGenerated(json.data);
       setOpen(false);
       setPrompt('');
-    } catch (err: any) {
-      setError(err.message || 'Došlo je do neočekivane greške.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Došlo je do neočekivane greške.');
     } finally {
       setLoading(false);
     }
@@ -71,20 +70,29 @@ export default function GeminiProductGenerator({ onGenerated }: Props) {
             </h4>
           </div>
           <p style={{ fontSize: '0.84rem', color: '#475569', marginBottom: 16, lineHeight: 1.5 }}>
-            Unesite samo naziv ili kratku ideju proizvoda (npr. <em>"Bežične bucie za trčanje sa otpornošću na vodu"</em>) i Gemini AI će automatski popuniti naziv, prodajni opis, brend, cenu, tagove, ključne prednosti, komparacije i pitanja!
+            Unesite samo naziv ili kratku ideju proizvoda (npr. <em>&bdquo;Bežične slušalice za trčanje, otporne na vodu&ldquo;</em>) i Gemini AI će automatski popuniti naziv, prodajni opis, brend, cenu, tagove, ključne prednosti, komparacije i pitanja.
           </p>
 
-          <form onSubmit={handleGenerate} style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          {/* NIJE <form>: ovo je unutar ProductForm-ove <form>, a ugnjezdene forme
+              browser odbaci - dugme bi se vezalo za spoljnu i onSubmit ne bi opalio. */}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <input
               type="text"
               className="customInput"
               placeholder="Unesite naziv ili opis idejnog artikla..."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleGenerate();
+                }
+              }}
               style={{ flex: 1, minWidth: 260, height: 46, fontSize: '0.9rem' }}
             />
             <button
-              type="submit"
+              type="button"
+              onClick={handleGenerate}
               disabled={loading || !prompt.trim()}
               className="btn btn-primary"
               style={{ height: 46, padding: '0 20px', background: 'var(--gold-gradient)', color: '#0A2A6B', fontWeight: 800 }}
@@ -99,7 +107,7 @@ export default function GeminiProductGenerator({ onGenerated }: Props) {
                 </>
               )}
             </button>
-          </form>
+          </div>
 
           {error && (
             <div style={{ marginTop: 12, padding: 10, borderRadius: 8, background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', fontSize: '0.8rem' }}>

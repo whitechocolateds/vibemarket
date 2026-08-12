@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { FileText, Banknote, ImageIcon, Tags, ListChecks, HelpCircle } from 'lucide-react';
+import { FileText, Banknote, ImageIcon, Tags, ListChecks, HelpCircle, CheckCircle2, X } from 'lucide-react';
 import { Product, ProductInput, ProductFaq, ImportSourceMeta } from '@/lib/types';
 import { slugify } from '@/lib/slugify';
 import GeminiProductGenerator from '@/components/admin/GeminiProductGenerator';
@@ -49,6 +49,14 @@ function faqsToStr(faqs?: ProductFaq[]): string {
   return (faqs ?? []).map((f) => `${f.question} | ${f.answer}`).join('\n');
 }
 
+function hostOf(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return 'izvora';
+  }
+}
+
 function productToInput(p: Product): ProductInput {
   const v = p.variants[0];
   return {
@@ -82,6 +90,7 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [source, setSource] = useState<ImportSourceMeta | null>(null);
+  const [imported, setImported] = useState<{ title: string; host: string; images: number } | null>(null);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -182,12 +191,27 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
     setImages([draft.imageUrl, ...(draft.imageUrls ?? [])].filter(Boolean));
     setSource(meta);
     setError('');
+    setImported({ title: draft.title, host: hostOf(meta.sourceUrl), images: (meta.images ?? []).length });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
     <form onSubmit={handleSubmit} className={styles.form}>
       {error && <div className={styles.loginError}>{error}</div>}
+
+      {imported && (
+        <div className={styles.importedBanner}>
+          <CheckCircle2 size={16} />
+          <span>
+            Uvezeno sa <strong>{imported.host}</strong>: &bdquo;{imported.title}&ldquo;
+            {imported.images > 0 && ` · ${imported.images} slika preuzeto`}.
+            {' '}Proveri cenu i tekst, pa klikni <strong>{submitLabel}</strong>.
+          </span>
+          <button type="button" onClick={() => setImported(null)} aria-label="Zatvori">
+            <X size={14} />
+          </button>
+        </div>
+      )}
 
       <CompetitorImport onImported={handleImported} />
       <GeminiProductGenerator onGenerated={handleAIGenerated} />

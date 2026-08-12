@@ -38,8 +38,7 @@ export default function CompetitorImport({ onImported }: Props) {
     };
   }, [open, models.length]);
 
-  const handleImport = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleImport = async () => {
     if (!url.trim() || loading) return;
 
     setLoading(true);
@@ -83,15 +82,25 @@ export default function CompetitorImport({ onImported }: Props) {
             prepisuje — doslovna kopija bi nosila i pravni rizik i duplicate-content kaznu na Google-u.
           </p>
 
-          <form onSubmit={handleImport} className={styles.importForm}>
+          {/*
+            NIJE <form>: ova komponenta se renderuje unutar ProductForm-ove <form>,
+            a HTML zabranjuje ugnjezdene forme - browser odbaci unutrasnju i veze
+            dugme za spoljnu, pa onSubmit nikad ne opali. Zato obican div + onClick.
+          */}
+          <div className={styles.importForm}>
             <input
               type="url"
               className="input"
               placeholder="https://prodavnica.rs/products/naziv-proizvoda"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleImport();
+                }
+              }}
               disabled={loading}
-              required
             />
 
             <select
@@ -109,7 +118,12 @@ export default function CompetitorImport({ onImported }: Props) {
               ))}
             </select>
 
-            <button type="submit" className="btn btn-primary" disabled={loading || !url.trim()}>
+            <button
+              type="button"
+              onClick={handleImport}
+              className="btn btn-primary"
+              disabled={loading || !url.trim()}
+            >
               {loading ? (
                 <>
                   <Loader2 size={15} className={styles.uploaderSpin} /> {STEPS[step]}
@@ -120,7 +134,7 @@ export default function CompetitorImport({ onImported }: Props) {
                 </>
               )}
             </button>
-          </form>
+          </div>
 
           {error && (
             <div className={styles.importError}>

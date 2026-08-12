@@ -1110,6 +1110,39 @@
 
 .sourceHintWarn { color: var(--color-warning); font-weight: 600; }
 
+.importedBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  background: rgba(var(--success-rgb), 0.10);
+  border: 1.5px solid rgba(var(--success-rgb), 0.32);
+  color: var(--color-success);
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
+.importedBanner strong { font-weight: 800; }
+.importedBanner svg { flex-shrink: 0; margin-top: 2px; }
+.importedBanner span { flex: 1; }
+
+.importedBanner button {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: rgba(var(--success-rgb), 0.14);
+  color: var(--color-success);
+  cursor: pointer;
+}
+
+.importedBanner button:hover { background: rgba(var(--success-rgb), 0.24); }
+
 .formActions {
   position: sticky;
   bottom: 0;
