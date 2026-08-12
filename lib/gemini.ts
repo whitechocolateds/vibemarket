@@ -2,11 +2,17 @@ import type { StructuredCopy } from './productHtml';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
-// ─── Priority fallback queue ──────────────────────────────────────────────────
+/**
+ * Redosled pokusaja. Provereno preko `npm run gemini:check` - ne nagadjati.
+ *
+ * Uklonjeni su gemini-2.5-flash, gemini-2.5-pro (oba vracaju 404 "no longer
+ * available to new users") i gemini-2.0-flash (nema ga u listi naloga). Kako
+ * fallback petlja tiho preskace neuspehe, ta tri mrtva modela su placala tri
+ * uzaludna round-tripa pre svakog stvarnog odgovora.
+ *
+ * Kad Google promeni ponudu, pokreni proveru ponovo i osvezi ovu listu.
+ */
 export const VALID_MODELS = [
-  'gemini-2.5-flash',
-  'gemini-2.0-flash',
-  'gemini-2.5-pro',
   'gemini-3.6-flash',
   'gemini-3.5-flash',
   'gemini-flash-latest',
@@ -52,42 +58,54 @@ export async function callGemini(
   let lastError: Error | null = null;
 
   for (const model of modelQueue) {
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+    // Grounding je na besplatnom nivou naplativ dodatak i vraca 429 i kad je sam
+    // model sasvim dostupan. Zato se isti model prvo proba SA alatom, pa BEZ njega -
+    // bolje odgovor bez svezih podataka nego nikakav.
+    const attempts = useGoogleSearch ? [true, false] : [false];
 
-      const payload: Record<string, unknown> = {
-        contents: [{ parts: [{ text: prompt }] }],
-      };
+    for (const withSearch of attempts) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
 
-      if (systemInstruction) {
-        payload.systemInstruction = { parts: [{ text: systemInstruction }] };
+        const payload: Record<string, unknown> = {
+          contents: [{ parts: [{ text: prompt }] }],
+        };
+
+        if (systemInstruction) {
+          payload.systemInstruction = { parts: [{ text: systemInstruction }] };
+        }
+        if (withSearch) {
+          payload.tools = [{ google_search: {} }];
+        }
+
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          lastError = new Error(`Model ${model} (status ${res.status}): ${errorText}`);
+
+          if (withSearch) {
+            console.warn(`Model ${model} odbio google_search (${res.status}). Pokušavam bez pretrage...`);
+            continue; // isti model, bez alata
+          }
+          console.warn(`Model ${model} vratio ${res.status}: ${errorText}. Pokušavam sledeći...`);
+          break; // sledeci model
+        }
+
+        const json = await res.json();
+        const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) return text;
+        break;
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error(String(err));
+        console.warn(`Izuzetak pri pozivu ${model}: ${error.message}. Pokušavam sledeći...`);
+        lastError = error;
+        break;
       }
-
-      // Enable Google Search grounding if requested
-      if (useGoogleSearch) {
-        payload.tools = [{ google_search: {} }];
-      }
-
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.warn(`Model ${model} vratio ${res.status}: ${errorText}. Pokušavam sledeći...`);
-        lastError = new Error(`Model ${model} (status ${res.status}): ${errorText}`);
-        continue;
-      }
-
-      const json = await res.json();
-      const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (text) return text;
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error(String(err));
-      console.warn(`Izuzetak pri pozivu ${model}: ${error.message}. Pokušavam sledeći...`);
-      lastError = error;
     }
   }
 
