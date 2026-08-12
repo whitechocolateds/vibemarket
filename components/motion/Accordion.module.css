@@ -110,7 +110,8 @@
   margin: var(--space-3) 0 var(--space-2);
 }
 
-.panel ul {
+.panel ul,
+.panel ol {
   padding-left: var(--space-5);
   margin-bottom: var(--space-3);
 }
@@ -118,3 +119,23 @@
 .panel li {
   margin-bottom: 6px;
 }
+
+.panel p { margin: 0 0 10px; }
+.panel p:last-child { margin-bottom: 0; }
+.panel strong { color: var(--text-primary); font-weight: 700; }
+.panel u { text-underline-offset: 2px; }
+.panel s { opacity: 0.65; }
+
+/* Slike u sekcijama opisa - bez max-width bi prelile panel */
+.panel img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 10px 0;
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--border-subtle);
+}
+
+.panel :global(.ds-sm) { font-size: 0.85em; }
+.panel :global(.ds-lg) { font-size: 1.18em; }
+.panel :global(.ds-xl) { font-size: 1.4em; line-height: 1.4; }

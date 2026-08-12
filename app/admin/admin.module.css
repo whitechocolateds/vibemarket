@@ -1143,6 +1143,155 @@
 
 .importedBanner button:hover { background: rgba(var(--success-rgb), 0.24); }
 
+/* ─── RichTextEditor ─────────────────────────────────────────────────────── */
+.editorShell {
+  border: 1.5px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
+  overflow: hidden;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.editorShell:focus-within {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(var(--brand-rgb), 0.16);
+}
+
+.editorLoading {
+  padding: var(--space-6);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.editorToolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: wrap;
+  padding: 6px 8px;
+  background: var(--bg-tint);
+  border-bottom: 1.5px solid var(--border-subtle);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.editorBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 7px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.editorBtn:hover:not(:disabled) { background: var(--brand-glow); color: var(--brand); }
+.editorBtn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.editorBtnActive {
+  background: var(--brand);
+  color: #ffffff;
+}
+.editorBtnActive:hover:not(:disabled) { background: var(--brand-dark); color: #ffffff; }
+
+.editorSep {
+  width: 1px;
+  height: 18px;
+  margin: 0 5px;
+  background: var(--border-medium);
+}
+
+.editorSpacer { flex: 1; }
+
+.editorSize_sm { font-size: 0.68rem; font-weight: 700; line-height: 1; }
+.editorSize_md { font-size: 0.85rem; font-weight: 700; line-height: 1; }
+.editorSize_lg { font-size: 1.02rem; font-weight: 700; line-height: 1; }
+.editorSize_xl { font-size: 1.2rem; font-weight: 700; line-height: 1; }
+
+.editorContent {
+  min-height: 320px;
+  max-height: 620px;
+  overflow-y: auto;
+  padding: var(--space-5);
+  outline: none;
+  font-size: 0.93rem;
+  line-height: 1.68;
+  color: var(--text-secondary);
+}
+
+.editorContent p { margin: 0 0 10px; }
+.editorContent p:last-child { margin-bottom: 0; }
+.editorContent strong { color: var(--text-primary); font-weight: 700; }
+
+.editorContent h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 18px 0 8px;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.editorContent h3::before {
+  content: '';
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--brand);
+  flex-shrink: 0;
+}
+
+.editorContent ul,
+.editorContent ol { margin: 0 0 10px; padding-left: 22px; display: grid; gap: 4px; }
+.editorContent li { padding-left: 2px; }
+
+.editorContent img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--border-subtle);
+  margin: 8px 0;
+}
+
+/* Slika izabrana u editoru */
+.editorContent img.ProseMirror-selectednode {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(var(--brand-rgb), 0.25);
+}
+
+.editorContent :global(.ds-sm) { font-size: 0.8em; }
+.editorContent :global(.ds-lg) { font-size: 1.2em; }
+.editorContent :global(.ds-xl) { font-size: 1.45em; }
+
+.editorContent p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--text-muted);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.editorError {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: rgba(var(--error-rgb), 0.1);
+  border-top: 1px solid rgba(var(--error-rgb), 0.25);
+  color: var(--color-error);
+  font-size: 0.78rem;
+}
+
 .formActions {
   position: sticky;
   bottom: 0;

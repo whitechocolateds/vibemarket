@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { FileText, Banknote, ImageIcon, Tags, ListChecks, HelpCircle, CheckCircle2, X } from 'lucide-react';
 import { Product, ProductInput, ProductFaq, ImportSourceMeta } from '@/lib/types';
 import { slugify } from '@/lib/slugify';
-import { editableTextToHtml, htmlToEditableText } from '@/lib/productHtml';
-import { htmlToPlainText } from '@/lib/sanitizeHtml';
+import RichTextEditor from '@/components/admin/RichTextEditor';
+import { htmlToPlainText, sanitizeProductHtml, escapeHtml } from '@/lib/sanitizeHtml';
 import GeminiProductGenerator from '@/components/admin/GeminiProductGenerator';
 import CompetitorImport from '@/components/admin/CompetitorImport';
 import ImageUploader from '@/components/admin/ImageUploader';
@@ -89,10 +89,10 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
     (initial?.comparisonPoints ?? []).join('\n')
   );
   const [faqsStr, setFaqsStr] = useState(faqsToStr(initial?.faqs));
-  // Stranica proizvoda prikazuje descriptionHtml, pa forma mora da uredjuje NJEGA,
-  // a ne `description` - inace admin menja jedno a u prodavnici se vidi drugo.
-  const [descriptionText, setDescriptionText] = useState(
-    initial ? htmlToEditableText(initial.descriptionHtml ?? '') || initial.description : ''
+  // Stranica proizvoda prikazuje descriptionHtml, pa editor radi direktno nad NJIM -
+  // inace admin menja jedno a u prodavnici se vidi drugo.
+  const [descriptionHtmlDraft, setDescriptionHtmlDraft] = useState(
+    initial?.descriptionHtml || (initial?.description ? `<p>${escapeHtml(initial.description)}</p>` : '')
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -125,7 +125,8 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
     setSaving(true);
     try {
       const cleanImages = images.map((u) => u.trim()).filter(Boolean);
-      const descriptionHtml = editableTextToHtml(descriptionText);
+      // Server svakako sanitizuje; ovde je bitno da `description` bude izveden iz istog HTML-a
+      const descriptionHtml = sanitizeProductHtml(descriptionHtmlDraft);
       const data: ProductInput = {
         ...form,
         descriptionHtml,
@@ -167,8 +168,8 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
     }));
 
     if (generated.descriptionHtml || generated.description) {
-      setDescriptionText(
-        htmlToEditableText(generated.descriptionHtml ?? '') || generated.description
+      setDescriptionHtmlDraft(
+        generated.descriptionHtml || `<p>${escapeHtml(generated.description)}</p>`
       );
     }
 
@@ -202,7 +203,7 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
 
   const handleImported = (draft: ProductInput, meta: ImportSourceMeta) => {
     setForm((prev) => ({ ...prev, ...draft }));
-    setDescriptionText(htmlToEditableText(draft.descriptionHtml ?? '') || draft.description);
+    setDescriptionHtmlDraft(draft.descriptionHtml ?? `<p>${escapeHtml(draft.description)}</p>`);
     setTagsStr(draft.tags.join(', '));
     setComparisonPointsStr((draft.comparisonPoints ?? []).join('\n'));
     setFaqsStr(faqsToStr(draft.faqs));
@@ -267,21 +268,11 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
           </div>
 
           <div className={`form-group ${styles.formGridFull}`}>
-            <label className="form-label" htmlFor="description">Opis * (prikazuje se na stranici proizvoda)</label>
-            <textarea
-              id="description"
-              name="description"
-              className="textarea"
-              rows={12}
-              value={descriptionText}
-              onChange={(e) => setDescriptionText(e.target.value)}
-              placeholder={'Uvodni pasus sa **podebljanom** ključnom rečju.\n\n## Podnaslov\nTekst ispod podnaslova.\n\n- stavka specifikacije\n- druga stavka'}
-              required
-            />
+            <label className="form-label">Opis * (prikazuje se na stranici proizvoda)</label>
+            <RichTextEditor value={descriptionHtmlDraft} onChange={setDescriptionHtmlDraft} />
             <span className={styles.fieldHint}>
-              <strong>## Podnaslov</strong> pravi naslov sekcije · prazan red razdvaja pasuse ·
-              {' '}<strong>- stavka</strong> pravi listu · <strong>**tekst**</strong> podebljava.
-              Ovo je tačno ono što kupac vidi.
+              Podnaslov razdvaja opis u sekcije koje se na stranici prikazuju kao zasebne kartice.
+              Slike i GIF-ovi se otpremaju sa računara i čuvaju u tvojoj prodavnici.
             </span>
           </div>
         </div>

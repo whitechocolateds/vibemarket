@@ -14,8 +14,44 @@
  * dakle po literalnom <h3> bez atributa. Kanonski emiter to garantuje.
  */
 
-const ALLOWED_TAGS = new Set(['p', 'strong', 'em', 'h3', 'ul', 'li', 'br']);
-const VOID_TAGS = new Set(['br']);
+const ALLOWED_TAGS = new Set([
+  'p', 'strong', 'em', 'u', 's', 'h3', 'ul', 'ol', 'li', 'br', 'img', 'span',
+]);
+const VOID_TAGS = new Set(['br', 'img']);
+
+/**
+ * Jedine dozvoljene klase - fiksne veličine teksta. Proizvoljna `class` vrednost
+ * bi dozvolila kačenje na tuđe stilove, a inline `style` je zabranjen u potpunosti.
+ */
+const SIZE_CLASS = /^ds-(sm|lg|xl)$/;
+
+/**
+ * Slike smeju da pokazuju SAMO na našu memoriju. Time otpadaju `javascript:`,
+ * `data:` (SVG u data URI je izvršiv) i hotlink na tuđi CDN koji pukne kad ga rotiraju.
+ */
+function safeImageSrc(raw: string): string | null {
+  const src = raw.trim();
+  if (/^\/uploads\/[A-Za-z0-9._-]+$/.test(src)) return src;
+  try {
+    const url = new URL(src);
+    if (url.protocol !== 'https:') return null;
+    if (url.hostname.endsWith('.public.blob.vercel-storage.com')) return url.toString();
+  } catch {
+    /* nije apsolutan URL */
+  }
+  return null;
+}
+
+/** Iz sirovog tag stringa izvlači atribute; vrednosti ostaju neproverene. */
+function readAttributes(rawTag: string): Record<string, string> {
+  const attrs: Record<string, string> = {};
+  const re = /([a-zA-Z-]+)\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+))/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(rawTag)) !== null) {
+    attrs[m[1].toLowerCase()] = m[3] ?? m[4] ?? m[5] ?? '';
+  }
+  return attrs;
+}
 
 /** Blokovi kod kojih se briše i sadržaj, ne samo tag. */
 const DROP_WITH_CONTENT = /<(script|style|noscript|iframe|object|embed|template|svg|math)\b[^>]*>[\s\S]*?<\/\1\s*>/gi;
@@ -87,13 +123,17 @@ function collapseEmpty(html: string): string {
   let prev: string;
   do {
     prev = cur;
-    cur = cur.replace(/<(p|h3|ul|li|strong|em)>\s*<\/\1>/g, '');
+    cur = cur
+      .replace(/<(p|h3|ul|ol|li|strong|em|u|s)>\s*<\/\1>/g, '')
+      .replace(/<span class="[^"]*">\s*<\/span>/g, '');
   } while (cur !== prev);
   return cur;
 }
 
 /**
- * Vraća HTML koji sadrži samo <p> <strong> <em> <h3> <ul> <li> <br>, bez ijednog atributa.
+ * Vraća HTML sveden na dozvoljenu listu tagova. Jedini atributi koji prežive su
+ * `src` na <img> (i to samo ka našoj memoriji) i `class` na <span> (i to samo
+ * fiksne veličine teksta). Sve ostalo - style, on*, id, data-* - se odbacuje.
  * Nedozvoljeni tagovi se uklanjaju ali im se tekst zadržava (<div>tekst</div> -> tekst).
  */
 export function sanitizeProductHtml(input: string): string {
@@ -101,7 +141,11 @@ export function sanitizeProductHtml(input: string): string {
 
   const src = stripDangerousBlocks(String(input));
   const out: string[] = [];
-  const stack: string[] = [];
+  /**
+   * `emitted:false` znači da je tag odmotan (npr. <span> bez validne klase):
+   * njegov zatvarajući tag mora da se proguta, a ne da zatvori neki element iznad.
+   */
+  const stack: { tag: string; emitted: boolean }[] = [];
   const tagRe = /<\/?([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>/g;
 
   const pushText = (raw: string) => {
@@ -109,8 +153,15 @@ export function sanitizeProductHtml(input: string): string {
     out.push(escapeHtml(decodeEntities(raw)));
   };
 
+  const openIndexOf = (tag: string) => {
+    for (let i = stack.length - 1; i >= 0; i--) if (stack[i].tag === tag) return i;
+    return -1;
+  };
+
   const closeDownTo = (index: number) => {
-    for (let i = stack.length - 1; i >= index; i--) out.push(`</${stack[i]}>`);
+    for (let i = stack.length - 1; i >= index; i--) {
+      if (stack[i].emitted) out.push(`</${stack[i].tag}>`);
+    }
     stack.length = index;
   };
 
@@ -128,27 +179,46 @@ export function sanitizeProductHtml(input: string): string {
     if (!ALLOWED_TAGS.has(name)) continue;
 
     if (VOID_TAGS.has(name)) {
-      if (!isClosing) out.push(`<${name}>`);
+      if (isClosing) continue;
+      if (name === 'img') {
+        const imgSrc = safeImageSrc(readAttributes(match[0]).src ?? '');
+        // Slika van naše memorije se izbacuje cela - nema šta da se sačuva
+        if (imgSrc) out.push(`<img src="${escapeHtml(imgSrc)}" alt="" />`);
+      } else {
+        out.push(`<${name}>`);
+      }
       continue;
     }
 
     if (isClosing) {
-      const open = stack.lastIndexOf(name);
+      const open = openIndexOf(name);
       if (open === -1) continue; // zalutali zatvarajući tag
       closeDownTo(open);
       continue;
     }
 
-    // <li> ima smisla samo unutar <ul>
-    if (name === 'li' && !stack.includes('ul')) continue;
+    // <li> ima smisla samo unutar liste
+    if (name === 'li' && openIndexOf('ul') === -1 && openIndexOf('ol') === -1) continue;
+
+    // <span> nosi isključivo veličinu teksta; bez validne klase se odmotava
+    if (name === 'span') {
+      const cls = (readAttributes(match[0]).class ?? '').trim();
+      if (!SIZE_CLASS.test(cls)) {
+        stack.push({ tag: 'span', emitted: false });
+        continue;
+      }
+      out.push(`<span class="${cls}">`);
+      stack.push({ tag: 'span', emitted: true });
+      continue;
+    }
 
     // <p> i <h3> se ne ugnježđuju - otvaranje novog zatvara prethodni
-    if ((name === 'p' || name === 'h3') && stack.includes(name)) {
-      closeDownTo(stack.lastIndexOf(name));
+    if ((name === 'p' || name === 'h3') && openIndexOf(name) !== -1) {
+      closeDownTo(openIndexOf(name));
     }
 
     out.push(`<${name}>`);
-    stack.push(name);
+    stack.push({ tag: name, emitted: true });
   }
 
   pushText(src.slice(last));
@@ -163,6 +233,7 @@ export function htmlToPlainText(input: string): string {
 
   const withBreaks = stripDangerousBlocks(String(input))
     .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<img\b[^>]*>/gi, '')
     .replace(/<\/(p|h1|h2|h3|h4|h5|h6|div|li|ul|ol|tr|table|section|article|blockquote)\s*>/gi, '\n')
     .replace(/<[^>]*>/g, '');
 
