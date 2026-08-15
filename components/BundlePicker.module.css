@@ -156,16 +156,26 @@
   right: var(--space-4);
   padding: 3px 11px;
   border-radius: var(--radius-full);
-  background: var(--brand-gradient);
   color: var(--text-inverse);
   font-size: 0.6rem;
   font-weight: 800;
   letter-spacing: 0.07em;
   text-transform: uppercase;
   white-space: nowrap;
-  box-shadow: 0 3px 10px rgba(var(--brand-rgb), 0.35);
   pointer-events: none;
   z-index: 2;
+}
+
+/* Tekst je sitan (0.6rem) pa WCAG traži 4.5:1 - zato tamnije nijanse
+   umesto živih zelene/crvene koje bi belo slovo ostavile nečitkim. */
+.badgeSuccess {
+  background: linear-gradient(135deg, #168748 0%, #15803D 55%, #0E6631 100%);
+  box-shadow: 0 3px 10px rgba(21, 128, 61, 0.4);
+}
+
+.badgeDanger {
+  background: linear-gradient(135deg, #D42F2F 0%, #C21F1F 55%, #A11616 100%);
+  box-shadow: 0 3px 10px rgba(194, 31, 31, 0.4);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -20,9 +20,9 @@ export function bundleUnitPrice(basePrice: number, quantity: number): number {
 }
 
 /** Oznake na paketima. Drži ih na jednom mestu da proizvod i checkout prikazuju isto. */
-export const BUNDLE_BADGES: Record<number, string> = {
-  2: 'Najpopularnije',
-  3: 'Najveća ušteda',
+export const BUNDLE_BADGES: Record<number, { label: string; tone: 'success' | 'danger' }> = {
+  2: { label: 'Najpopularnije', tone: 'success' },
+  3: { label: 'Najveća ušteda', tone: 'danger' },
 };
 
 export interface BundleTierPricing {

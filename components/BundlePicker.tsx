@@ -91,7 +91,7 @@ export default function BundlePicker({
             `${tier.quantity} ${noun}`,
             `ukupno ${formatPrice(tier.total)}`,
             tier.savings > 0 ? `ušteda ${formatPrice(tier.savings)}` : null,
-            badge,
+            badge?.label,
           ]
             .filter(Boolean)
             .join(', ');
@@ -109,7 +109,11 @@ export default function BundlePicker({
               onClick={() => onChange(tier.quantity)}
               onKeyDown={(e) => handleKeyDown(e, i)}
             >
-              {badge && <span className={styles.badge}>{badge}</span>}
+              {badge && (
+                <span className={`${styles.badge} ${badge.tone === 'success' ? styles.badgeSuccess : styles.badgeDanger}`}>
+                  {badge.label}
+                </span>
+              )}
 
               <span className={styles.radio} aria-hidden="true">
                 <span className={styles.radioDot} />
