@@ -13,7 +13,7 @@ import { LOW_STOCK_THRESHOLD, FREE_SHIPPING_THRESHOLD } from '@/lib/shipping';
 import { recordRecentlyViewed } from '@/lib/recentlyViewed';
 import { pickTestimonials } from '@/lib/testimonials';
 import { stableReviewCount } from '@/lib/reviewStats';
-import { BUNDLE_TIERS, bundleUnitPrice } from '@/lib/bundlePricing';
+import { bundleUnitPrice } from '@/lib/bundlePricing';
 import { trackPixel } from '@/lib/metaEvents';
 import Accordion from '@/components/motion/Accordion';
 import Reveal from '@/components/motion/Reveal';
@@ -23,6 +23,7 @@ import TestimonialsCarousel from '@/components/TestimonialsCarousel';
 import ProductComparisonTable from '@/components/ProductComparisonTable';
 import ProductFAQ from '@/components/ProductFAQ';
 import ImageLightbox from '@/components/ImageLightbox';
+import BundlePicker from '@/components/BundlePicker';
 import styles from './product.module.css';
 
 const OFFER_CYCLE_MS = 30 * 60 * 1000;
@@ -460,37 +461,13 @@ export default function ProductDetailClient({ product, related }: Props) {
             })}
 
             <div className={styles.bundleSection}>
-              <p className={styles.optionLabel}>Izaberite paket</p>
-              <div className={styles.bundleGrid}>
-                {BUNDLE_TIERS.map((tier) => {
-                  const unit = bundleUnitPrice(price, tier.quantity);
-                  const total = unit * tier.quantity;
-                  const isSelected = quantity === tier.quantity;
-                  return (
-                    <button
-                      key={tier.quantity}
-                      type="button"
-                      className={`${styles.bundleCard} ${isSelected ? styles.bundleCardActive : ''}`}
-                      onClick={() => setQuantity(tier.quantity)}
-                    >
-                      {tier.quantity === 2 && <span className={styles.bundleTag}>Najpopularnije</span>}
-                      {tier.quantity === 3 && <span className={`${styles.bundleTag} ${styles.bundleTagBest}`}>Najveća ušteda</span>}
-                      
-                      <div className={styles.bundleRadioIndicator}>
-                        {isSelected && <Check size={12} strokeWidth={3} />}
-                      </div>
-
-                      <span className={styles.bundleQty}>{tier.quantity} {tier.quantity === 1 ? 'komad' : 'komada'}</span>
-                      <span className={styles.bundleTotal}>{formatPrice(total)}</span>
-                      {tier.discountPercent > 0 ? (
-                        <span className={styles.bundleSave}>UŠTEDA {tier.discountPercent}%</span>
-                      ) : (
-                        <span className={styles.bundleStandardPrice}>Standardna cena</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+              <BundlePicker
+                basePrice={price}
+                compareAtPrice={compareAtPrice}
+                value={quantity}
+                onChange={setQuantity}
+                label="Izaberite paket"
+              />
             </div>
 
             <div className={styles.ctaButtons} ref={ctaRef}>

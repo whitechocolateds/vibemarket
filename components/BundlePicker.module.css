@@ -1,0 +1,202 @@
+/* ─── Izbor paketa: vertikalna lista redova (proizvod + checkout) ─────────── */
+
+.root {
+  /* Prilagođavanje ide po širini KONTEJNERA, ne ekrana - isti prag pogađa
+     i telefon (~328px) i usku checkout kolonu (~346px). */
+  container-type: inline-size;
+  container-name: bundlepicker;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.label {
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;        /* najmanje visina oznake, da ne dodiruje red iznad */
+  padding-top: 9px; /* prostor za oznaku na prvom redu */
+}
+
+.row {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: 14px var(--space-4);
+  border-radius: var(--radius-xl);
+  border: 1.5px solid var(--border-medium);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-sm);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease,
+              box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.row:hover {
+  border-color: var(--brand);
+  background: var(--bg-tint);
+  box-shadow: 0 6px 18px rgba(var(--brand-rgb), 0.16);
+}
+
+.row:focus-visible {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(var(--brand-rgb), 0.28);
+}
+
+.row:active { transform: scale(0.995); }
+
+.rowActive {
+  border-color: var(--brand);
+  background: rgba(var(--brand-rgb), 0.06);
+  box-shadow: 0 0 0 1px var(--brand), 0 8px 22px rgba(var(--brand-rgb), 0.16);
+}
+
+.rowActive:hover { background: rgba(var(--brand-rgb), 0.09); }
+
+/* Red sa oznakom mora da se crta iznad suseda */
+.rowBadged { z-index: 1; }
+
+/* ─── Radio krug ─────────────────────────────────────────────────────────── */
+.radio {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--border-strong);
+  background: var(--bg-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.radioDot {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: var(--brand);
+  transform: scale(0);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.rowActive .radio {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(var(--brand-rgb), 0.12);
+}
+
+.rowActive .radioDot { transform: scale(1); }
+
+/* ─── Leva kolona ────────────────────────────────────────────────────────── */
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.qty {
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+.save {
+  font-size: 0.74rem;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--text-muted);
+}
+
+.rowActive .save { color: var(--brand-dark); }
+
+/* ─── Desna kolona ───────────────────────────────────────────────────────── */
+.prices {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.total {
+  font-family: 'Prata', serif;
+  font-size: 1.2rem;
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--brand);
+}
+
+.strike {
+  font-size: 0.76rem;
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+/* ─── Plutajuća oznaka preko gornje ivice ────────────────────────────────── */
+.badge {
+  position: absolute;
+  top: -10px;
+  right: var(--space-4);
+  padding: 3px 11px;
+  border-radius: var(--radius-full);
+  background: var(--brand-gradient);
+  color: var(--text-inverse);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 0 3px 10px rgba(var(--brand-rgb), 0.35);
+  pointer-events: none;
+  z-index: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row, .radio, .radioDot { transition: none; }
+  .row:active { transform: none; }
+}
+
+/* ─── Uska kolona: checkout sažetak i telefoni ───────────────────────────── */
+@container bundlepicker (max-width: 380px) {
+  .list { gap: 12px; }
+  .row { padding: 12px var(--space-3); gap: var(--space-2); }
+  .radio { width: 20px; height: 20px; }
+  .radioDot { width: 9px; height: 9px; }
+  .qty { font-size: 0.88rem; }
+  .save { font-size: 0.7rem; }
+  .total { font-size: 1.05rem; }
+  .strike { font-size: 0.7rem; }
+  .badge { top: -9px; right: var(--space-3); font-size: 0.55rem; padding: 2px 8px; }
+}
+
+/* Pregledači bez container query podrške */
+@supports not (container-type: inline-size) {
+  @media (max-width: 420px) {
+    .row { padding: 12px var(--space-3); }
+    .qty { font-size: 0.88rem; }
+    .total { font-size: 1.05rem; }
+    .strike { font-size: 0.7rem; }
+  }
+}
+
+/* ─── Kompaktna varijanta (checkout) ─────────────────────────────────────── */
+.compact .list { gap: 12px; padding-top: 8px; }
+.compact .row { padding: 11px var(--space-3); }
+.compact .total { font-size: 1.05rem; }

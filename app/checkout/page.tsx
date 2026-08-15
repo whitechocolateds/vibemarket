@@ -4,15 +4,16 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, MapPin, Wallet, ShieldCheck, Truck, PackageCheck, PackageOpen, CheckCircle2, Lock, Sparkles, ArrowLeft, Phone, Mail, Building2, Hash } from 'lucide-react';
+import { User, MapPin, Wallet, ShieldCheck, Truck, PackageCheck, PackageOpen, CheckCircle2, Lock, ArrowLeft, Phone, Mail, Building2, Hash } from 'lucide-react';
 import { useCartStore } from '@/lib/cart';
 import { formatPrice } from '@/lib/format';
 import { OrderForm } from '@/lib/types';
 import { FREE_SHIPPING_THRESHOLD, shippingCostFor } from '@/lib/shipping';
-import { BUNDLE_TIERS, bundleUnitPrice } from '@/lib/bundlePricing';
+import { bundleUnitPrice } from '@/lib/bundlePricing';
 import { isValidSerbianPhone } from '@/lib/phone';
 import { trackPixel, newEventId } from '@/lib/metaEvents';
 import Reveal from '@/components/motion/Reveal';
+import BundlePicker from '@/components/BundlePicker';
 import styles from './page.module.css';
 
 const INITIAL_FORM: OrderForm = {
@@ -42,8 +43,9 @@ export default function CheckoutPage() {
   const [form, setForm] = useState<OrderForm>(INITIAL_FORM);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitting, setSubmitting] = useState(false);
-  const eventIdRef = useRef<string>(undefined);
-  if (!eventIdRef.current) eventIdRef.current = newEventId();
+  // Isti event id kroz ceo život stranice (Meta dedupe). useState sa lenjim
+  // inicijalizatorom umesto ref-a - ref se ne sme čitati tokom rendera.
+  const [eventId] = useState(newEventId);
 
   // Cene po stavci uključuju količinski popust (2 kom -10%, 3 kom -15%)
   const discountedItems = items.map((item) => ({
@@ -99,14 +101,14 @@ export default function CheckoutPage() {
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items, customerInfo: form, totalPrice: grandTotal, eventId: eventIdRef.current }),
+        body: JSON.stringify({ items, customerInfo: form, totalPrice: grandTotal, eventId }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       clearCart();
       const contentIds = discountedItems.map((i) => i.productId).join(',');
       router.push(
-        `/orders/${data.orderId}?name=${encodeURIComponent(form.firstName)}&value=${grandTotal}&eventId=${eventIdRef.current}&contentIds=${encodeURIComponent(contentIds)}`
+        `/orders/${data.orderId}?name=${encodeURIComponent(form.firstName)}&value=${grandTotal}&eventId=${eventId}&contentIds=${encodeURIComponent(contentIds)}`
       );
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Greška pri slanju');
@@ -293,25 +295,20 @@ export default function CheckoutPage() {
                         <p>{item.title}</p>
                         {item.variantTitle && <p className={styles.itemVariant}>{item.variantTitle}</p>}
                       </div>
+                      {/* Precrtana cena je izostavljena namerno - izbor paketa ispod
+                          prikazuje i nju i uštedu, pa bi ovde bila duplirana. */}
                       <span className={styles.itemPrice}>
-                        {item.unitPrice < item.price && (
-                          <span className={styles.itemPriceOld}>{formatPrice(item.price * item.quantity)}</span>
-                        )}
                         {formatPrice(item.unitPrice * item.quantity)}
                       </span>
                     </div>
-                    <div className={styles.bundlePicker}>
-                      {BUNDLE_TIERS.map((tier) => (
-                        <button
-                          key={tier.quantity}
-                          type="button"
-                          className={`${styles.bundleOption} ${item.quantity === tier.quantity ? styles.bundleOptionActive : ''}`}
-                          onClick={() => updateQuantity(item.id, tier.quantity)}
-                        >
-                          {tier.quantity} kom{tier.discountPercent > 0 ? ` · -${tier.discountPercent}%` : ''}
-                        </button>
-                      ))}
-                    </div>
+                    <BundlePicker
+                      basePrice={item.price}
+                      compareAtPrice={item.compareAtPrice}
+                      value={item.quantity}
+                      onChange={(q) => updateQuantity(item.id, q)}
+                      ariaLabel={`Izaberite količinu: ${item.title}`}
+                      variant="compact"
+                    />
                   </div>
                 ))}
               </div>

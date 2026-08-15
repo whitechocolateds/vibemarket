@@ -447,129 +447,6 @@
   margin-top: var(--space-2);
 }
 
-.bundleGrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-3);
-  align-items: stretch;
-}
-
-
-
-.bundleCard {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  padding: 22px 12px 14px;
-  border-radius: var(--radius-xl);
-  border: 1.5px solid var(--border-medium);
-  background: linear-gradient(180deg, #ffffff 0%, var(--bg-tint) 100%);
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(var(--brand-rgb), 0.08);
-}
-
-.bundleCard:hover {
-  border-color: var(--brand-light);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(var(--brand-rgb), 0.18);
-}
-
-.bundleCardActive {
-  border-color: var(--brand) !important;
-  background: linear-gradient(180deg, rgba(22, 82, 190, 0.06) 0%, rgba(255, 255, 255, 1) 100%) !important;
-  box-shadow: 0 0 0 1px var(--brand), 0 8px 24px rgba(var(--brand-rgb), 0.15) !important;
-}
-
-.bundleRadioIndicator {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  border: 2px solid var(--border-medium);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  background: var(--bg-elevated);
-  color: transparent;
-}
-
-.bundleCardActive .bundleRadioIndicator {
-  border-color: var(--brand);
-  background: var(--brand);
-  color: #ffffff;
-  box-shadow: 0 2px 6px rgba(var(--brand-rgb), 0.3);
-}
-
-.bundleTag {
-  position: absolute;
-  top: -12px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 4px 12px;
-  border-radius: var(--radius-full);
-  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-  color: #ffffff;
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  box-shadow: 0 3px 8px rgba(180, 83, 9, 0.3);
-  z-index: 2;
-}
-
-.bundleTagBest {
-  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
-  box-shadow: 0 3px 8px rgba(220, 38, 38, 0.35);
-}
-
-.bundleQty {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-top: 2px;
-}
-
-.bundleTotal {
-  font-family: 'Prata', serif;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.bundleCardActive .bundleTotal {
-  color: var(--brand);
-}
-
-.bundleSave {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 10px;
-  border-radius: var(--radius-full);
-  background: rgba(22, 163, 74, 0.12);
-  color: #15803d;
-  font-size: 0.65rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.bundleStandardPrice {
-  font-size: 0.68rem;
-  color: var(--text-muted);
-  font-weight: 500;
-}
-
 .ctaButtons {
   display: flex;
   flex-direction: column;
@@ -661,8 +538,6 @@
   background: linear-gradient(180deg, #ffffff 0%, var(--bg-tint) 100%);
   box-shadow: 0 2px 10px rgba(var(--brand-rgb), 0.10);
 }
-
-
 
 .perkCard {
   display: flex;
@@ -1111,39 +986,6 @@
   }
 
   /* ─── Compact 3-Column Mobile Layouts for Bundles & Value Props ──────────── */
-  .bundleGrid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
-  }
-  .bundleCard {
-    padding: 16px 4px 10px;
-    gap: 3px;
-  }
-  .bundleTag {
-    font-size: 0.52rem;
-    padding: 2px 7px;
-    top: -10px;
-  }
-  .bundleRadioIndicator {
-    width: 16px;
-    height: 16px;
-    top: 6px;
-    right: 6px;
-  }
-  .bundleQty {
-    font-size: 0.74rem;
-  }
-  .bundleTotal {
-    font-size: 0.95rem;
-  }
-  .bundleSave {
-    font-size: 0.56rem;
-    padding: 2px 6px;
-  }
-  .bundleStandardPrice {
-    font-size: 0.62rem;
-  }
-
   .perksGrid {
     grid-template-columns: repeat(3, 1fr);
     gap: 4px;
