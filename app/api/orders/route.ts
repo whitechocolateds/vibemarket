@@ -5,6 +5,7 @@ import { getAllProducts, decrementStock } from '@/lib/productStore';
 import { bundleUnitPrice } from '@/lib/bundlePricing';
 import { isValidSerbianPhone } from '@/lib/phone';
 import { sendCapiEvent } from '@/lib/metaConversionsApi';
+import { isOrderPushEnabled, createShopifyOrder } from '@/lib/shopify';
 
 interface CreateOrderBody {
   items: CartItem[];
@@ -79,6 +80,7 @@ export async function POST(req: NextRequest) {
         compareAtPrice: variant.compareAtPrice ? parseFloat(variant.compareAtPrice.amount) : undefined,
         quantity,
         image: product.featuredImage,
+        ...(variant.shopifyVariantId ? { shopifyVariantId: variant.shopifyVariantId } : {}),
       });
     }
 
@@ -102,6 +104,35 @@ export async function POST(req: NextRequest) {
       fbp: req.cookies.get('_fbp')?.value ?? null,
       fbc: req.cookies.get('_fbc')?.value ?? null,
     }).catch((error) => console.error('CAPI Purchase event failed:', error));
+
+    // Porudzbina u Shopify - PISE U ZIVI NALOG, zato iza zasebnog prekidaca.
+    // Namerno bez await: ako Shopify padne ili kasni, kupac ne sme da ostane
+    // bez potvrde - porudzbina je vec sacuvana kod nas.
+    if (isOrderPushEnabled()) {
+      createShopifyOrder({
+        orderNumber,
+        totalPrice,
+        items: verifiedItems.map((i) => ({
+          title: i.title,
+          variantTitle: i.variantTitle,
+          price: i.price,
+          quantity: i.quantity,
+          shopifyVariantId: i.shopifyVariantId,
+        })),
+        customer: {
+          firstName: customerInfo.firstName,
+          lastName: customerInfo.lastName,
+          email: customerInfo.email,
+          phone: customerInfo.phone,
+          address: customerInfo.address,
+          city: customerInfo.city,
+          postalCode: customerInfo.postalCode,
+          note: customerInfo.note,
+        },
+      })
+        .then((r) => console.log(`Porudzbina ${orderNumber} poslata u Shopify kao ${r.shopifyOrderName}`))
+        .catch((error) => console.error(`Shopify push za ${orderNumber} nije uspeo:`, error));
+    }
 
     return NextResponse.json({
       success: true,

@@ -94,6 +94,7 @@ function buildProduct(input: ProductInput, id?: string): Product {
       availableForSale: input.availableForSale,
       quantityAvailable: input.quantity,
       selectedOptions: [{ name: 'Title', value: 'Default' }],
+      ...(input.shopifyVariantId ? { shopifyVariantId: input.shopifyVariantId } : {}),
     }],
     priceRange: {
       minVariantPrice: { amount: priceStr, currencyCode: 'RSD' },
@@ -105,6 +106,7 @@ function buildProduct(input: ProductInput, id?: string): Product {
     availableForSale: input.availableForSale,
     comparisonPoints: (input.comparisonPoints ?? []).map((p) => p.trim()).filter(Boolean),
     faqs: (input.faqs ?? []).filter((f) => f.question.trim() && f.answer.trim()),
+    ...(input.shopifyProductId ? { shopifyProductId: input.shopifyProductId } : {}),
   };
 }
 

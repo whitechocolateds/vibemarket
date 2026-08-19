@@ -9,6 +9,7 @@ import RichTextEditor from '@/components/admin/RichTextEditor';
 import { htmlToPlainText, sanitizeProductHtml, escapeHtml } from '@/lib/sanitizeHtml';
 import GeminiProductGenerator from '@/components/admin/GeminiProductGenerator';
 import CompetitorImport from '@/components/admin/CompetitorImport';
+import ShopifyImport from '@/components/admin/ShopifyImport';
 import ImageUploader from '@/components/admin/ImageUploader';
 import { GeneratedProduct } from '@/lib/gemini';
 import styles from '@/app/admin/admin.module.css';
@@ -231,6 +232,8 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
           </button>
         </div>
       )}
+
+      <ShopifyImport />
 
       <CompetitorImport onImported={handleImported} />
       <GeminiProductGenerator onGenerated={handleAIGenerated} />

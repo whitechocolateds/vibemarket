@@ -22,6 +22,8 @@ export interface ProductVariant {
     name: string;
     value: string;
   }[];
+  /** Shopify variant id - slanje porudzbina ga koristi da skine zalihu na pravom artiklu. */
+  shopifyVariantId?: number;
 }
 
 export interface ProductFaq {
@@ -57,6 +59,9 @@ export interface Product {
   comparisonPoints?: string[];
   /** Pitanja i odgovori specifični za ovaj proizvod */
   faqs?: ProductFaq[];
+  /** Poreklo sa Shopify-ja; postoji samo na uvezenim proizvodima. Bez njega se
+   *  porudzbina ne moze vezati za pravi artikal nego ide kao slobodna stavka. */
+  shopifyProductId?: number;
 }
 
 export interface Collection {
@@ -77,6 +82,7 @@ export interface CartItem {
   compareAtPrice?: number;
   quantity: number;
   image: ProductImage | null;
+  shopifyVariantId?: number;
 }
 
 export interface Cart {
@@ -178,5 +184,7 @@ export interface ProductInput {
   availableForSale: boolean;
   comparisonPoints?: string[];
   faqs?: ProductFaq[];
+  shopifyProductId?: number;
+  shopifyVariantId?: number;
 }
 

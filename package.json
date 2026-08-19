@@ -11,7 +11,8 @@
     "gemini:check": "npx tsx scripts/check-gemini.ts",
     "seed:blob": "npx tsx scripts/seed-blob.ts",
     "postinstall": "node scripts/init-store.mjs",
-    "meta:check": "npx tsx scripts/check-meta.ts"
+    "meta:check": "npx tsx scripts/check-meta.ts",
+    "shopify:check": "npx tsx scripts/check-shopify.ts"
   },
   "dependencies": {
     "@tiptap/core": "^3.30.0",
