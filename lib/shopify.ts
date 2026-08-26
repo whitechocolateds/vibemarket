@@ -5,9 +5,18 @@
  *   - proizvodi ULAZE  (citanje kataloga sa Shopify-ja u ovu prodavnicu)
  *   - porudzbine IZLAZE (kupovina ovde kreira porudzbinu u Shopify-ju)
  *
- * Token je Admin API access token custom aplikacije (pocinje sa `shpat_`).
- * Koristi se ISKLJUCIVO na serveru - nikada ne sme dobiti NEXT_PUBLIC_ prefiks,
- * jer daje pun pristup katalogu, porudzbinama i kupcima.
+ * DVA NACINA PRIJAVE, jer je Shopify promenio pravila:
+ *
+ *   1. client_credentials  - aplikacija napravljena u Dev Dashboard-u.
+ *      Razmenjuje Client ID + Client Secret za token koji vazi 24 SATA.
+ *      Token se kesira i sam obnavlja. Radi samo ako su aplikacija i
+ *      prodavnica u ISTOJ Shopify organizaciji.
+ *
+ *   2. staticki shpat_ token - aplikacije napravljene u admin panelu
+ *      prodavnice. Shopify vise NE DOZVOLJAVA pravljenje takvih, ali
+ *      postojeci tokeni i dalje rade, pa se nacin zadrzava.
+ *
+ * Tajne se koriste ISKLJUCIVO na serveru - nikada NEXT_PUBLIC_ prefiks.
  */
 
 /** Verzije koje probamo ako SHOPIFY_API_VERSION nije postavljen, od novije ka starijoj. */
@@ -21,27 +30,41 @@ export class ShopifyError extends Error {
   }
 }
 
+export type AuthMode = 'client_credentials' | 'static_token';
+
 export interface ShopifyConfig {
   shop: string;   // xxxx.myshopify.com
-  token: string;
   version: string;
+  mode: AuthMode;
+  /** mode === 'static_token' */
+  token?: string;
+  /** mode === 'client_credentials' */
+  clientId?: string;
+  clientSecret?: string;
 }
 
 /** Prihvata i pun URL i goli domen; uvek vraca `xxx.myshopify.com`. */
 export function normalizeShopDomain(raw: string): string {
-  const trimmed = raw.trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
-  return trimmed.toLowerCase();
+  return raw.trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '').toLowerCase();
 }
 
 export function getShopifyConfig(): ShopifyConfig | null {
-  const shop = process.env.SHOPIFY_STORE_DOMAIN?.trim();
+  const shopRaw = process.env.SHOPIFY_STORE_DOMAIN?.trim();
+  if (!shopRaw) return null;
+
+  const shop = normalizeShopDomain(shopRaw);
+  const version = process.env.SHOPIFY_API_VERSION?.trim() || CANDIDATE_API_VERSIONS[0];
+
+  const clientId = process.env.SHOPIFY_CLIENT_ID?.trim();
+  const clientSecret = process.env.SHOPIFY_CLIENT_SECRET?.trim();
+  if (clientId && clientSecret) {
+    return { shop, version, mode: 'client_credentials', clientId, clientSecret };
+  }
+
   const token = process.env.SHOPIFY_ADMIN_TOKEN?.trim();
-  if (!shop || !token) return null;
-  return {
-    shop: normalizeShopDomain(shop),
-    token,
-    version: process.env.SHOPIFY_API_VERSION?.trim() || CANDIDATE_API_VERSIONS[0],
-  };
+  if (token) return { shop, version, mode: 'static_token', token };
+
+  return null;
 }
 
 export function isShopifyConfigured(): boolean {
@@ -53,6 +76,104 @@ export function isOrderPushEnabled(): boolean {
   return isShopifyConfigured() && process.env.SHOPIFY_PUSH_ORDERS === 'true';
 }
 
+// ─── Token: pribavljanje, kesiranje, obnavljanje ─────────────────────────────
+
+interface CachedToken {
+  token: string;
+  /** Unix ms kada istice. */
+  expiresAt: number;
+  scope: string;
+}
+
+/** Kes po prodavnici. Zivi koliko i proces - na serverless-u to je jedna topla instanca. */
+const tokenCache = new Map<string, CachedToken>();
+/** Sprecava da paralelni pozivi svaki za sebe traze token. */
+const inFlight = new Map<string, Promise<CachedToken>>();
+
+/** Obnavljamo malo pre isteka da zahtev u letu ne zatekne mrtav token. */
+const REFRESH_MARGIN_MS = 5 * 60 * 1000;
+
+async function requestClientCredentialsToken(config: ShopifyConfig): Promise<CachedToken> {
+  const body = new URLSearchParams({
+    grant_type: 'client_credentials',
+    client_id: config.clientId!,
+    client_secret: config.clientSecret!,
+  });
+
+  const res = await fetch(`https://${config.shop}/admin/oauth/access_token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body,
+    signal: AbortSignal.timeout(20_000),
+  });
+
+  const text = await res.text();
+  if (!res.ok) {
+    if (res.status === 400 || res.status === 401) {
+      throw new ShopifyError(
+        'Shopify je odbio Client ID/Secret. Proveri da su prepisani tacno i da su ' +
+          'aplikacija i prodavnica u ISTOJ Shopify organizaciji - client_credentials ' +
+          `radi samo tada. Odgovor: ${text.slice(0, 200)}`,
+        res.status
+      );
+    }
+    throw new ShopifyError(`Pribavljanje tokena nije uspelo (HTTP ${res.status}): ${text.slice(0, 200)}`, res.status);
+  }
+
+  let json: { access_token?: string; expires_in?: number; scope?: string };
+  try {
+    json = JSON.parse(text);
+  } catch {
+    throw new ShopifyError(`Neocekivan odgovor pri pribavljanju tokena: ${text.slice(0, 200)}`);
+  }
+
+  if (!json.access_token) {
+    throw new ShopifyError('Shopify nije vratio access_token.');
+  }
+
+  // expires_in je 86399 (24h); oduzimamo marginu
+  const ttl = (json.expires_in ?? 86_399) * 1000;
+  return {
+    token: json.access_token,
+    expiresAt: Date.now() + ttl,
+    scope: json.scope ?? '',
+  };
+}
+
+/** Vraca vazeci token; kod client_credentials sam ga obnavlja. */
+export async function getAccessToken(config?: ShopifyConfig): Promise<string> {
+  const cfg = config ?? getShopifyConfig();
+  if (!cfg) throw new ShopifyError('Shopify nije podesen.');
+
+  if (cfg.mode === 'static_token') return cfg.token!;
+
+  const key = `${cfg.shop}|${cfg.clientId}`;
+  const cached = tokenCache.get(key);
+  if (cached && cached.expiresAt - REFRESH_MARGIN_MS > Date.now()) return cached.token;
+
+  const pending = inFlight.get(key);
+  if (pending) return (await pending).token;
+
+  const promise = requestClientCredentialsToken(cfg)
+    .then((fresh) => {
+      tokenCache.set(key, fresh);
+      return fresh;
+    })
+    .finally(() => inFlight.delete(key));
+
+  inFlight.set(key, promise);
+  return (await promise).token;
+}
+
+/** Dozvole koje token stvarno nosi; kod client_credentials stizu uz sam token. */
+export function getCachedScope(config?: ShopifyConfig): string | null {
+  const cfg = config ?? getShopifyConfig();
+  if (!cfg || cfg.mode !== 'client_credentials') return null;
+  return tokenCache.get(`${cfg.shop}|${cfg.clientId}`)?.scope ?? null;
+}
+
+// ─── Pozivi ka Admin API-ju ─────────────────────────────────────────────────
+
 interface FetchOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
   body?: unknown;
@@ -63,22 +184,24 @@ interface FetchOptions {
 
 export interface ShopifyResponse<T> {
   data: T;
-  /** `page_info` sledece strane, ako postoji. */
   nextPageUrl: string | null;
 }
 
 export async function shopifyFetch<T>(path: string, opts: FetchOptions = {}): Promise<ShopifyResponse<T>> {
   const config = opts.config ?? getShopifyConfig();
   if (!config) {
-    throw new ShopifyError('Shopify nije podesen. Postavi SHOPIFY_STORE_DOMAIN i SHOPIFY_ADMIN_TOKEN u .env.local.');
+    throw new ShopifyError(
+      'Shopify nije podesen. Postavi SHOPIFY_STORE_DOMAIN i (SHOPIFY_CLIENT_ID + SHOPIFY_CLIENT_SECRET) u .env.local.'
+    );
   }
 
+  const token = await getAccessToken(config);
   const url = opts.absoluteUrl ?? `https://${config.shop}/admin/api/${config.version}${path}`;
 
   const res = await fetch(url, {
     method: opts.method ?? 'GET',
     headers: {
-      'X-Shopify-Access-Token': config.token,
+      'X-Shopify-Access-Token': token,
       'Content-Type': 'application/json',
       Accept: 'application/json',
     },
@@ -87,8 +210,12 @@ export async function shopifyFetch<T>(path: string, opts: FetchOptions = {}): Pr
   });
 
   if (res.status === 401 || res.status === 403) {
+    // Token je mozda istekao ranije nego sto smo racunali - baci ga iz kesa
+    if (config.mode === 'client_credentials') {
+      tokenCache.delete(`${config.shop}|${config.clientId}`);
+    }
     throw new ShopifyError(
-      'Shopify je odbio token. Proveri da je aplikacija instalirana i da ima potrebne dozvole.',
+      'Shopify je odbio token. Proveri da je aplikacija instalirana na prodavnici i da ima potrebne dozvole.',
       res.status
     );
   }
@@ -106,7 +233,6 @@ export async function shopifyFetch<T>(path: string, opts: FetchOptions = {}): Pr
     throw new ShopifyError(`Shopify greska ${res.status}: ${text.slice(0, 300)}`, res.status);
   }
 
-  // Paginacija ide kroz Link zaglavlje, ne kroz telo odgovora
   const link = res.headers.get('link') ?? '';
   const next = link.split(',').find((p) => p.includes('rel="next"'));
   const nextPageUrl = next?.match(/<([^>]+)>/)?.[1] ?? null;
@@ -136,13 +262,18 @@ export async function getShopInfo(config?: ShopifyConfig): Promise<ShopInfo> {
   };
 }
 
-/** Dozvole koje je aplikacija stvarno dobila. Radi bez verzije API-ja. */
+/** Dozvole koje je token stvarno dobio. */
 export async function getGrantedScopes(config?: ShopifyConfig): Promise<string[]> {
   const cfg = config ?? getShopifyConfig();
   if (!cfg) throw new ShopifyError('Shopify nije podesen.');
 
+  // Kod client_credentials scope stize uz sam token, pa nema potrebe za dodatnim pozivom
+  const fromToken = getCachedScope(cfg);
+  if (fromToken) return fromToken.split(',').map((s) => s.trim()).filter(Boolean);
+
+  const token = await getAccessToken(cfg);
   const res = await fetch(`https://${cfg.shop}/admin/oauth/access_scopes.json`, {
-    headers: { 'X-Shopify-Access-Token': cfg.token },
+    headers: { 'X-Shopify-Access-Token': token },
     signal: AbortSignal.timeout(20_000),
   });
   if (!res.ok) throw new ShopifyError(`Ne mogu da procitam dozvole (HTTP ${res.status}).`, res.status);
@@ -192,16 +323,11 @@ export interface PushOrderResult {
  *
  * Stavke koje imaju shopifyVariantId se vezuju za pravi artikal, pa Shopify sam
  * skida zalihu. Stavke bez njega (proizvod nije uvezen sa Shopify-ja) idu kao
- * slobodne stavke - vidljive u porudzbini, ali bez veze sa katalogom i bez
- * skidanja zalihe.
+ * slobodne stavke - vidljive u porudzbini, ali bez veze sa katalogom.
  *
  * financial_status: 'pending' jer je placanje pouzecem - novac jos nije naplacen.
- * inventory_behaviour: 'decrement_obeying_policy' postuje podesavanje artikla.
  */
 export async function createShopifyOrder(input: PushOrderInput): Promise<PushOrderResult> {
-  const config = getShopifyConfig();
-  if (!config) throw new ShopifyError('Shopify nije podesen.');
-
   const lineItems = input.items.map((item) =>
     item.shopifyVariantId
       ? { variant_id: item.shopifyVariantId, quantity: item.quantity, price: String(item.price) }

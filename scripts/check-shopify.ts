@@ -17,7 +17,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import {
   CANDIDATE_API_VERSIONS, normalizeShopDomain, getShopInfo, getGrantedScopes,
-  shopifyFetch, REQUIRED_SCOPES, type ShopifyConfig,
+  shopifyFetch, REQUIRED_SCOPES, getShopifyConfig, type ShopifyConfig,
 } from '../lib/shopify';
 
 async function loadEnvLocal(): Promise<void> {
@@ -39,22 +39,30 @@ async function main() {
   await loadEnvLocal();
 
   const rawShop = process.env.SHOPIFY_STORE_DOMAIN?.trim();
-  const token = process.env.SHOPIFY_ADMIN_TOKEN?.trim();
+  const clientId = process.env.SHOPIFY_CLIENT_ID?.trim();
+  const clientSecret = process.env.SHOPIFY_CLIENT_SECRET?.trim();
+  const staticToken = process.env.SHOPIFY_ADMIN_TOKEN?.trim();
+  const haveCreds = Boolean((clientId && clientSecret) || staticToken);
 
   console.log('\n─── Veza sa Shopify nalogom ──────────────────────────────────\n');
 
-  if (!rawShop || !token) {
+  if (!rawShop || !haveCreds) {
     console.log('  Shopify nije podesen.\n');
-    console.log('  1. Shopify admin -> Settings -> Apps and sales channels');
-    console.log('  2. Develop apps -> Create an app (npr. "VibeMarket most")');
-    console.log('  3. Configure Admin API scopes -> ukljuci:');
-    console.log('       read_products      (uvoz kataloga)');
-    console.log('       write_orders       (slanje porudzbina)');
-    console.log('       read_orders        (provera poslatih)');
-    console.log('  4. Install app -> Reveal token once -> kopiraj shpat_...');
+    console.log('  Shopify vise NE dozvoljava pravljenje aplikacija sa gotovim');
+    console.log('  shpat_ tokenom. Za aplikaciju iz Dev Dashboard-a ide razmena');
+    console.log('  Client ID + Secret za token (client_credentials).\n');
+    console.log('  1. Dev Dashboard -> tvoja aplikacija -> Settings -> Credentials');
+    console.log('     prepisi Client ID i Client secret');
+    console.log('  2. APLIKACIJA i PRODAVNICA moraju biti u ISTOJ organizaciji -');
+    console.log('     client_credentials radi samo tada');
+    console.log('  3. Na verziji aplikacije ukljuci dozvole:');
+    console.log('       read_products, write_orders, read_orders');
+    console.log('     pa objavi novu verziju i odobri promenu na prodavnici');
+    console.log('  4. Instaliraj aplikaciju na prodavnicu');
     console.log('  5. U .env.local:');
     console.log('       SHOPIFY_STORE_DOMAIN=tvoja-prodavnica.myshopify.com');
-    console.log('       SHOPIFY_ADMIN_TOKEN=shpat_...');
+    console.log('       SHOPIFY_CLIENT_ID=...');
+    console.log('       SHOPIFY_CLIENT_SECRET=...');
     console.log('  6. npm run shopify:check\n');
     process.exitCode = 1;
     return;
@@ -62,13 +70,22 @@ async function main() {
 
   const shop = normalizeShopDomain(rawShop);
   row('Domen', shop);
-  row('Token', `postavljen (${token.length} znakova, pocinje "${token.slice(0, 6)}")`);
+  const mode = clientId && clientSecret ? 'client_credentials' : 'static_token';
+  row('Nacin prijave', mode === 'client_credentials'
+    ? 'Client ID + Secret (Dev Dashboard aplikacija)'
+    : 'staticki shpat_ token (starije aplikacije)');
+  if (mode === 'client_credentials') {
+    row('Client ID', `${clientId!.slice(0, 8)}... (${clientId!.length} znakova)`);
+    row('Client secret', `postavljen (${clientSecret!.length} znakova)`);
+  } else {
+    row('Token', `postavljen (${staticToken!.length} znakova, pocinje "${staticToken!.slice(0, 6)}")`);
+  }
 
   if (!shop.endsWith('.myshopify.com')) {
     console.log('\n  UPOZORENJE: ocekuje se *.myshopify.com, a ne tvoj javni domen.');
     console.log('  Pravi domen je u Shopify admin -> Settings -> Domains.');
   }
-  if (!token.startsWith('shpat_')) {
+  if (mode === 'static_token' && !staticToken!.startsWith('shpat_')) {
     console.log('\n  UPOZORENJE: Admin API token obicno pocinje sa "shpat_".');
     console.log('  Ako si kopirao "API key" ili "API secret key", to nije to -');
     console.log('  treba "Admin API access token" sa Install app ekrana.');
@@ -82,7 +99,8 @@ async function main() {
   let working: string | null = null;
 
   for (const version of toTry) {
-    const candidate: ShopifyConfig = { shop, token, version };
+    const base = getShopifyConfig()!;
+    const candidate: ShopifyConfig = { ...base, shop, version };
     try {
       await getShopInfo(candidate);
       working = version;
@@ -90,9 +108,13 @@ async function main() {
       break;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (/odbio token|401|403/.test(msg)) {
-        console.log('\n  Token je odbijen. Aplikacija mozda nije instalirana na prodavnici,');
-        console.log('  ili je token opozvan. Develop apps -> tvoja aplikacija -> Install.\n');
+      if (/odbio token|odbio Client|401|403/.test(msg)) {
+        console.log('\n  Prijava je odbijena. Najcesci uzroci:');
+        console.log('   - aplikacija nije instalirana na TOJ prodavnici');
+        console.log('   - aplikacija i prodavnica nisu u istoj Shopify organizaciji');
+        console.log('     (client_credentials radi samo tada)');
+        console.log('   - Client ID ili Secret su pogresno prepisani');
+        console.log(`\n  Detalj: ${msg}\n`);
         process.exitCode = 1;
         return;
       }
@@ -111,7 +133,7 @@ async function main() {
     console.log(`     SHOPIFY_API_VERSION=${working}`);
   }
 
-  const config: ShopifyConfig = { shop, token, version: working };
+  const config: ShopifyConfig = { ...getShopifyConfig()!, shop, version: working };
 
   // ── Podaci o prodavnici ───────────────────────────────────────────────────
   console.log('\n─── Prodavnica ───────────────────────────────────────────────\n');
