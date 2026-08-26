@@ -114,7 +114,12 @@ async function main() {
         event_id: `meta-check-${Date.now()}`,
         action_source: 'website',
         event_source_url: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
-        user_data: { client_user_agent: 'vibemarket-meta-check' },
+        user_data: {
+          // Meta trazi BAR DVA parametra za povezivanje; sam user agent odbija
+          // kao "prosirok za matching" (Invalid parameter / insufficient customer information)
+          client_user_agent: 'Mozilla/5.0 (compatible; VibeMarketMetaCheck/1.0)',
+          client_ip_address: '127.0.0.1',
+        },
       },
     ],
     test_event_code: testCode,
@@ -136,9 +141,14 @@ async function main() {
       console.log('  iz .env.local da pravi saobracaj ne zavrsi u test rezimu.\n');
     } else {
       problems++;
-      const msg = json?.error?.message ?? JSON.stringify(json).slice(0, 200);
+      const err = json?.error ?? {};
+
+      const msg = err.message ?? JSON.stringify(json).slice(0, 200);
       console.log(`  Meta je odbila event (HTTP ${res.status}).`);
       console.log(`  Poruka: ${msg}`);
+      // Pravi razlog je skoro uvek ovde, a ne u `message`
+      if (err.error_user_title) console.log(`  Razlog: ${err.error_user_title}`);
+      if (err.error_user_msg) console.log(`  Detalj: ${err.error_user_msg}`);
       if (/access token/i.test(msg)) {
         console.log('\n  Token nije validan ili je opozvan. Generisi novi u');
         console.log('  Events Manager -> Settings -> Conversions API.');

@@ -99,7 +99,13 @@ export async function POST(req: NextRequest) {
       value: totalPrice,
       currency: 'RSD',
       contentIds: verifiedItems.map((i) => i.productId),
-      clientIp: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null,
+      // Bez IP-a Meta odbija event kao "nedovoljno podataka za povezivanje" i
+      // Purchase se tiho gubi. x-forwarded-for nije svuda prisutan.
+      clientIp:
+        req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+        req.headers.get('x-real-ip')?.trim() ||
+        req.headers.get('cf-connecting-ip')?.trim() ||
+        null,
       userAgent: req.headers.get('user-agent'),
       fbp: req.cookies.get('_fbp')?.value ?? null,
       fbc: req.cookies.get('_fbc')?.value ?? null,
