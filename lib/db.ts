@@ -38,7 +38,11 @@ export async function writeJsonFile<T>(filename: string, data: T): Promise<void>
 
   if (process.env.VERCEL === '1') {
     throw new Error(
-      `Cannot write ${filename} on Vercel without Blob storage. Connect a Blob store or set BLOB_READ_WRITE_TOKEN.`
+      `Nije moguce upisati ${filename}: na Vercelu je fajl sistem samo za citanje. ` +
+        'Ukljuci Vercel Blob: Vercel -> projekat -> Storage -> Create Database -> Blob -> ' +
+        'Connect Project (sve tri sredine), pa uradi novi deploy. ' +
+        'Bez toga ne rade ni uvoz proizvoda ni cuvanje porudzbina. ' +
+        'Lokalna provera: npm run blob:check'
     );
   }
 
