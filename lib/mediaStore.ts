@@ -2,19 +2,53 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { randomUUID } from 'crypto';
 import { put } from '@vercel/blob';
-import { isBlobStorageEnabled } from './blobStore';
 import { slugify } from './slugify';
 
 /**
- * Čuvanje slika proizvoda. Prati isto grananje kao lib/db.ts:
- * Vercel Blob kad je konfigurisan, inače lokalni public/uploads/.
+ * Čuvanje slika proizvoda.
  *
- * NAPOMENA: ne koristi blobCommandOptions() iz blobStore.ts - ono hardkoduje
- * access: 'private', pa bi <img> na tu putanju vraćao 403. Slike moraju biti javne.
+ * DVA ODVOJENA BLOB STORE-A, jer je pristup svojstvo STORE-a i ne može se
+ * promeniti posle kreiranja:
+ *
+ *   - JSON (proizvodi, porudžbine) -> PRIVATNI store (lib/blobStore.ts).
+ *     Mora biti privatan: orders.json sadrži imena, adrese i telefone kupaca.
+ *
+ *   - slike -> JAVNI store (ovaj fajl). Moraju biti javne jer privatni blob
+ *     Vercel isporučuje samo kroz našu funkciju preko get(), pa bi <img> iz
+ *     kupčevog browsera dobio 403. Uz to bi svaka slika trošila poziv funkcije
+ *     umesto da je servira CDN.
+ *
+ * Ako BLOB_MEDIA_* nije postavljen, pada nazad na glavni store - to radi samo
+ * ako je i on javan. Kod privatnog glavnog store-a Vercel vraća
+ * "Cannot use public access on a private store".
  */
 
 const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads');
 const BLOB_MEDIA_PREFIX = 'products';
+
+/**
+ * Zaseban JAVNI store za slike. Ako nije podešen, koristi se glavni.
+ * Vercel pri povezivanju drugog store-a dozvoljava svoj prefiks za env
+ * varijable - imenuj ga BLOB_MEDIA_ da se ne sudari sa glavnim.
+ */
+function mediaCredentials(): { token?: string; storeId?: string } {
+  const token = process.env.BLOB_MEDIA_READ_WRITE_TOKEN?.trim() || process.env.BLOB_READ_WRITE_TOKEN?.trim();
+  const storeId = process.env.BLOB_MEDIA_STORE_ID?.trim() || process.env.BLOB_STORE_ID?.trim();
+  return { token, storeId };
+}
+
+/** Da li slike uopšte idu u Blob (a ne na lokalni disk). */
+export function isMediaBlobEnabled(): boolean {
+  const { token, storeId } = mediaCredentials();
+  return Boolean(token?.startsWith('vercel_blob_rw_') || storeId?.startsWith('store_'));
+}
+
+/** True kad se koristi zaseban medijski store, a ne glavni. */
+export function usesDedicatedMediaStore(): boolean {
+  return Boolean(
+    process.env.BLOB_MEDIA_READ_WRITE_TOKEN?.trim() || process.env.BLOB_MEDIA_STORE_ID?.trim()
+  );
+}
 
 /** Ispod Vercel-ovog ~4.5 MB limita na telo zahteva. */
 export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
@@ -74,7 +108,7 @@ export function safeFileName(original: string, kind: ImageKind): string {
 }
 
 function assertWritable() {
-  if (!isBlobStorageEnabled() && process.env.VERCEL === '1') {
+  if (!isMediaBlobEnabled() && process.env.VERCEL === '1') {
     throw new Error(
       'Otpremanje slika na Vercelu zahteva Blob storage. Poveži Blob store ili postavi BLOB_READ_WRITE_TOKEN.'
     );
@@ -85,21 +119,33 @@ async function storeBytes(bytes: Uint8Array, name: string, kind: ImageKind): Pro
   assertWritable();
   const contentType = MIME_BY_KIND[kind];
 
-  if (isBlobStorageEnabled()) {
-    const token = process.env.BLOB_READ_WRITE_TOKEN;
-    const storeId = process.env.BLOB_STORE_ID;
+  if (isMediaBlobEnabled()) {
+    const { token, storeId } = mediaCredentials();
     const pathname = `${BLOB_MEDIA_PREFIX}/${name}`;
 
-    const result = await put(pathname, Buffer.from(bytes), {
-      access: 'public',
-      addRandomSuffix: true,
-      contentType,
-      cacheControlMaxAge: 31_536_000,
-      ...(token ? { token } : {}),
-      ...(storeId ? { storeId } : {}),
-    });
-
-    return { url: result.url, pathname: result.pathname, size: bytes.byteLength, contentType };
+    try {
+      const result = await put(pathname, Buffer.from(bytes), {
+        access: 'public',
+        addRandomSuffix: true,
+        contentType,
+        cacheControlMaxAge: 31_536_000,
+        ...(token ? { token } : {}),
+        ...(storeId ? { storeId } : {}),
+      });
+      return { url: result.url, pathname: result.pathname, size: bytes.byteLength, contentType };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (/public access on a private store/i.test(message)) {
+        throw new MediaError(
+          'Blob store za slike je PRIVATAN, a slike moraju biti javne da bi ih kupac video. ' +
+            'Pristup se ne može promeniti posle kreiranja store-a. Napravi drugi Blob store sa ' +
+            'Public pristupom samo za slike i poveži ga sa prefiksom BLOB_MEDIA_ ' +
+            '(BLOB_MEDIA_READ_WRITE_TOKEN / BLOB_MEDIA_STORE_ID). Glavni store ostavi privatan - ' +
+            'u njemu su porudžbine sa podacima kupaca. Provera: npm run blob:check'
+        );
+      }
+      throw error;
+    }
   }
 
   await fs.mkdir(UPLOAD_DIR, { recursive: true });

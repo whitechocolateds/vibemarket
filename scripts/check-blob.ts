@@ -14,6 +14,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { isBlobStorageEnabled, readJsonFromBlob, writeJsonToBlob } from '../lib/blobStore';
+import { isMediaBlobEnabled, usesDedicatedMediaStore, saveImage, MediaError } from '../lib/mediaStore';
 
 async function loadEnvLocal(): Promise<void> {
   try {
@@ -106,6 +107,43 @@ async function main() {
     console.log(`  citanje NE RADI: ${err instanceof Error ? err.message : err}`);
     process.exitCode = 1;
     return;
+  }
+
+  // ── Store za slike ────────────────────────────────────────────────────────
+  console.log('\n─── Store za slike ───────────────────────────────────────────\n');
+
+  row('Zaseban store za slike', usesDedicatedMediaStore() ? 'da (BLOB_MEDIA_*)' : 'ne - koristi glavni');
+
+  if (!isMediaBlobEnabled()) {
+    console.log('\n  Slike ne idu u Blob. Na Vercelu ce otpremanje puci.');
+  } else {
+    // Jedini nacin da se vidi sudar pristupa je da se stvarno pokusa upis
+    const gif = new Uint8Array([
+      0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x01, 0x00, 0x01, 0x00, 0x80, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0x21, 0xf9, 0x04, 0x01, 0x00, 0x00, 0x00,
+      0x00, 0x2c, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x02, 0x02,
+      0x44, 0x01, 0x00, 0x3b,
+    ]);
+    try {
+      const saved = await saveImage(new File([gif.slice().buffer as ArrayBuffer], 'probe.gif', { type: 'image/gif' }));
+      console.log('  upis slike ok');
+      row('Primer URL-a', saved.url.slice(0, 72));
+
+      // Javan store mora da vrati sliku BEZ ikakve autentifikacije
+      if (saved.url.startsWith('https://')) {
+        const res = await fetch(saved.url);
+        if (res.ok) {
+          console.log('  slika je javno dostupna ok');
+        } else {
+          console.log(`  slika NIJE javno dostupna (HTTP ${res.status}) - kupac bi video praznu sliku`);
+          process.exitCode = 1;
+        }
+      }
+    } catch (err) {
+      const msg = err instanceof MediaError ? err.message : err instanceof Error ? err.message : String(err);
+      console.log(`  upis slike NE RADI:\n    ${msg}`);
+      process.exitCode = 1;
+    }
   }
 
   // ── Sta je vec u skladistu ────────────────────────────────────────────────

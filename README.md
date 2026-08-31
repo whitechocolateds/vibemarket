@@ -86,3 +86,34 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Vercel Blob — dva store-a
+
+Pristup (`public` / `private`) je svojstvo **store-a** i ne može se promeniti
+posle kreiranja. Zato su potrebna dva:
+
+| Store | Pristup | Šta drži | Zašto tako |
+|---|---|---|---|
+| glavni | **private** | `products.json`, `orders.json` | `orders.json` sadrži imena, adrese i telefone kupaca — javan store znači da to čita svako sa URL-om |
+| medijski | **public** | slike proizvoda | privatan blob Vercel isporučuje samo kroz funkciju preko `get()`, pa bi `<img>` u kupčevom browseru dobio 403, a svaka slika trošila poziv funkcije umesto CDN-a |
+
+Ako medijski store nije podešen, slike padaju nazad na glavni — što radi samo
+ako je i on javan. Kod privatnog glavnog store-a upis puca sa
+`Cannot use public access on a private store`.
+
+**Podešavanje drugog store-a:** Vercel → Storage → Create Database → Blob →
+**Public** → Connect Project. Pri povezivanju izaberi prefiks `BLOB_MEDIA_`;
+ako ga Vercel ne ponudi, dodaj ručno u Settings → Environment Variables:
+
+```
+BLOB_MEDIA_STORE_ID           # store_... drugog, javnog store-a
+BLOB_MEDIA_READ_WRITE_TOKEN   # samo ako ne koristiš OIDC
+```
+
+Ako koristiš `vercel env pull`, dodaj ih **na Vercelu** pa povuci ponovo —
+ručne izmene u `.env.local` briše sledeći `pull`.
+
+```bash
+npm run blob:check     # otprema probni GIF pa ga povlači bez autentifikacije
+npm run blob:migrate   # lokalni data/*.json -> Blob (ne seed:blob, taj je demo)
+```
