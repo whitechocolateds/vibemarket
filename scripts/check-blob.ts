@@ -84,8 +84,11 @@ async function main() {
   console.log('\n─── Provera upisa i citanja ──────────────────────────────────\n');
 
   const probe = { probe: true, at: new Date().toISOString() };
+  // Jedinstveno ime po pokretanju: prepisivanje istog fajla bi vratilo stariju
+  // verziju iz CDN kesa (Vercel navodi do 60 s propagacije) pa bi provera lazno pala
+  const probeFile = `_probe-${Date.now()}.json`;
   try {
-    await writeJsonToBlob('_probe.json', probe);
+    await writeJsonToBlob(probeFile, probe);
     console.log('  upis    ok');
   } catch (err) {
     console.log(`  upis    NE RADI: ${err instanceof Error ? err.message : err}`);
@@ -95,7 +98,7 @@ async function main() {
   }
 
   try {
-    const back = await readJsonFromBlob<typeof probe>('_probe.json');
+    const back = await readJsonFromBlob<typeof probe>(probeFile);
     if (back?.at === probe.at) {
       console.log('  citanje ok');
     } else {
@@ -113,6 +116,8 @@ async function main() {
   console.log('\n─── Store za slike ───────────────────────────────────────────\n');
 
   row('Zaseban store za slike', usesDedicatedMediaStore() ? 'da (BLOB_MEDIA_*)' : 'ne - koristi glavni');
+  row('BLOB_MEDIA_STORE_ID', process.env.BLOB_MEDIA_STORE_ID?.trim() || 'nije postavljen');
+  row('BLOB_MEDIA_READ_WRITE_TOKEN', process.env.BLOB_MEDIA_READ_WRITE_TOKEN ? 'postavljen' : 'nije postavljen (OIDC)');
 
   if (!isMediaBlobEnabled()) {
     console.log('\n  Slike ne idu u Blob. Na Vercelu ce otpremanje puci.');
@@ -140,8 +145,20 @@ async function main() {
         }
       }
     } catch (err) {
-      const msg = err instanceof MediaError ? err.message : err instanceof Error ? err.message : String(err);
-      console.log(`  upis slike NE RADI:\n    ${msg}`);
+      console.log('  upis slike NE RADI\n');
+      console.log(`    ${err instanceof Error ? err.message : String(err)}`);
+
+      // Sirova greska iz @vercel/blob, bez ikakvog tumacenja
+      const cause = err instanceof Error ? (err as Error & { cause?: unknown }).cause : undefined;
+      if (cause instanceof Error) {
+        console.log('\n    Sirova greska iz @vercel/blob:');
+        console.log(`      name    : ${cause.name}`);
+        console.log(`      message : ${cause.message}`);
+        const code = (cause as Error & { code?: unknown }).code;
+        if (code) console.log(`      code    : ${String(code)}`);
+      } else if (cause) {
+        console.log(`\n    Sirova greska: ${String(cause)}`);
+      }
       process.exitCode = 1;
     }
   }

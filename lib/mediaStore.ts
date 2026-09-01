@@ -21,7 +21,15 @@ import { slugify } from './slugify';
  * Ako BLOB_MEDIA_* nije postavljen, pada nazad na glavni store - to radi samo
  * ako je i on javan. Kod privatnog glavnog store-a Vercel vraća
  * "Cannot use public access on a private store".
+ *
+ * VAŽNO, izmereno: kad se prosledi i `token` i `storeId`, TOKEN određuje u koji
+ * store upis ide i nadjačava `storeId` — iako dokumentacija tvrdi suprotno
+ * ("token ... Ignored when Vercel OIDC token is available and either
+ * BLOB_STORE_ID or options.storeId is set"). Zato se kredencijali dva store-a
+ * nikad ne mešaju.
  */
+
+export class MediaError extends Error {}
 
 const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads');
 const BLOB_MEDIA_PREFIX = 'products';
@@ -32,9 +40,28 @@ const BLOB_MEDIA_PREFIX = 'products';
  * varijable - imenuj ga BLOB_MEDIA_ da se ne sudari sa glavnim.
  */
 function mediaCredentials(): { token?: string; storeId?: string } {
-  const token = process.env.BLOB_MEDIA_READ_WRITE_TOKEN?.trim() || process.env.BLOB_READ_WRITE_TOKEN?.trim();
-  const storeId = process.env.BLOB_MEDIA_STORE_ID?.trim() || process.env.BLOB_STORE_ID?.trim();
-  return { token, storeId };
+  const mediaToken = process.env.BLOB_MEDIA_READ_WRITE_TOKEN?.trim();
+  const mediaStoreId = process.env.BLOB_MEDIA_STORE_ID?.trim();
+
+  /**
+   * Kad postoji zaseban medijski store, koriste se ISKLJUCIVO njegovi kredencijali.
+   *
+   * Ranije se ovde padalo na BLOB_READ_WRITE_TOKEN glavnog store-a kad medijski
+   * token ne postoji (Vercel ga i ne pravi kad se koristi OIDC). To je bilo pogresno:
+   * izmereno je da TOKEN odredjuje odrediste i nadjacava storeId, pa je upis
+   * zavrsavao u glavnom PRIVATNOM store-u i padao sa
+   * "Cannot use public access on a private store" - iako je storeId pokazivao
+   * na javni store. Bez tokena SDK koristi OIDC uz prosledjeni storeId i pogadja
+   * pravi store.
+   */
+  if (mediaToken || mediaStoreId) {
+    return { token: mediaToken, storeId: mediaStoreId };
+  }
+
+  return {
+    token: process.env.BLOB_READ_WRITE_TOKEN?.trim(),
+    storeId: process.env.BLOB_STORE_ID?.trim(),
+  };
 }
 
 /** Da li slike uopšte idu u Blob (a ne na lokalni disk). */
@@ -134,17 +161,25 @@ async function storeBytes(bytes: Uint8Array, name: string, kind: ImageKind): Pro
       });
       return { url: result.url, pathname: result.pathname, size: bytes.byteLength, contentType };
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (/public access on a private store/i.test(message)) {
-        throw new MediaError(
-          'Blob store za slike je PRIVATAN, a slike moraju biti javne da bi ih kupac video. ' +
-            'Pristup se ne može promeniti posle kreiranja store-a. Napravi drugi Blob store sa ' +
-            'Public pristupom samo za slike i poveži ga sa prefiksom BLOB_MEDIA_ ' +
-            '(BLOB_MEDIA_READ_WRITE_TOKEN / BLOB_MEDIA_STORE_ID). Glavni store ostavi privatan - ' +
-            'u njemu su porudžbine sa podacima kupaca. Provera: npm run blob:check'
-        );
-      }
-      throw error;
+      const original = error instanceof Error ? error.message : String(error);
+
+      /**
+       * Originalna Vercel poruka se UVEK zadrzava. Ranije je bila zamenjena
+       * objasnjenjem, pa se nije videlo sta je stvarno vratio API - a objasnjenje
+       * je usput promasivalo uzrok.
+       */
+      const hint = /public access on a private store/i.test(original)
+        ? ' | Upis je otisao u PRIVATAN store. Proveri da je BLOB_MEDIA_STORE_ID id javnog ' +
+          'store-a i da uz njega NE ide token glavnog store-a - token nadjacava storeId. ' +
+          'Provera: npm run blob:check'
+        : '';
+
+      throw new MediaError(
+        `Vercel Blob nije primio sliku (store: ${storeId ?? 'podrazumevani'}, ` +
+          `token: ${token ? 'prosledjen' : 'nije prosledjen, koristi se OIDC'}). ` +
+          `Originalna greska: ${original}${hint}`,
+        { cause: error }
+      );
     }
   }
 
@@ -152,8 +187,6 @@ async function storeBytes(bytes: Uint8Array, name: string, kind: ImageKind): Pro
   await fs.writeFile(path.join(UPLOAD_DIR, name), bytes);
   return { url: `/uploads/${name}`, pathname: name, size: bytes.byteLength, contentType };
 }
-
-export class MediaError extends Error {}
 
 export async function saveImage(file: File): Promise<StoredMedia> {
   if (file.size === 0) throw new MediaError('Fajl je prazan.');
