@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
 import { isShopifyConfigured, ShopifyError } from '@/lib/shopify';
 import { fetchAllShopifyProducts, mapShopifyProduct, assertCurrencyMatches } from '@/lib/shopifyImport';
-import { getAllProducts, saveProductsBulk } from '@/lib/productStore';
+import { getAllProducts, saveProductsBulk, type BulkOutcome } from '@/lib/productStore';
+import { BlobConflictError } from '@/lib/blobStore';
 import { ProductInput } from '@/lib/types';
 
 export const runtime = 'nodejs';
@@ -34,6 +35,77 @@ export interface ShopifyImportResult {
   failed: { title: string; reason: string }[];
   dryRun: boolean;
   items: { title: string; action: 'kreiran' | 'azuriran' | 'preskocen' | 'greska'; detail?: string }[];
+}
+
+/**
+ * Upisuje seriju, pa ako to ne uspe - proizvod po proizvod.
+ *
+ * Grupni upis je brz put: jedno citanje, jedan upis za celu seriju. Ali kad
+ * padne, ranije je OBARAO svih 10 proizvoda odjednom, iako je problem mozda samo
+ * u jednom. Zato se posle njega ide pojedinacno: sto moze da prodje - prolazi, a
+ * neuspeh ostane ogranicen na proizvod koji ga je izazvao.
+ *
+ * Sam sudar (BlobConflictError) se ponavlja jos jednom pre nego sto se ide na
+ * pojedinacni put, jer je prolazan - sledece citanje vec vidi noviju verziju.
+ */
+async function writeBatch(
+  pending: { title: string; input: ProductInput }[],
+  overwrite: boolean,
+  result: ShopifyImportResult,
+  offset: number
+): Promise<BulkOutcome[]> {
+  const BULK_POKUSAJA = 3;
+
+  for (let attempt = 1; attempt <= BULK_POKUSAJA; attempt++) {
+    try {
+      const outcomes = await saveProductsBulk(pending.map((x) => x.input), { overwrite });
+
+      for (const outcome of outcomes) {
+        const title = pending.find((x) => x.input === outcome.input)?.title ?? outcome.product.title;
+        if (outcome.action === 'azuriran') {
+          result.updated++;
+          result.items.push({ title, action: 'azuriran' });
+        } else {
+          result.created++;
+          result.items.push({ title, action: 'kreiran' });
+        }
+      }
+      return outcomes;
+    } catch (err) {
+      const conflict = err instanceof BlobConflictError;
+      console.error(
+        `Shopify uvoz: grupni upis serije ${offset}, pokusaj ${attempt}/${BULK_POKUSAJA} nije uspeo - ` +
+          `${err instanceof Error ? err.message : 'nepoznata greška'}`
+      );
+      if (conflict && attempt < BULK_POKUSAJA) {
+        await new Promise((r) => setTimeout(r, 500 * attempt));
+        continue;
+      }
+      break;
+    }
+  }
+
+  // Grupni upis ne prolazi - dalje se ide jedan po jedan, da neuspeh ostane sam
+  console.warn(`Shopify uvoz: serija ${offset} prelazi na pojedinacni upis (${pending.length} proizvoda)`);
+  const outcomes: BulkOutcome[] = [];
+
+  for (const item of pending) {
+    try {
+      const single = await saveProductsBulk([item.input], { overwrite });
+      outcomes.push(...single);
+
+      if (single.length === 0) continue; // preskocen, broji se kasnije
+      result[single[0].action === 'azuriran' ? 'updated' : 'created']++;
+      result.items.push({ title: item.title, action: single[0].action });
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : 'upis nije uspeo';
+      console.error(`Shopify uvoz: "${item.title}" nije upisan - ${reason}`);
+      result.failed.push({ title: item.title, reason });
+      result.items.push({ title: item.title, action: 'greska', detail: reason });
+    }
+  }
+
+  return outcomes;
 }
 
 export async function POST(req: NextRequest) {
@@ -134,33 +206,14 @@ export async function POST(req: NextRequest) {
     if (pending.length > 0) {
       // Upis se CEKA pre nego sto se serija prijavi kao uspesna. Ako padne,
       // nijedan proizvod iz serije se ne broji kao upisan - jer i nije.
-      try {
-        const outcomes = await saveProductsBulk(pending.map((x) => x.input), { overwrite });
+      const outcomes = await writeBatch(pending, overwrite, result, offset);
 
-        for (const outcome of outcomes) {
-          const title = pending.find((x) => x.input === outcome.input)?.title ?? outcome.product.title;
-          if (outcome.action === 'azuriran') {
-            result.updated++;
-            result.items.push({ title, action: 'azuriran' });
-          } else {
-            result.created++;
-            result.items.push({ title, action: 'kreiran' });
-          }
-        }
-
-        // Sto je bulk preskocio (vec postoji, a overwrite je iskljucen)
-        for (const item of pending) {
-          if (outcomes.some((o) => o.input === item.input)) continue;
-          result.skipped++;
-          result.items.push({ title: item.title, action: 'preskocen', detail: 'već postoji' });
-        }
-      } catch (err) {
-        const reason = err instanceof Error ? err.message : 'upis nije uspeo';
-        console.error(`Shopify uvoz: upis serije ${offset}-${result.processedTo} nije uspeo - ${reason}`);
-        for (const item of pending) {
-          result.failed.push({ title: item.title, reason });
-          result.items.push({ title: item.title, action: 'greska', detail: reason });
-        }
+      // Sto je upis preskocio (vec postoji, a overwrite je iskljucen)
+      for (const item of pending) {
+        if (outcomes.some((o) => o.input === item.input)) continue;
+        if (result.items.some((r) => r.title === item.title && r.action === 'greska')) continue;
+        result.skipped++;
+        result.items.push({ title: item.title, action: 'preskocen', detail: 'već postoji' });
       }
     }
 

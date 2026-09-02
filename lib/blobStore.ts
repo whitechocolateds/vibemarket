@@ -73,22 +73,24 @@ function strongEtag(etag: string | undefined): string {
 }
 
 /**
- * Citanje ide preko URL-a sa verzijom u upitu, ne preko gole putanje.
+ * Citanje vraca telo TEK kad se dokaze da telo i ETag opisuju istu verziju.
  *
- * `get()` po putanji ide kroz rubni kes koji se u ovoj verziji SDK-a vise ne moze
- * zaobici (`useCache` je ukinut: "the backend no longer supports bypassing the
- * cache"). Izmereno na petlji upisi-pa-procitaj: po goloj putanji 3 od 8 citanja
- * su bila zastarela, a preko URL-a sa ETag-om u upitu 1 od 8 - jer se URL menja
- * cim se sadrzaj promeni, pa kes ne moze da posluzi stariju verziju.
+ * Izmereno na objektu od 140 KB, u petlji upisi-pa-procitaj: `head()` je uvek
+ * svez, ali sadrzaj iz `get()` kasni za njim. Kombinacija je podmukla - ETag iz
+ * `head()` je jedini koji If-Match priznaje (6/6 naspram 0/6 sa ETag-om iz
+ * `get()`), ali NE opisuje nuzno telo koje je stiglo. Upis sa takvim parom
+ * prolazi i tiho gubi tudju izmenu: izmereno, od 12 izmena prezivela je jedna.
  *
- * Ono sto preostalu zastarelost cini bezopasnom: vraceni ETag opisuje BAS taj
- * vraceni sadrzaj. Uslovan upis zato ili prodje (nista se nije promenilo) ili
- * padne kao sudar - a nikad tiho ne pregazi tudje izmene.
+ * Ono sto to cini uhvatljivim: `get()` uz telo vraca hes BAS tog tela. Ako se ne
+ * poklopi sa ETag-om iz `head()`, telo je starija verzija - citanje se tada
+ * ponavlja umesto da se na njemu gradi upis.
  */
 async function readOnce<T>(pathname: string): Promise<BlobRead<T>> {
   const meta = await head(pathname, blobCommandOptions());
-  const version = strongEtag(meta.etag).replace(/"/g, '');
-  const result = await get(`${meta.url}?v=${version}`, blobCommandOptions());
+  const etag = strongEtag(meta.etag);
+
+  // Verzija u upitu: URL se menja sa sadrzajem, pa kes ne moze da posluzi stariju
+  const result = await get(`${meta.url}?v=${etag.replace(/"/g, '')}`, blobCommandOptions());
 
   if (!result) return { status: 'error', error: new Error('get() je vratio null iako head() vidi objekat') };
   if (result.statusCode !== 200 || !result.stream) {
@@ -96,12 +98,28 @@ async function readOnce<T>(pathname: string): Promise<BlobRead<T>> {
   }
 
   const text = await new Response(result.stream).text();
-  // ETag iz odgovora, ne iz head() - opisuje telo koje smo stvarno dobili
-  return { status: 'ok', data: JSON.parse(text) as T, etag: strongEtag(result.blob.etag) };
+
+  // Jedina provera koja stvarno drzi: opisuju li telo i ETag istu verziju
+  const bodyEtag = strongEtag(result.blob.etag);
+  if (bodyEtag !== etag) {
+    return {
+      status: 'error',
+      error: new Error(`telo je zastarelo: telo=${bodyEtag} skladiste=${etag}`),
+    };
+  }
+
+  return { status: 'ok', data: JSON.parse(text) as T, etag };
 }
 
-const READ_RETRIES = 3;
-const RETRY_MS = 400;
+/**
+ * Budzet ponavljanja je nateran merenjem, ne procenom.
+ *
+ * Posle upisa telo iz `get()` kasni za `head()`-om: izmereno na 10 upisa objekta
+ * od 140 KB - medijana 344 ms, maksimum 985 ms. Cekanja idu 500/1000/1500/2000/2500 ms,
+ * dakle do 7,5 s ukupno, sto je sa dosta zazora iznad izmerenog maksimuma.
+ */
+const READ_RETRIES = 6;
+const RETRY_MS = 500;
 
 /**
  * "Nema ga" se tvrdi SAMO kad to kaze `head()`.
