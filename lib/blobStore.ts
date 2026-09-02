@@ -104,7 +104,7 @@ async function readOnce<T>(pathname: string): Promise<BlobRead<T>> {
   if (bodyEtag !== etag) {
     return {
       status: 'error',
-      error: new Error(`telo je zastarelo: telo=${bodyEtag} skladiste=${etag}`),
+      error: new BlobTransientError(`telo je zastarelo: telo=${bodyEtag} skladiste=${etag}`),
     };
   }
 
@@ -144,7 +144,15 @@ export async function readJsonBlob<T>(filename: string): Promise<BlobRead<T>> {
     }
   }
 
-  return { status: 'error', error: lastError };
+  return {
+    status: 'error',
+    error: isTransientBlobError(lastError)
+      ? lastError
+      : new BlobTransientError(
+          lastError instanceof Error ? lastError.message : 'citanje nije uspelo',
+          lastError
+        ),
+  };
 }
 
 /** Zadrzano zbog postojecih poziva; gubi razliku izmedju 'missing' i 'error'. */
@@ -163,11 +171,35 @@ export interface WriteOptions {
   ifMatch?: string;
 }
 
-export class BlobConflictError extends Error {
+/**
+ * Greska koja ce verovatno proci ako se pokusa ponovo.
+ *
+ * Postoji da bi se prolazno stanje skladista razlikovalo od prave greske.
+ * Bez te razlike pozivalac ima samo dva losa izbora: da odustane na svaku
+ * sitnicu, ili da uporno ponavlja i ono sto nikada nece proci.
+ */
+export class BlobTransientError extends Error {
+  constructor(message: string, cause?: unknown) {
+    super(message);
+    this.name = 'BlobTransientError';
+    if (cause !== undefined) this.cause = cause;
+  }
+}
+
+export class BlobConflictError extends BlobTransientError {
   constructor() {
     super('Neko drugi je u medjuvremenu izmenio podatke.');
     this.name = 'BlobConflictError';
   }
+}
+
+/** Prepoznaje prolaznu gresku i kada je umotana u drugu (kroz `cause`). */
+export function isTransientBlobError(error: unknown): boolean {
+  for (let e = error, depth = 0; e && depth < 5; depth++) {
+    if (e instanceof BlobTransientError) return true;
+    e = (e as { cause?: unknown })?.cause;
+  }
+  return false;
 }
 
 export async function writeJsonToBlob<T>(
@@ -215,7 +247,14 @@ export async function updateJsonBlob<T>(
     if (attempt > 0) await new Promise((r) => setTimeout(r, RETRY_MS * attempt));
 
     const res = await readJsonBlob<T>(filename);
-    if (res.status === 'error') throw res.error;
+    if (res.status === 'error') {
+      // Prolazno citanje je isto sto i sudar - ima smisla pokusati ponovo.
+      // Ranije je prvo zastarelo telo odmah izbijalo do pozivaoca i obaralo
+      // ceo posao, iako se stanje sleze za manje od sekunde.
+      if (!isTransientBlobError(res.error) || attempt === UPDATE_RETRIES - 1) throw res.error;
+      lastConflict = res.error;
+      continue;
+    }
 
     const current = res.status === 'ok' ? res.data : null;
     const next = mutate(current);

@@ -41,6 +41,8 @@ const AKCIJA_LABELA: Record<ImportItem['action'], string> = {
 };
 
 const BATCH = 10;
+/** Koliko puta se ponavlja ISTA serija pre nego sto se odustane. */
+const RETRY_SERIJE = 4;
 
 export default function ShopifyImport() {
   const [open, setOpen] = useState(false);
@@ -48,6 +50,7 @@ export default function ShopifyImport() {
   const [error, setError] = useState<string | null>(null);
   const [totals, setTotals] = useState<Totals | null>(null);
   const [overwrite, setOverwrite] = useState(false);
+  const [retrying, setRetrying] = useState<{ offset: number; pokusaj: number } | null>(null);
   const cancelRef = useRef(false);
 
   /**
@@ -59,6 +62,7 @@ export default function ShopifyImport() {
   const run = async (dryRun: boolean) => {
     setLoading(dryRun ? 'proba' : 'uvoz');
     setError(null);
+    setRetrying(null);
     cancelRef.current = false;
 
     const acc: Totals = {
@@ -69,6 +73,8 @@ export default function ShopifyImport() {
 
     try {
       let offset = 0;
+      let pokusaj = 0;
+
       for (let guard = 0; guard < 500; guard++) {
         if (cancelRef.current) break;
 
@@ -78,8 +84,27 @@ export default function ShopifyImport() {
           body: JSON.stringify({ dryRun, overwrite, offset, limit: BATCH }),
         });
         const json = await res.json();
-        if (!res.ok) throw new Error(json.error || 'Uvoz nije uspeo.');
 
+        // Prolazno stanje skladista: ponavlja se BAS OVA serija, ne prekida se
+        // uvoz. Ranije je prvo takvo citanje obaralo sve - uvoz je stajao na
+        // 10/81 iako se stanje sleze za manje od sekunde.
+        if (!res.ok && json.retryable && pokusaj < RETRY_SERIJE) {
+          pokusaj++;
+          setRetrying({ offset, pokusaj });
+          await new Promise((r) => setTimeout(r, 1000 * pokusaj));
+          continue;
+        }
+
+        if (!res.ok) {
+          throw new Error(
+            json.retryable
+              ? `${json.error} (serija od ${offset + 1} nije prošla ni iz ${RETRY_SERIJE} pokušaja)`
+              : json.error || 'Uvoz nije uspeo.'
+          );
+        }
+
+        pokusaj = 0;
+        setRetrying(null);
         const batch = json as BatchResult;
         acc.total = batch.total;
         acc.processedTo = batch.processedTo;
@@ -97,6 +122,7 @@ export default function ShopifyImport() {
       setError(err instanceof Error ? err.message : 'Došlo je do neočekivane greške.');
     } finally {
       setLoading(null);
+      setRetrying(null);
     }
   };
 
@@ -159,6 +185,14 @@ export default function ShopifyImport() {
           {error && (
             <div className={styles.importError}>
               <AlertCircle size={14} /> {error}
+            </div>
+          )}
+
+          {retrying && (
+            <div className={styles.sourceHint} style={{ marginTop: 12 }}>
+              <Loader2 size={14} className={styles.uploaderSpin} />{' '}
+              Skladište se sleže — ponavljam seriju od {retrying.offset + 1}.
+              {' '}Pokušaj {retrying.pokusaj}/{RETRY_SERIJE}.
             </div>
           )}
 

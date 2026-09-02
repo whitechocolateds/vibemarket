@@ -36,11 +36,15 @@ async function loadProducts(): Promise<Product[]> {
   }
 
   if (res.status === 'error') {
-    // Nikada ne raditi nista nad podacima koje nismo uspeli da procitamo
-    throw new Error(
+    // Nikada ne raditi nista nad podacima koje nismo uspeli da procitamo.
+    // `cause` se prenosi da bi pozivalac mogao da vidi da je greska prolazna -
+    // bez toga bi umotavanje sakrilo da vredi pokusati ponovo.
+    const wrapped = new Error(
       'Katalog nije procitan iz skladista. Upis je zaustavljen da ne bi pregazio postojece podatke. ' +
         `Uzrok: ${res.error instanceof Error ? res.error.message : String(res.error)}`
     );
+    wrapped.cause = res.error;
+    throw wrapped;
   }
 
   // status === 'missing' -> prvi start, tek tada demo katalog

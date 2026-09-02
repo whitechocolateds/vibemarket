@@ -3,7 +3,7 @@ import { requireAdmin } from '@/lib/adminAuth';
 import { isShopifyConfigured, ShopifyError } from '@/lib/shopify';
 import { fetchAllShopifyProducts, mapShopifyProduct, assertCurrencyMatches } from '@/lib/shopifyImport';
 import { getAllProducts, saveProductsBulk, type BulkOutcome } from '@/lib/productStore';
-import { BlobConflictError } from '@/lib/blobStore';
+import { isTransientBlobError } from '@/lib/blobStore';
 import { ProductInput } from '@/lib/types';
 
 export const runtime = 'nodejs';
@@ -35,6 +35,28 @@ export interface ShopifyImportResult {
   failed: { title: string; reason: string }[];
   dryRun: boolean;
   items: { title: string; action: 'kreiran' | 'azuriran' | 'preskocen' | 'greska'; detail?: string }[];
+}
+
+/**
+ * Ponavlja posao koji je pao iz PROLAZNOG razloga.
+ *
+ * Prava greska (nema naziv, cena je 0, Shopify vraca 401) ponavljanjem ne postaje
+ * tacna, pa se propusta odmah. Ponavlja se samo ono sto skladiste oznaci kao
+ * prolazno - zastarelo telo posle upisa, sudar oko istog objekta.
+ */
+async function withRetry<T>(fn: () => Promise<T>, sta: string, pokusaja = 4): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (!isTransientBlobError(err) || attempt >= pokusaja) throw err;
+      console.warn(
+        `Shopify uvoz: ${sta} - pokusaj ${attempt}/${pokusaja} nije uspeo (` +
+          `${err instanceof Error ? err.message : 'nepoznato'}), pokusavam ponovo`
+      );
+      await new Promise((r) => setTimeout(r, 600 * attempt));
+    }
+  }
 }
 
 /**
@@ -72,13 +94,13 @@ async function writeBatch(
       }
       return outcomes;
     } catch (err) {
-      const conflict = err instanceof BlobConflictError;
       console.error(
         `Shopify uvoz: grupni upis serije ${offset}, pokusaj ${attempt}/${BULK_POKUSAJA} nije uspeo - ` +
           `${err instanceof Error ? err.message : 'nepoznata greška'}`
       );
-      if (conflict && attempt < BULK_POKUSAJA) {
-        await new Promise((r) => setTimeout(r, 500 * attempt));
+      // Sudar je samo jedan oblik prolazne greske - zastarelo telo je drugi
+      if (isTransientBlobError(err) && attempt < BULK_POKUSAJA) {
+        await new Promise((r) => setTimeout(r, 600 * attempt));
         continue;
       }
       break;
@@ -91,7 +113,10 @@ async function writeBatch(
 
   for (const item of pending) {
     try {
-      const single = await saveProductsBulk([item.input], { overwrite });
+      const single = await withRetry(
+        () => saveProductsBulk([item.input], { overwrite }),
+        `upis "${item.title}"`
+      );
       outcomes.push(...single);
 
       if (single.length === 0) continue; // preskocen, broji se kasnije
@@ -137,7 +162,11 @@ export async function POST(req: NextRequest) {
 
     const all = await fetchAllShopifyProducts();
     const slice = all.slice(offset, offset + limit);
-    const existing = await getAllProducts();
+
+    // Citanje kataloga na pocetku serije je bila tacka na kojoj je ceo uvoz
+    // stajao: prvo zastarelo telo posle upisa prethodne serije rusilo je zahtev.
+    // Stanje se slegne za manje od sekunde, pa se ovde jednostavno saceka.
+    const existing = await withRetry(() => getAllProducts(), 'citanje kataloga');
 
     const result: ShopifyImportResult = {
       total: all.length,
@@ -230,6 +259,17 @@ export async function POST(req: NextRequest) {
     }
     const message = error instanceof Error ? error.message : 'Uvoz nije uspeo.';
     console.error('Shopify uvoz je pukao:', message);
+
+    // Prolazno stanje skladista NIJE razlog da ceo uvoz stane. Klijent dobija
+    // znak da ponovi BAS OVU seriju - preskakanje bi ostavilo rupu u katalogu,
+    // a prekid bi bacio i ono sto je vec proslo.
+    if (isTransientBlobError(error)) {
+      return NextResponse.json(
+        { error: message, retryable: true, offset },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
