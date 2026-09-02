@@ -1,11 +1,38 @@
-import { readJsonFile, writeJsonFile } from './db';
+import { readJsonFileResult, updateJsonFile } from './db';
 import { AdminStats, CartItem, DailyStat, Order, OrderForm, TopProduct } from './types';
 import { getAllProducts } from './productStore';
 
 const FILE = 'orders.json';
 
+/**
+ * Neuspelo citanje se NE svodi na praznu listu.
+ *
+ * Prazna lista bi u admin panelu izgledala kao "nema porudzbina", a upis nad
+ * njom bi obrisao sve dosadasnje. Porudzbine su podaci kupaca - bolje je da
+ * stranica pukne nego da tiho nestanu.
+ */
 async function loadOrders(): Promise<Order[]> {
-  return readJsonFile<Order[]>(FILE, []);
+  const res = await readJsonFileResult<Order[]>(FILE);
+  if (res.status === 'ok') return Array.isArray(res.data) ? res.data : [];
+  if (res.status === 'missing') return [];
+  throw new Error(
+    'Porudzbine nisu procitane iz skladista. ' +
+      `Uzrok: ${res.error instanceof Error ? res.error.message : String(res.error)}`
+  );
+}
+
+/**
+ * Svaka izmena porudzbina ide odavde - procitaj, izmeni, uslovno upisi.
+ *
+ * Bez ovoga dve porudzbine u istom trenutku znace da jedna nestane: obe procitaju
+ * istu listu, obe je upisu nazad, druga pregazi prvu. Kupac dobije potvrdu za
+ * porudzbinu koje u skladistu nema.
+ */
+async function mutateOrders(mutate: (orders: Order[]) => boolean): Promise<void> {
+  await updateJsonFile<Order[]>(FILE, (current) => {
+    const orders = Array.isArray(current) ? current : [];
+    return mutate(orders) ? orders : null;
+  });
 }
 
 export async function saveOrder(params: {
@@ -14,7 +41,6 @@ export async function saveOrder(params: {
   totalPrice: number;
   orderNumber: string;
 }): Promise<Order> {
-  const orders = await loadOrders();
   const order: Order = {
     id: params.orderNumber,
     orderNumber: params.orderNumber,
@@ -24,8 +50,11 @@ export async function saveOrder(params: {
     totalPrice: params.totalPrice,
     status: 'pending',
   };
-  orders.unshift(order);
-  await writeJsonFile(FILE, orders);
+  await mutateOrders((orders) => {
+    orders.unshift(order);
+    return true;
+  });
+
   return order;
 }
 
@@ -42,12 +71,17 @@ export async function updateOrderStatus(
   id: string,
   status: Order['status']
 ): Promise<Order> {
-  const orders = await loadOrders();
-  const index = orders.findIndex((o) => o.id === id || o.orderNumber === id);
-  if (index === -1) throw new Error('Porudžbina nije pronađena');
-  orders[index] = { ...orders[index], status };
-  await writeJsonFile(FILE, orders);
-  return orders[index];
+  let updated: Order | null = null;
+
+  await mutateOrders((orders) => {
+    const index = orders.findIndex((o) => o.id === id || o.orderNumber === id);
+    if (index === -1) throw new Error('Porudžbina nije pronađena');
+    updated = { ...orders[index], status };
+    orders[index] = updated;
+    return true;
+  });
+
+  return updated!;
 }
 
 function isToday(iso: string): boolean {

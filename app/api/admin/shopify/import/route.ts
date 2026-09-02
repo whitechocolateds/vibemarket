@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
 import { isShopifyConfigured, ShopifyError } from '@/lib/shopify';
 import { fetchAllShopifyProducts, mapShopifyProduct, assertCurrencyMatches } from '@/lib/shopifyImport';
-import { getAllProducts, createProduct, updateProduct } from '@/lib/productStore';
+import { getAllProducts, saveProductsBulk } from '@/lib/productStore';
+import { ProductInput } from '@/lib/types';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -78,6 +79,16 @@ export async function POST(req: NextRequest) {
       items: [],
     };
 
+    /**
+     * Prvo se SVE mapira, pa se cela serija upisuje JEDNIM upisom.
+     *
+     * Ranije je svaki proizvod isao kroz createProduct/updateProduct, sto je za
+     * seriju od 10 znacilo 10 puta "procitaj ceo katalog, dopisi jedan, upisi ceo
+     * katalog". Ako je jedno od tih citanja palo, katalog je bio zamenjen demo
+     * podacima, a serija bi to i dalje prijavila kao uspeh.
+     */
+    const pending: { title: string; input: ProductInput }[] = [];
+
     for (const sp of slice) {
       const title = sp.title ?? '(bez naziva)';
       try {
@@ -99,17 +110,17 @@ export async function POST(req: NextRequest) {
         if (!input.title.trim()) throw new Error('nema naziv');
         if (input.price <= 0) throw new Error('cena je 0');
 
-        if (!dryRun) {
-          if (match) await updateProduct(match.id, input);
-          else await createProduct(input);
-        }
-
-        if (match) {
-          result.updated++;
-          result.items.push({ title, action: 'azuriran' });
+        if (dryRun) {
+          // Proba ne pise nista, pa se ishod zna odmah iz poklapanja
+          if (match) {
+            result.updated++;
+            result.items.push({ title, action: 'azuriran' });
+          } else {
+            result.created++;
+            result.items.push({ title, action: 'kreiran' });
+          }
         } else {
-          result.created++;
-          result.items.push({ title, action: 'kreiran' });
+          pending.push({ title, input });
         }
       } catch (err) {
         const reason = err instanceof Error ? err.message : 'nepoznata greška';
@@ -117,6 +128,39 @@ export async function POST(req: NextRequest) {
         console.error(`Shopify uvoz: "${title}" nije uspeo - ${reason}`);
         result.failed.push({ title, reason });
         result.items.push({ title, action: 'greska', detail: reason });
+      }
+    }
+
+    if (pending.length > 0) {
+      // Upis se CEKA pre nego sto se serija prijavi kao uspesna. Ako padne,
+      // nijedan proizvod iz serije se ne broji kao upisan - jer i nije.
+      try {
+        const outcomes = await saveProductsBulk(pending.map((x) => x.input), { overwrite });
+
+        for (const outcome of outcomes) {
+          const title = pending.find((x) => x.input === outcome.input)?.title ?? outcome.product.title;
+          if (outcome.action === 'azuriran') {
+            result.updated++;
+            result.items.push({ title, action: 'azuriran' });
+          } else {
+            result.created++;
+            result.items.push({ title, action: 'kreiran' });
+          }
+        }
+
+        // Sto je bulk preskocio (vec postoji, a overwrite je iskljucen)
+        for (const item of pending) {
+          if (outcomes.some((o) => o.input === item.input)) continue;
+          result.skipped++;
+          result.items.push({ title: item.title, action: 'preskocen', detail: 'već postoji' });
+        }
+      } catch (err) {
+        const reason = err instanceof Error ? err.message : 'upis nije uspeo';
+        console.error(`Shopify uvoz: upis serije ${offset}-${result.processedTo} nije uspeo - ${reason}`);
+        for (const item of pending) {
+          result.failed.push({ title: item.title, reason });
+          result.items.push({ title: item.title, action: 'greska', detail: reason });
+        }
       }
     }
 

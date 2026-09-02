@@ -1,5 +1,5 @@
 import { MOCK_PRODUCTS } from './mockData';
-import { readJsonFile, writeJsonFile } from './db';
+import { readJsonFileResult, updateJsonFile, writeJsonFile } from './db';
 import { Product, ProductInput } from './types';
 import { slugify } from './slugify';
 import { sanitizeProductHtml, htmlToPlainText, escapeHtml } from './sanitizeHtml';
@@ -18,21 +18,63 @@ function harden(product: Product): Product {
   return safe === html ? product : { ...product, descriptionHtml: safe };
 }
 
+/**
+ * Ucitava katalog.
+ *
+ * SEED SE POKRECE SAMO kad skladiste dokazano NE POSTOJI (prvi start).
+ * Ranije se demo katalog upisivao i kad citanje NE USPE, jer se greska i
+ * praznina svodile na isti `null`. Jedan prolazni prekid citanja usred uvoza
+ * bio je dovoljan da 8 demo proizvoda pregazi pravi katalog, a sve sto se
+ * posle upisivalo gradilo se na njima.
+ */
 async function loadProducts(): Promise<Product[]> {
-  try {
-    const stored = await readJsonFile<Product[] | null>(FILE, null);
-    if (stored && stored.length > 0) return stored.map(harden);
-  } catch (error) {
-    console.error('Failed to read products store:', error);
+  const res = await readJsonFileResult<Product[]>(FILE);
+
+  if (res.status === 'ok') {
+    // Prazan niz je legitimno stanje (sve obrisano) - NE seeduje se
+    return (Array.isArray(res.data) ? res.data : []).map(harden);
   }
 
+  if (res.status === 'error') {
+    // Nikada ne raditi nista nad podacima koje nismo uspeli da procitamo
+    throw new Error(
+      'Katalog nije procitan iz skladista. Upis je zaustavljen da ne bi pregazio postojece podatke. ' +
+        `Uzrok: ${res.error instanceof Error ? res.error.message : String(res.error)}`
+    );
+  }
+
+  // status === 'missing' -> prvi start, tek tada demo katalog
+  console.log('Katalog ne postoji - upisujem pocetne demo proizvode.');
   try {
     await writeJsonFile(FILE, MOCK_PRODUCTS);
   } catch (error) {
-    console.warn('Could not seed products store:', error);
+    console.warn('Pocetni upis nije uspeo:', error);
   }
-
   return MOCK_PRODUCTS;
+}
+
+/**
+ * Svaka izmena kataloga ide odavde.
+ *
+ * `mutate` dobija niz koji sme da menja na licu mesta i vraca `true` ako se
+ * nesto promenilo. Ako se ne promeni nista, ne upisuje se nista.
+ */
+async function mutateProducts(
+  mutate: (products: Product[]) => boolean
+): Promise<Product[]> {
+  let result: Product[] = [];
+
+  await updateJsonFile<Product[]>(FILE, (current) => {
+    if (current === null) {
+      throw new Error('Katalog ne postoji u skladistu - izmena je zaustavljena.');
+    }
+    const products = (Array.isArray(current) ? current : []).map(harden);
+    const changed = mutate(products);
+    result = products;
+    return changed ? products : null;
+  });
+
+  return result;
 }
 
 export async function getAllProducts(): Promise<Product[]> {
@@ -110,71 +152,137 @@ function buildProduct(input: ProductInput, id?: string): Product {
   };
 }
 
+export interface BulkOutcome {
+  input: ProductInput;
+  action: 'kreiran' | 'azuriran';
+  product: Product;
+}
+
+/**
+ * Upisuje CELU seriju kroz jedno citanje i jedan upis.
+ *
+ * Ranije je svaki proizvod isao kroz createProduct, sto je za seriju od 10
+ * znacilo 10 ciklusa procitaj-ceo-niz / upisi-ceo-niz. Svaki od njih je bio
+ * prilika da se izgubi tudji upis, a i deset puta skuplje.
+ */
+export async function saveProductsBulk(
+  inputs: ProductInput[],
+  opts: { overwrite: boolean }
+): Promise<BulkOutcome[]> {
+  let outcomes: BulkOutcome[] = [];
+
+  await mutateProducts((products) => {
+    // Ponovni pokusaj posle sudara krece od nule, nad SVEZE procitanim katalogom
+    outcomes = [];
+
+    for (const input of inputs) {
+      const handle = input.handle?.trim() || slugify(input.title);
+      const index = products.findIndex(
+        (p) =>
+          (input.shopifyProductId && p.shopifyProductId === input.shopifyProductId) ||
+          p.handle === handle
+      );
+
+      if (index !== -1 && !opts.overwrite) continue;
+
+      if (index !== -1) {
+        const existing = products[index];
+        const updated = buildProduct({ ...input, handle }, existing.id);
+        updated.variants[0].id = existing.variants[0]?.id ?? updated.variants[0].id;
+        products[index] = updated;
+        outcomes.push({ input, action: 'azuriran', product: updated });
+      } else {
+        // Vise proizvoda u istoj seriji: sam Date.now() bi im dao isti id
+        const product = buildProduct({ ...input, handle }, `prod-${Date.now()}-${outcomes.length}`);
+        products.unshift(product);
+        outcomes.push({ input, action: 'kreiran', product });
+      }
+    }
+
+    return outcomes.length > 0;
+  });
+
+  return outcomes;
+}
+
 export async function createProduct(input: ProductInput): Promise<Product> {
-  const products = await loadProducts();
   const handle = input.handle?.trim() || slugify(input.title);
+  let created: Product | null = null;
 
-  if (products.some((p) => p.handle === handle)) {
-    throw new Error('Proizvod sa tim URL-om već postoji');
-  }
+  await mutateProducts((products) => {
+    if (products.some((p) => p.handle === handle)) {
+      throw new Error('Proizvod sa tim URL-om već postoji');
+    }
+    created = buildProduct({ ...input, handle });
+    products.unshift(created);
+    return true;
+  });
 
-  const product = buildProduct(input);
-  products.unshift(product);
-  await writeJsonFile(FILE, products);
-  return product;
+  return created!;
 }
 
 export async function updateProduct(id: string, input: ProductInput): Promise<Product> {
-  const products = await loadProducts();
-  const index = products.findIndex((p) => p.id === id);
-  if (index === -1) throw new Error('Proizvod nije pronađen');
-
   const handle = input.handle?.trim() || slugify(input.title);
-  if (products.some((p) => p.handle === handle && p.id !== id)) {
-    throw new Error('Proizvod sa tim URL-om već postoji');
-  }
+  let updated: Product | null = null;
 
-  const updated = buildProduct(input, id);
-  updated.variants[0].id = products[index].variants[0]?.id ?? updated.variants[0].id;
-  products[index] = updated;
-  await writeJsonFile(FILE, products);
-  return updated;
+  await mutateProducts((products) => {
+    const index = products.findIndex((p) => p.id === id);
+    if (index === -1) throw new Error('Proizvod nije pronađen');
+    if (products.some((p) => p.handle === handle && p.id !== id)) {
+      throw new Error('Proizvod sa tim URL-om već postoji');
+    }
+
+    updated = buildProduct({ ...input, handle }, id);
+    updated.variants[0].id = products[index].variants[0]?.id ?? updated.variants[0].id;
+    products[index] = updated;
+    return true;
+  });
+
+  return updated!;
 }
 
 export async function setProductAvailability(id: string, availableForSale: boolean): Promise<Product> {
-  const products = await loadProducts();
-  const product = products.find((p) => p.id === id);
-  if (!product) throw new Error('Proizvod nije pronađen');
+  let changed: Product | null = null;
 
-  product.availableForSale = availableForSale;
-  for (const v of product.variants) v.availableForSale = availableForSale;
-  await writeJsonFile(FILE, products);
-  return product;
+  await mutateProducts((products) => {
+    const product = products.find((p) => p.id === id);
+    if (!product) throw new Error('Proizvod nije pronađen');
+
+    product.availableForSale = availableForSale;
+    for (const v of product.variants) v.availableForSale = availableForSale;
+    changed = product;
+    return true;
+  });
+
+  return changed!;
 }
 
 export async function decrementStock(items: { productId: string; quantity: number }[]): Promise<void> {
-  const products = await loadProducts();
-  let changed = false;
+  await mutateProducts((products) => {
+    let changed = false;
 
-  for (const item of items) {
-    const product = products.find((p) => p.id === item.productId);
-    const variant = product?.variants[0];
-    if (!product || !variant || typeof variant.quantityAvailable !== 'number') continue;
+    for (const item of items) {
+      const product = products.find((p) => p.id === item.productId);
+      const variant = product?.variants[0];
+      if (!product || !variant || typeof variant.quantityAvailable !== 'number') continue;
 
-    variant.quantityAvailable = Math.max(0, variant.quantityAvailable - item.quantity);
-    if (variant.quantityAvailable === 0) {
-      variant.availableForSale = false;
-      product.availableForSale = false;
+      variant.quantityAvailable = Math.max(0, variant.quantityAvailable - item.quantity);
+      if (variant.quantityAvailable === 0) {
+        variant.availableForSale = false;
+        product.availableForSale = false;
+      }
+      changed = true;
     }
-    changed = true;
-  }
 
-  if (changed) await writeJsonFile(FILE, products);
+    return changed;
+  });
 }
 
 export async function deleteProduct(id: string): Promise<void> {
-  const products = await loadProducts();
-  const filtered = products.filter((p) => p.id !== id);
-  if (filtered.length === products.length) throw new Error('Proizvod nije pronađen');
-  await writeJsonFile(FILE, filtered);
+  await mutateProducts((products) => {
+    const index = products.findIndex((p) => p.id === id);
+    if (index === -1) throw new Error('Proizvod nije pronađen');
+    products.splice(index, 1);
+    return true;
+  });
 }
