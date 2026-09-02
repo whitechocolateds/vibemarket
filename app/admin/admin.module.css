@@ -2133,3 +2133,36 @@
   color: var(--text-muted);
   font-size: 0.72rem;
 }
+
+/* ─── ShopifyImport: napredak po serijama ────────────────────────────────── */
+.shopifyProgress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.shopifyProgressBar {
+  flex: 1;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+}
+
+.shopifyProgressBar span {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--brand-gradient);
+  transition: width 0.3s ease;
+}
+
+.shopifyProgressLabel {
+  flex-shrink: 0;
+  font-size: 0.76rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--brand-dark);
+}

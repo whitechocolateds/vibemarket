@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Store, Loader2, AlertCircle, CheckCircle2, Download, Eye } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Store, Loader2, AlertCircle, CheckCircle2, Download, Eye, XCircle } from 'lucide-react';
 import styles from '@/app/admin/admin.module.css';
 
 interface ImportItem {
@@ -10,11 +10,25 @@ interface ImportItem {
   detail?: string;
 }
 
-interface ImportResult {
+interface BatchResult {
   total: number;
+  processedTo: number;
+  hasMore: boolean;
   created: number;
   updated: number;
   skipped: number;
+  failed: { title: string; reason: string }[];
+  dryRun: boolean;
+  items: ImportItem[];
+}
+
+interface Totals {
+  total: number;
+  processedTo: number;
+  created: number;
+  updated: number;
+  skipped: number;
+  failed: number;
   dryRun: boolean;
   items: ImportItem[];
 }
@@ -26,33 +40,68 @@ const AKCIJA_LABELA: Record<ImportItem['action'], string> = {
   greska: 'Greška',
 };
 
+const BATCH = 10;
+
 export default function ShopifyImport() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState<'proba' | 'uvoz' | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<ImportResult | null>(null);
+  const [totals, setTotals] = useState<Totals | null>(null);
   const [overwrite, setOverwrite] = useState(false);
+  const cancelRef = useRef(false);
 
+  /**
+   * Uvoz ide u serijama: jedan zahtev obradi malu grupu, pa se niže dok
+   * hasMore ne postane false. Ceo katalog u jednom zahtevu traje predugo i
+   * funkcija bude prekinuta u pola - ranije se to videlo kao "uspeh" sa
+   * delimičnim brojem.
+   */
   const run = async (dryRun: boolean) => {
     setLoading(dryRun ? 'proba' : 'uvoz');
     setError(null);
-    if (dryRun) setResult(null);
+    cancelRef.current = false;
+
+    const acc: Totals = {
+      total: 0, processedTo: 0, created: 0, updated: 0, skipped: 0, failed: 0,
+      dryRun, items: [],
+    };
+    setTotals({ ...acc });
 
     try {
-      const res = await fetch('/api/admin/shopify/import', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dryRun, overwrite }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Uvoz nije uspeo.');
-      setResult(json as ImportResult);
+      let offset = 0;
+      for (let guard = 0; guard < 500; guard++) {
+        if (cancelRef.current) break;
+
+        const res = await fetch('/api/admin/shopify/import', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dryRun, overwrite, offset, limit: BATCH }),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Uvoz nije uspeo.');
+
+        const batch = json as BatchResult;
+        acc.total = batch.total;
+        acc.processedTo = batch.processedTo;
+        acc.created += batch.created;
+        acc.updated += batch.updated;
+        acc.skipped += batch.skipped;
+        acc.failed += batch.failed.length;
+        acc.items.push(...batch.items);
+        setTotals({ ...acc, items: [...acc.items] });
+
+        if (!batch.hasMore) break;
+        offset = batch.processedTo;
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Došlo je do neočekivane greške.');
     } finally {
       setLoading(null);
     }
   };
+
+  const pct = totals && totals.total > 0 ? Math.round((totals.processedTo / totals.total) * 100) : 0;
+  const done = totals && !loading && totals.processedTo > 0;
 
   return (
     <div className={styles.importWrap}>
@@ -66,7 +115,8 @@ export default function ShopifyImport() {
           <p className={styles.importLead}>
             Povlači <strong>ceo tvoj katalog</strong> sa Shopify naloga — nazive, cene, opise, slike i
             zalihe. Slike se preuzimaju u tvoju prodavnicu, ne hotlinkuju.
-            {' '}Shopify se <strong>ne menja</strong>.
+            {' '}Shopify se <strong>ne menja</strong>. Ide u serijama po {BATCH}, pa velik katalog
+            ne prekine vremensko ograničenje.
           </p>
 
           <label className={styles.sourceHint} style={{ marginBottom: 12, cursor: 'pointer' }}>
@@ -81,12 +131,7 @@ export default function ShopifyImport() {
           </label>
 
           <div className={styles.importForm} style={{ gridTemplateColumns: 'auto auto 1fr' }}>
-            <button
-              type="button"
-              onClick={() => run(true)}
-              className="btn btn-secondary"
-              disabled={loading !== null}
-            >
+            <button type="button" onClick={() => run(true)} className="btn btn-secondary" disabled={loading !== null}>
               {loading === 'proba'
                 ? <><Loader2 size={15} className={styles.uploaderSpin} /> Proveravam…</>
                 : <><Eye size={15} /> Proba (ništa se ne menja)</>}
@@ -96,13 +141,19 @@ export default function ShopifyImport() {
               type="button"
               onClick={() => run(false)}
               className="btn btn-primary"
-              disabled={loading !== null || !result?.dryRun}
-              title={!result?.dryRun ? 'Prvo pokreni probu' : undefined}
+              disabled={loading !== null || !totals?.dryRun || !done}
+              title={!done || !totals?.dryRun ? 'Prvo pokreni probu' : undefined}
             >
               {loading === 'uvoz'
                 ? <><Loader2 size={15} className={styles.uploaderSpin} /> Uvozim…</>
                 : <><Download size={15} /> Uvezi stvarno</>}
             </button>
+
+            {loading && (
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => { cancelRef.current = true; }}>
+                Prekini
+              </button>
+            )}
           </div>
 
           {error && (
@@ -111,19 +162,35 @@ export default function ShopifyImport() {
             </div>
           )}
 
-          {result && (
-            <div className={result.dryRun ? styles.importPanel : styles.importedBanner} style={{ marginTop: 16 }}>
-              {!result.dryRun && <CheckCircle2 size={16} />}
+          {totals && totals.total > 0 && (
+            <div className={styles.shopifyProgress}>
+              <div className={styles.shopifyProgressBar}>
+                <span style={{ width: `${pct}%` }} />
+              </div>
+              <span className={styles.shopifyProgressLabel}>
+                {totals.processedTo} / {totals.total} ({pct}%)
+              </span>
+            </div>
+          )}
+
+          {totals && totals.processedTo > 0 && (
+            <div
+              className={totals.failed > 0 ? styles.importError : done ? styles.importedBanner : styles.importPanel}
+              style={{ marginTop: 16 }}
+            >
+              {totals.failed > 0 ? <XCircle size={16} /> : done ? <CheckCircle2 size={16} /> : null}
               <span style={{ flex: 1 }}>
-                <strong>
-                  {result.dryRun ? 'Proba: ' : 'Uvezeno: '}
-                  {result.total} proizvoda na Shopify-ju
-                </strong>
+                <strong>{totals.dryRun ? 'Proba' : 'Uvoz'}: {totals.processedTo} od {totals.total}</strong>
                 {' — '}
-                {result.created} {result.dryRun ? 'bi bilo novo' : 'novih'},{' '}
-                {result.updated} {result.dryRun ? 'bi bilo ažurirano' : 'ažuriranih'},{' '}
-                {result.skipped} preskočeno.
-                {result.dryRun && result.total > 0 && (
+                {totals.created} {totals.dryRun ? 'bi bilo novo' : 'novih'},{' '}
+                {totals.updated} {totals.dryRun ? 'bi bilo ažurirano' : 'ažuriranih'},{' '}
+                {totals.skipped} preskočeno
+                {/* Ranije se broj neuspelih nigde nije prikazivao, pa je delovalo da je sve prošlo */}
+                {totals.failed > 0 && (
+                  <>, <strong>{totals.failed} NEUSPELO</strong> — vidi listu ispod</>
+                )}
+                .
+                {totals.dryRun && done && (
                   <>
                     <br />
                     Slike se u probi <strong>ne preuzimaju</strong>, pa pravi uvoz traje osetno duže.
@@ -133,17 +200,20 @@ export default function ShopifyImport() {
             </div>
           )}
 
-          {result && result.items.length > 0 && (
+          {totals && totals.items.length > 0 && (
             <ul className={styles.shopifyList}>
-              {result.items.slice(0, 60).map((item, i) => (
+              {/* Neuspeli prvi - njih treba videti */}
+              {[...totals.items].sort((a, b) =>
+                (a.action === 'greska' ? 0 : 1) - (b.action === 'greska' ? 0 : 1)
+              ).slice(0, 80).map((item, i) => (
                 <li key={i} className={item.action === 'greska' ? styles.shopifyItemError : undefined}>
                   <span className={styles.shopifyAction}>{AKCIJA_LABELA[item.action]}</span>
                   <span className={styles.shopifyTitle}>{item.title}</span>
                   {item.detail && <span className={styles.shopifyDetail}>{item.detail}</span>}
                 </li>
               ))}
-              {result.items.length > 60 && (
-                <li className={styles.shopifyDetail}>… i još {result.items.length - 60}</li>
+              {totals.items.length > 80 && (
+                <li className={styles.shopifyDetail}>… i još {totals.items.length - 80}</li>
               )}
             </ul>
           )}
