@@ -16,32 +16,58 @@
   border-color: var(--brand);
 }
 
+/*
+ * Kvadratna ploča, ne 3/4.
+ *
+ * Izmereno na 73 naslovne slike iz kataloga: 49 je kvadratnih, 18 položenih,
+ * samo 4 uspravne. U uspravnoj kutiji 3/4 svaka od tih 49 dobija najveći mogući
+ * prazan prostor, a odnos ne odgovara skoro nijednoj slici. Kvadrat pokriva
+ * dominantni oblik tačno, a ostalima ostavlja uzak, jednak pojas.
+ */
 .imageWrap {
   position: relative;
-  aspect-ratio: 3/4;
+  aspect-ratio: 1/1;
   overflow: hidden;
-  background: var(--blue-wash);
+  /* Bela, ne --blue-wash: proizvodi su fotografisani na belom, pa se plava
+     podloga videla kao okvir oko slike umesto kao deo kartice. */
+  background: #ffffff;
   border-bottom: 1px solid var(--border-subtle);
 }
 
+/*
+ * Ostaje samo tanka linija. Donje zatamnjenje je imalo smisla dok je slika
+ * išla do ivice - preko bele ploče se videlo kao prljava senka.
+ */
 .imageWrap::after {
   content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
-  box-shadow:
-    inset 0 0 0 1px rgba(var(--brand-rgb), 0.10),
-    inset 0 -56px 44px -36px rgba(11, 42, 107, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(var(--brand-rgb), 0.08);
 }
 
 .image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  /*
+   * contain, ne cover. Izmereno: cover u kutiji 3/4 odbacivao je medijalno 25%
+   * slike, u najgorem slučaju 66% - a kod kvadratnih baš levo i desno, tamo gde
+   * na slici stoji tekst. Zato se tekst i sekao na ivici.
+   */
+  object-fit: contain;
+  /*
+   * Uvlačenje ide preko padding-a NA SLICI, a ne margine na .imageWrap:
+   * object-fit računa content box, pa padding daje jednak beli prostor sa svih
+   * strana, dok .quickAdd i .badges - koji su pozicionirani na ivice ploče -
+   * i dalje idu od ivice do ivice. Procenat, da se prostor drži isto na svakoj
+   * širini kartice.
+   */
+  padding: 7%;
   transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.card:hover .image { transform: scale(1.06); }
+/* Blaže od pređašnjih 1.06: uvećanje jede beli prostor koji ploču drži urednom */
+.card:hover .image { transform: scale(1.04); }
 
 /* ─── Spotlight (featured hero card) ────────────────────────────────────── */
 .spotlightMotion { height: 100%; }
@@ -253,8 +279,29 @@
 
 .card:hover .quickAdd { transform: translateY(0); }
 
+.touchActions { display: none; }
+
 @media (hover: none) {
-  .quickAdd { transform: translateY(0); }
+  /*
+   * Na dodir dugmad idu POD ploču, ne preko slike.
+   * Traka preko slike ima smisla samo kao hover stanje. Bez hovera je stajala
+   * stalno i jela 43% kvadratne ploče, a sa dva dugmeta i preko 70% - pola
+   * proizvoda se nije videlo.
+   */
+  .quickAdd { display: none; }
+
+  .touchActions {
+    display: block;
+    margin-top: var(--space-3);
+  }
+
+  /* .cartBtn je bela sa belom ivicom - radi preko tamne trake, ali ne na beloj kartici */
+  .touchActions .cartBtn {
+    background: rgba(var(--brand-rgb), 0.06);
+    border-color: rgba(var(--brand-rgb), 0.28);
+    color: var(--brand-dark);
+    backdrop-filter: none;
+  }
 }
 
 .btnGroup {

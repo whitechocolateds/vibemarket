@@ -226,6 +226,14 @@ export default function ProductCard({ product, spotlight = false }: Props) {
           ) : (
             <span className={styles.unavailable}>Nije dostupno</span>
           )}
+          {/*
+            Druga kopija dugmadi, za ekrane bez hovera.
+            Na dodir nema hovera, pa je traka preko slike stajala stalno i
+            prekrivala 43% ploče (sa dva dugmeta i preko 70%). Neaktivna kopija
+            se gasi sa display: none, pa je nema ni u pristupačnosti - čitač
+            ekrana ne izgovara dugmad dva puta.
+          */}
+          <div className={styles.touchActions}>{actionButtons}</div>
         </div>
       </Link>
     </motion.div>
