@@ -11,7 +11,15 @@ export function formatPrice(amount: string | number, currencyCode = 'RSD'): stri
   }).format(num);
 }
 
-export function getProductPrice(product: Product): { price: number; compareAtPrice: number | null } {
+/**
+ * Trazi samo ona dva polja koja i cita, ne ceo `Product`.
+ *
+ * Tako radi i nad punim proizvodom i nad lakim oblikom iz liste
+ * (`ProductListItem`), bez ijedne kopije funkcije.
+ */
+export function getProductPrice(
+  product: Pick<Product, 'variants' | 'priceRange'>
+): { price: number; compareAtPrice: number | null } {
   const variant = product.variants[0];
   if (!variant) {
     return {

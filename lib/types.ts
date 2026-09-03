@@ -168,6 +168,35 @@ export interface ImportSourceMeta {
   images: string[];
 }
 
+/**
+ * Oblik koji /api/products vraca za LISTU (kolekcija, predlozi u korpi, obavestenja).
+ *
+ * Izmereno na katalogu od 81 proizvoda: pun oblik je 347 KB, od cega su
+ * `descriptionHtml` (126 KB) i `description` (101 KB) - dakle 65% - polja koja
+ * nijedan potrosac liste ne cita. Stranica pojedinacnog proizvoda ih i dalje
+ * dobija u celosti, jer se ucitava na serveru preko getProductByHandle.
+ *
+ * Namerno `Pick`, a ne `Omit`: ovako novo polje na `Product` NE ulazi u listu
+ * samo od sebe. Da bi uslo, mora se dopisati ovde - sto je i prilika da se
+ * proveri koliko tezi.
+ *
+ * `images` ovde nije ceo niz: kartica prikazuje samo naslovnu i drugu (zamena na
+ * hover), pa se salju najvise dve.
+ */
+export type ProductListItem = Pick<
+  Product,
+  | 'id'
+  | 'handle'
+  | 'title'
+  | 'vendor'
+  | 'tags'
+  | 'availableForSale'
+  | 'featuredImage'
+  | 'images'
+  | 'priceRange'
+  | 'variants'
+>;
+
 export interface ProductInput {
   title: string;
   handle?: string;

@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Sparkles, Clock, Flame, Zap, ShoppingCart, CheckCircle2 } from 'lucide-react';
-import { Product } from '@/lib/types';
+import { ProductListItem } from '@/lib/types';
 import { useCartStore } from '@/lib/cart';
 import { formatPrice, getProductPrice } from '@/lib/format';
 import { LOW_STOCK_THRESHOLD } from '@/lib/shipping';
@@ -14,7 +14,12 @@ import { isOptimizableImageUrl } from '@/lib/imageHost';
 import styles from './ProductCard.module.css';
 
 interface Props {
-  product: Product;
+  /*
+   * Lakši oblik, ne pun Product: kartica ne koristi opis ni ostala teška polja.
+   * Pun Product je i dalje prihvatljiv - nadskup je ovog oblika - pa stranica
+   * proizvoda može da prosledi svoj objekat bez ikakve izmene.
+   */
+  product: ProductListItem;
   index?: number;
   spotlight?: boolean;
 }

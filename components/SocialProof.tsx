@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, BadgeCheck } from 'lucide-react';
-import { Product } from '@/lib/types';
+import { ProductListItem } from '@/lib/types';
 import styles from './SocialProof.module.css';
 
 const BUYERS = [
@@ -28,7 +28,7 @@ const GAP_JITTER = 14000;
 
 interface Toast {
   buyer: (typeof BUYERS)[number];
-  product: Product;
+  product: ProductListItem;
   minsAgo: number;
 }
 
@@ -45,11 +45,11 @@ export default function SocialProof() {
     const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
     (async () => {
-      let products: Product[] = [];
+      let products: ProductListItem[] = [];
       try {
         const res = await fetch('/api/products');
         const json = await res.json();
-        products = (json.data ?? []).filter((p: Product) => p.featuredImage && p.availableForSale);
+        products = (json.data ?? []).filter((p: ProductListItem) => p.featuredImage && p.availableForSale);
       } catch {
         return;
       }

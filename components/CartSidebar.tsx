@@ -8,13 +8,13 @@ import { useCartStore } from '@/lib/cart';
 import { formatPrice, getProductPrice } from '@/lib/format';
 import { FREE_SHIPPING_THRESHOLD } from '@/lib/shipping';
 import { bundleUnitPrice } from '@/lib/bundlePricing';
-import { Product } from '@/lib/types';
+import { Product, ProductListItem } from '@/lib/types';
 import styles from './CartSidebar.module.css';
 
 function UpsellList({ title, products, onAdd, onNavigate, className = '' }: {
   title: string;
-  products: Product[];
-  onAdd: (p: Product) => void;
+  products: ProductListItem[];
+  onAdd: (p: ProductListItem) => void;
   onNavigate: () => void;
   className?: string;
 }) {
@@ -56,7 +56,7 @@ function UpsellList({ title, products, onAdd, onNavigate, className = '' }: {
 
 export default function CartSidebar() {
   const { items, totalItems, isOpen, closeCart, removeItem, updateQuantity, addItem } = useCartStore();
-  const [catalog, setCatalog] = useState<Product[]>([]);
+  const [catalog, setCatalog] = useState<ProductListItem[]>([]);
 
   // Cene po stavci uključuju količinski popust (2 kom -10%, 3 kom -15%), isto kao na checkout-u
   const discountedItems = items.map((item) => ({ ...item, unitPrice: bundleUnitPrice(item.price, item.quantity) }));
@@ -76,7 +76,7 @@ export default function CartSidebar() {
       try {
         const res = await fetch('/api/products');
         const json = await res.json();
-        if (alive) setCatalog((json.data ?? []).filter((p: Product) => p.availableForSale && p.featuredImage && p.variants[0]));
+        if (alive) setCatalog((json.data ?? []).filter((p: ProductListItem) => p.availableForSale && p.featuredImage && p.variants[0]));
       } catch {
         /* predlozi su opcioni */
       }
@@ -97,7 +97,7 @@ export default function CartSidebar() {
     })
     .slice(0, 2);
 
-  const addSuggestion = (product: Product) => {
+  const addSuggestion = (product: ProductListItem) => {
     const variant = product.variants[0];
     const { price, compareAtPrice } = getProductPrice(product);
     addItem({

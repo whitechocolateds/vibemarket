@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
 import Reveal from '@/components/motion/Reveal';
-import { Product } from '@/lib/types';
+import { ProductListItem } from '@/lib/types';
 import styles from './page.module.css';
 
 const POPULAR_TAGS = ['bestseller', 'novo', 'sport', 'fudbal', 'elektronika', 'kuhinja'];
@@ -34,7 +34,7 @@ export default function ProductsClient() {
   const [sortBy, setSortBy] = useState(searchParams.get('sort') ?? '');
 
   // Rezultat poslednjeg završenog fetch-a; "refetching" se izvodi poređenjem ključa filtera
-  const [result, setResult] = useState<{ key: string; products: Product[] } | null>(null);
+  const [result, setResult] = useState<{ key: string; products: ProductListItem[] } | null>(null);
 
   // Debounce free-text search so we don't hit the API on every keystroke
   useEffect(() => {
@@ -48,7 +48,7 @@ export default function ProductsClient() {
     let active = true;
     const key = `${searchQuery}|${selectedTag}|${sortBy}`;
     (async () => {
-      let data: Product[] = [];
+      let data: ProductListItem[] = [];
       try {
         const params = new URLSearchParams();
         if (searchQuery) params.set('q', searchQuery);
