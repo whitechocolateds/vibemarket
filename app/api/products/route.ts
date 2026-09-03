@@ -7,7 +7,16 @@ export async function GET(req: NextRequest) {
   const type = searchParams.get('type');
   const handle = searchParams.get('handle');
   const query = searchParams.get('q') ?? undefined;
-  const first = parseInt(searchParams.get('first') ?? '24');
+  /*
+   * Bez `first` se vraca CEO katalog.
+   *
+   * Podrazumevanih 24 je bilo tiho odsecanje: stranica kolekcije ne salje
+   * `first`, pa je od 81 proizvoda prikazivala 24 i u zaglavlju pisala
+   * "24 artikala" - kao da ih toliko i ima. Ogranicenje ostaje dostupno onima
+   * koji ga izricito traze (npr. "srodni proizvodi").
+   */
+  const firstParam = searchParams.get('first');
+  const first = firstParam === null ? Number.POSITIVE_INFINITY : Math.max(1, parseInt(firstParam) || 1);
 
   try {
     if (type === 'collections') {
@@ -27,7 +36,9 @@ export async function GET(req: NextRequest) {
           p.tags.some((t) => t.toLowerCase().includes(query.toLowerCase()))
       );
     }
-    return NextResponse.json({ data: products.slice(0, first) });
+    return NextResponse.json({
+      data: Number.isFinite(first) ? products.slice(0, first) : products,
+    });
   } catch (error) {
     console.error('Products API error:', error);
     return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 });

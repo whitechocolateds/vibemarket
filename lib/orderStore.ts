@@ -177,6 +177,9 @@ export async function getAdminStats(): Promise<AdminStats> {
     .slice(0, 5);
 
   const lowStockProducts = products
+    // Proizvod bez broja ne prati zalihu, pa nije "na izmaku" - pre je `?? 0`
+    // svih takvih ulazilo u listu i gusilo one kojima zaliha stvarno pada.
+    .filter((p) => typeof p.variants[0]?.quantityAvailable === 'number')
     .map((p) => ({
       id: p.id,
       title: p.title,

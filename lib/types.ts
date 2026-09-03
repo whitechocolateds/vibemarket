@@ -181,6 +181,14 @@ export interface ProductInput {
   vendor: string;
   productType: string;
   quantity: number;
+  /**
+   * false = zaliha se NE prati, pa je `quantity` besmislen.
+   *
+   * Shopify za takve proizvode prodaje bez obzira na kolicinu
+   * (`inventory_management: null`). Podrazumevano se prati, da se postojece
+   * ponasanje ne menja - samo uvoz sa Shopify-ja ovo postavlja na false.
+   */
+  trackInventory?: boolean;
   availableForSale: boolean;
   comparisonPoints?: string[];
   faqs?: ProductFaq[];

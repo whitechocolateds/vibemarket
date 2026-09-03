@@ -138,7 +138,13 @@ function buildProduct(input: ProductInput, id?: string): Product {
       price: { amount: priceStr, currencyCode: 'RSD' },
       compareAtPrice: compareStr ? { amount: compareStr, currencyCode: 'RSD' } : null,
       availableForSale: input.availableForSale,
-      quantityAvailable: input.quantity,
+      /*
+       * Kad se zaliha ne prati, kolicina se NE upisuje.
+       * Nula bi znacila "nema na stanju" - a za takav proizvod kolicina prosto
+       * nije poznata. Ostatak koda to vec razlikuje: decrementStock preskace
+       * varijantu bez broja, a kartica ne prikazuje "jos samo N kom".
+       */
+      quantityAvailable: input.trackInventory === false ? undefined : input.quantity,
       selectedOptions: [{ name: 'Title', value: 'Default' }],
       ...(input.shopifyVariantId ? { shopifyVariantId: input.shopifyVariantId } : {}),
     }],

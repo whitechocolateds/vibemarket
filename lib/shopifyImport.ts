@@ -21,16 +21,18 @@ interface ShopifyImage {
   position?: number;
 }
 
-interface ShopifyVariant {
+export interface ShopifyVariant {
   id?: number;
   title?: string;
   price?: string;
   compare_at_price?: string | null;
   inventory_quantity?: number;
   inventory_policy?: string;
+  /** null kad Shopify NE prati zalihu za taj proizvod - tada se prodaje uvek. */
+  inventory_management?: string | null;
 }
 
-interface ShopifyProduct {
+export interface ShopifyProduct {
   id?: number;
   title?: string;
   handle?: string;
@@ -99,6 +101,36 @@ function buildDescription(product: ShopifyProduct): { descriptionHtml: string; d
  * (buildProduct u productStore uvek pravi jednu "Default"), pa proizvod sa vise
  * velicina ili boja gubi ostale - to je poznato ogranicenje, ne previd.
  */
+/**
+ * Dostupnost se racuna kao sto je racuna i sam Shopify.
+ *
+ * Kljucno je `inventory_management`: kad je null, Shopify NE prati zalihu za taj
+ * proizvod i prodaje ga bez obzira na kolicinu - `inventory_quantity` je tada
+ * besmislen podatak i stoji na 0.
+ *
+ * Izmereno na katalogu od 81 proizvoda: 78 ne prati zalihu, 3 prati, a svima je
+ * `inventory_quantity` 0. Formula koja je gledala samo kolicinu obelezila je
+ * zato svih 81 kao rasprodato, iako se u Shopify-ju svi normalno prodaju.
+ *
+ * Izdvojeno jer istu odluku pravi i `npm run shopify:availability` - dve kopije
+ * bi se pre ili posle razisle.
+ */
+export function deriveAvailability(
+  product: Pick<ShopifyProduct, 'status'>,
+  variant: ShopifyVariant | undefined
+): { tracked: boolean; stock: number; availableForSale: boolean } {
+  const stock = variant?.inventory_quantity ?? 0;
+  const tracked = variant?.inventory_management != null;
+  // `continue` znaci da Shopify dozvoljava prodaju i na nuli
+  const oversell = variant?.inventory_policy === 'continue';
+
+  return {
+    tracked,
+    stock,
+    availableForSale: product.status === 'active' && (!tracked || oversell || stock > 0),
+  };
+}
+
 export async function mapShopifyProduct(
   product: ShopifyProduct,
   opts: { rehostImages?: boolean } = {}
@@ -135,9 +167,7 @@ export async function mapShopifyProduct(
     .filter(Boolean)
     .slice(0, 8);
 
-  // `continue` znaci da Shopify dozvoljava prodaju i na nuli
-  const stock = variant?.inventory_quantity ?? 0;
-  const oversell = variant?.inventory_policy === 'continue';
+  const { tracked, stock, availableForSale } = deriveAvailability(product, variant);
 
   return {
     title: (product.title ?? '').trim(),
@@ -152,7 +182,8 @@ export async function mapShopifyProduct(
     vendor: (product.vendor ?? '').trim() || 'VibeMarket',
     productType: (product.product_type ?? '').trim() || 'Ostalo',
     quantity: Math.max(0, stock),
-    availableForSale: product.status === 'active' && (oversell || stock > 0),
+    trackInventory: tracked,
+    availableForSale,
     comparisonPoints: [],
     faqs: [],
     shopifyProductId: product.id,

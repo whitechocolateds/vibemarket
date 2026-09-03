@@ -15,7 +15,8 @@
     "shopify:check": "npx tsx scripts/check-shopify.ts",
     "blob:check": "npx tsx scripts/check-blob.ts",
     "blob:migrate": "npx tsx scripts/migrate-to-blob.ts",
-    "products:clean-demo": "npx tsx scripts/clean-demo.ts"
+    "products:clean-demo": "npx tsx scripts/clean-demo.ts",
+    "shopify:availability": "npx tsx scripts/sync-availability.ts"
   },
   "dependencies": {
     "@tiptap/core": "^3.30.0",
