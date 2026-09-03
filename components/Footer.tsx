@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { KONTAKT } from '@/lib/legalContent';
 import Link from 'next/link';
 import { Mail, Phone, ArrowRight, Truck, ShieldCheck, CheckCircle2, Sparkles } from 'lucide-react';
 import Logo from './Logo';
@@ -89,23 +90,23 @@ export default function Footer() {
             </div>
             <div className={styles.col}>
               <h4 className={styles.colTitle}>Podrška</h4>
-              <Link href="#" className={styles.link}>Uslovi kupovine</Link>
-              <Link href="#" className={styles.link}>Povrat i reklamacije</Link>
-              <Link href="#" className={styles.link}>Često postavljana pitanja</Link>
+              <Link href="/isporuka" className={styles.link}>Isporuka i dostava</Link>
+              <Link href="/reklamacije" className={styles.link}>Reklamacije i povraćaj</Link>
+              <Link href="/uslovi-koriscenja" className={styles.link}>Uslovi korišćenja</Link>
             </div>
             <div className={styles.col}>
               <h4 className={styles.colTitle}>Kontakt</h4>
-              <a href="mailto:stupardavid3@gmail.com" className={styles.contactLink}>
+              <a href={`mailto:${KONTAKT.email}`} className={styles.contactLink}>
                 <div className={styles.contactIconWrap}>
                   <Mail size={13} />
                 </div>
-                <span>stupardavid3@gmail.com</span>
+                <span>{KONTAKT.email}</span>
               </a>
-              <a href="tel:+3816121446605" className={styles.contactLink}>
+              <a href={`tel:${KONTAKT.telefonHref}`} className={styles.contactLink}>
                 <div className={styles.contactIconWrap}>
                   <Phone size={13} />
                 </div>
-                <span>+381 61 2144 6605</span>
+                <span>{KONTAKT.telefon}</span>
               </a>
             </div>
           </div>

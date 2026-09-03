@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { KONTAKT } from '@/lib/legalContent';
 import Link from 'next/link';
 import { useSearchParams, useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -138,8 +139,8 @@ export default function OrderConfirmClient() {
           <div className={styles.support}>
             <span>Imate pitanje u vezi porudžbine?</span>
             <div className={styles.supportLinks}>
-              <a href="mailto:stupardavid3@gmail.com"><Mail size={13} /> stupardavid3@gmail.com</a>
-              <a href="tel:+3816121446605"><Phone size={13} /> +381 61 2144 6605</a>
+              <a href={`mailto:${KONTAKT.email}`}><Mail size={13} /> {KONTAKT.email}</a>
+              <a href={`tel:${KONTAKT.telefonHref}`}><Phone size={13} /> {KONTAKT.telefon}</a>
             </div>
           </div>
         </motion.div>
