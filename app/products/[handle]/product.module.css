@@ -445,6 +445,12 @@
   flex-direction: column;
   gap: var(--space-3);
   margin-top: var(--space-2);
+  /* Ispod 768px .info postaje `align-items: center`, pa deca prestaju da se
+     rastežu i mere se po sadržaju. Izbor paketa unutra ima
+     `container-type: inline-size`, čija je intrinzična širina nula - red je
+     ispadao 26px širok. Ostali susedi u tom bloku (.priceBlock, .stock,
+     .viewers) već traže punu širinu; ovaj je bio preskočen. */
+  width: 100%;
 }
 
 .ctaButtons {

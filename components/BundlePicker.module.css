@@ -5,6 +5,15 @@
      i telefon (~328px) i usku checkout kolonu (~346px). */
   container-type: inline-size;
   container-name: bundlepicker;
+
+  /* Nosivo, ne kozmetika: `container-type: inline-size` uvodi i sadržavanje po
+     širini, pa element NE sme da se širi prema sadržaju. U roditelju koji decu ne
+     rasteže padne na nulu - a stranica proizvoda ispod 768px ima baš takav
+     roditelj (`.info` je flex kolona sa `align-items: center`). Posledica je bila
+     red od 26px u kome se srednja kolona sruši na 0 i tekst se lomi slovo po
+     slovo. Zato komponenta sama traži punu širinu, umesto da je nasleđuje. */
+  width: 100%;
+
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
