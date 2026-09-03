@@ -74,6 +74,20 @@ export default function OrderConfirmClient() {
             </button>
           </div>
 
+          {/*
+            Dugmad idu ODMAH ispod potvrde, pre informativnih sekcija.
+            Ranije su bile na dnu, ispod pracenja dostave i sledecih koraka - kupac
+            je morao da skroluje da bi nastavio kupovinu.
+          */}
+          <div className={styles.actions}>
+            <Link href="/products" className={`btn btn-primary btn-lg ${styles.primaryBtn}`}>
+              <ShoppingBag size={18} /> Nastavi kupovinu
+            </Link>
+            <Link href="/" className={`btn btn-outline btn-lg ${styles.secondaryBtn}`}>
+              Vrati se na početnu
+            </Link>
+          </div>
+
           <div className={styles.deliveryCard}>
             <h3 className={styles.sectionTitle}>
               <Clock size={16} /> Status Praćenja Dostave
@@ -119,15 +133,6 @@ export default function OrderConfirmClient() {
                 </div>
               </li>
             </ul>
-          </div>
-
-          <div className={styles.actions}>
-            <Link href="/products" className={`btn btn-primary btn-lg ${styles.primaryBtn}`}>
-              <ShoppingBag size={18} /> Nastavi kupovinu
-            </Link>
-            <Link href="/" className={`btn btn-outline btn-lg ${styles.secondaryBtn}`}>
-              Vrati se na početnu
-            </Link>
           </div>
 
           <div className={styles.support}>

@@ -270,7 +270,9 @@
   gap: var(--space-4);
   justify-content: center;
   flex-wrap: wrap;
-  margin-top: var(--space-6);
+  /* Vise nije na dnu strane, pa razmak ide na obe strane - inace bi se sudarilo
+     sa karticom pracenja dostave koja dolazi odmah ispod. */
+  margin: var(--space-6) 0;
 }
 
 .primaryBtn {
