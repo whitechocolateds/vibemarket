@@ -2166,3 +2166,24 @@
   font-variant-numeric: tabular-nums;
   color: var(--brand-dark);
 }
+
+/* ─── Upozorenje o neposlatim porudzbinama ──────────────────────────────── */
+.syncWarning {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: var(--space-5);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: rgba(220, 38, 38, 0.07);
+  border: 1px solid rgba(220, 38, 38, 0.28);
+  color: #b91c1c;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.syncWarning p + p { margin-top: 6px; }
+
+.syncWarningMuted {
+  color: #b45309;
+}

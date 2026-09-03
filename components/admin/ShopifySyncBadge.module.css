@@ -1,0 +1,48 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.poslato {
+  background: rgba(22, 163, 74, 0.12);
+  color: #15803d;
+  border: 1px solid rgba(22, 163, 74, 0.28);
+}
+
+.neuspelo {
+  background: rgba(220, 38, 38, 0.12);
+  color: #b91c1c;
+  border: 1px solid rgba(220, 38, 38, 0.32);
+}
+
+.ceka {
+  background: rgba(217, 119, 6, 0.12);
+  color: #b45309;
+  border: 1px solid rgba(217, 119, 6, 0.28);
+}
+
+.nema {
+  color: var(--text-muted, #64748b);
+  font-size: 0.72rem;
+}
+
+/* Razlog neuspeha - u tabeli se secka, na stranici porudzbine ide ceo */
+.razlog {
+  margin-top: 4px;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  color: #b91c1c;
+  max-width: 260px;
+  overflow-wrap: anywhere;
+}
+
+.razlogPun {
+  max-width: none;
+}

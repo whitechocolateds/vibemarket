@@ -1,11 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
 import { CartItem, OrderForm } from '@/lib/types';
-import { saveOrder } from '@/lib/orderStore';
+import { saveOrder, setOrderShopifySync } from '@/lib/orderStore';
 import { getAllProducts, decrementStock } from '@/lib/productStore';
 import { bundleUnitPrice } from '@/lib/bundlePricing';
 import { isValidSerbianPhone } from '@/lib/phone';
 import { sendCapiEvent } from '@/lib/metaConversionsApi';
 import { isOrderPushEnabled, createShopifyOrder } from '@/lib/shopify';
+
+export const runtime = 'nodejs';
+/*
+ * Posao u `after` tece POSLE odgovora kupcu, ali unutar ovog ogranicenja.
+ * Poziv ka Shopify-ju ima sopstveni prekid na 20 s, pa 60 s ostavlja prostora
+ * i za upis ishoda na porudzbinu.
+ */
+export const maxDuration = 60;
 
 interface CreateOrderBody {
   items: CartItem[];
@@ -87,7 +95,17 @@ export async function POST(req: NextRequest) {
     const totalPrice = verifiedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
     const orderNumber = `VM-${Date.now().toString(36).toUpperCase()}`;
 
-    await saveOrder({ items: verifiedItems, customerInfo, totalPrice, orderNumber });
+    await saveOrder({
+      items: verifiedItems,
+      customerInfo,
+      totalPrice,
+      orderNumber,
+      // Porudzbina se od prvog trenutka vidi kao "ceka slanje". Ako posao ispod
+      // nikada ne stigne do kraja, ostace u tom stanju - a to je vidljivo.
+      ...(isOrderPushEnabled()
+        ? { shopifySync: { status: 'ceka' as const, at: new Date().toISOString() } }
+        : {}),
+    });
     await decrementStock(verifiedItems.map((i) => ({ productId: i.productId, quantity: i.quantity })));
 
     // Server-side Purchase event (Conversions API) - backup kanal za Meta Ads, radi i kad browser blokira Pixel.
@@ -111,33 +129,69 @@ export async function POST(req: NextRequest) {
       fbc: req.cookies.get('_fbc')?.value ?? null,
     }).catch((error) => console.error('CAPI Purchase event failed:', error));
 
-    // Porudzbina u Shopify - PISE U ZIVI NALOG, zato iza zasebnog prekidaca.
-    // Namerno bez await: ako Shopify padne ili kasni, kupac ne sme da ostane
-    // bez potvrde - porudzbina je vec sacuvana kod nas.
+    /*
+     * Porudzbina u Shopify - PISE U ZIVI NALOG, zato iza zasebnog prekidaca.
+     *
+     * Ide kroz `after`, a ne kao "obesena" promisa: bez toga platforma sme da
+     * zamrzne funkciju cim posalje odgovor, pa slanje ni ne krene. `after` drzi
+     * funkciju u zivotu do isteka maxDuration ove rute.
+     *
+     * I dalje se NE ceka pre odgovora: ako Shopify padne ili kasni, kupac ne sme
+     * da ostane bez potvrde - porudzbina je vec sacuvana kod nas.
+     *
+     * Ishod se UPISUJE na porudzbinu. Ranije je neuspeh isao samo u console.error,
+     * pa je porudzbina koja nikada nije stigla u Shopify izgledala isto kao ona
+     * koja jeste - vlasnik nije imao nacina da primeti razliku.
+     */
     if (isOrderPushEnabled()) {
-      createShopifyOrder({
-        orderNumber,
-        totalPrice,
-        items: verifiedItems.map((i) => ({
-          title: i.title,
-          variantTitle: i.variantTitle,
-          price: i.price,
-          quantity: i.quantity,
-          shopifyVariantId: i.shopifyVariantId,
-        })),
-        customer: {
-          firstName: customerInfo.firstName,
-          lastName: customerInfo.lastName,
-          email: customerInfo.email,
-          phone: customerInfo.phone,
-          address: customerInfo.address,
-          city: customerInfo.city,
-          postalCode: customerInfo.postalCode,
-          note: customerInfo.note,
-        },
-      })
-        .then((r) => console.log(`Porudzbina ${orderNumber} poslata u Shopify kao ${r.shopifyOrderName}`))
-        .catch((error) => console.error(`Shopify push za ${orderNumber} nije uspeo:`, error));
+      after(async () => {
+        try {
+          const r = await createShopifyOrder({
+            orderNumber,
+            totalPrice,
+            items: verifiedItems.map((i) => ({
+              title: i.title,
+              variantTitle: i.variantTitle,
+              price: i.price,
+              quantity: i.quantity,
+              shopifyVariantId: i.shopifyVariantId,
+            })),
+            customer: {
+              firstName: customerInfo.firstName,
+              lastName: customerInfo.lastName,
+              email: customerInfo.email,
+              phone: customerInfo.phone,
+              address: customerInfo.address,
+              city: customerInfo.city,
+              postalCode: customerInfo.postalCode,
+              note: customerInfo.note,
+            },
+          });
+
+          console.log(`Porudzbina ${orderNumber} poslata u Shopify kao ${r.shopifyOrderName}`);
+          await setOrderShopifySync(orderNumber, {
+            status: 'poslato',
+            at: new Date().toISOString(),
+            shopifyOrderId: r.shopifyOrderId,
+            shopifyOrderName: r.shopifyOrderName,
+          });
+        } catch (error) {
+          const razlog = error instanceof Error ? error.message : 'nepoznata greska';
+          console.error(`Shopify push za ${orderNumber} nije uspeo: ${razlog}`);
+
+          // Upis ishoda ne sme da padne zajedno sa slanjem - bas taj zapis je
+          // jedino sto vlasniku govori da nesto treba da uradi rucno.
+          try {
+            await setOrderShopifySync(orderNumber, {
+              status: 'neuspelo',
+              at: new Date().toISOString(),
+              error: razlog,
+            });
+          } catch (upis) {
+            console.error(`Neuspeh slanja za ${orderNumber} nije mogao da se zabelezi:`, upis);
+          }
+        }
+      });
     }
 
     return NextResponse.json({

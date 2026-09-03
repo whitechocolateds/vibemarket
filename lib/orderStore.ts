@@ -1,5 +1,5 @@
 import { readJsonFileResult, updateJsonFile } from './db';
-import { AdminStats, CartItem, DailyStat, Order, OrderForm, TopProduct } from './types';
+import { AdminStats, CartItem, DailyStat, Order, OrderForm, ShopifySync, TopProduct } from './types';
 import { getAllProducts } from './productStore';
 
 const FILE = 'orders.json';
@@ -40,6 +40,8 @@ export async function saveOrder(params: {
   customerInfo: OrderForm;
   totalPrice: number;
   orderNumber: string;
+  /** Upisuje se odmah, u ISTOM upisu - da ne bude porudzbine bez traga o slanju. */
+  shopifySync?: ShopifySync;
 }): Promise<Order> {
   const order: Order = {
     id: params.orderNumber,
@@ -49,6 +51,7 @@ export async function saveOrder(params: {
     customerInfo: params.customerInfo,
     totalPrice: params.totalPrice,
     status: 'pending',
+    ...(params.shopifySync ? { shopifySync: params.shopifySync } : {}),
   };
   await mutateOrders((orders) => {
     orders.unshift(order);
@@ -82,6 +85,28 @@ export async function updateOrderStatus(
   });
 
   return updated!;
+}
+
+/**
+ * Belezi ishod slanja u Shopify na vec sacuvanoj porudzbini.
+ *
+ * Namerno NE baca ako porudzbine nema: ovo se poziva iz posla koji tece posle
+ * odgovora kupcu, gde bacanje nikoga ne obavestava. Umesto toga se zapise u log.
+ */
+export async function setOrderShopifySync(orderNumber: string, sync: ShopifySync): Promise<void> {
+  let nadjena = false;
+
+  await mutateOrders((orders) => {
+    const order = orders.find((o) => o.id === orderNumber || o.orderNumber === orderNumber);
+    if (!order) return false;
+    order.shopifySync = sync;
+    nadjena = true;
+    return true;
+  });
+
+  if (!nadjena) {
+    console.error(`Shopify sync za ${orderNumber}: porudzbina nije nadjena, ishod nije zabelezen.`);
+  }
 }
 
 function isToday(iso: string): boolean {

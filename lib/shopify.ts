@@ -187,6 +187,32 @@ export interface ShopifyResponse<T> {
   nextPageUrl: string | null;
 }
 
+/**
+ * Vadi razlog iz Shopify odgovora u oblik koji se moze procitati.
+ *
+ * Shopify vraca `errors` cas kao tekst, cas kao mapu polje -> lista poruka:
+ * {"errors":{"customer":["phone_number has already been taken"]}}. Sirov JSON u
+ * admin panelu nikome ne pomaze, a bas ta poruka je ono sto vlasnik treba da
+ * vidi da bi znao sta da uradi.
+ */
+function citljivaGreska(text: string): string {
+  try {
+    const json = JSON.parse(text) as { errors?: unknown; error?: unknown };
+    const errors = json.errors ?? json.error;
+    if (typeof errors === 'string') return errors;
+    if (errors && typeof errors === 'object') {
+      const delovi = Object.entries(errors as Record<string, unknown>).map(([polje, poruke]) => {
+        const spisak = Array.isArray(poruke) ? poruke.join(', ') : String(poruke);
+        return `${polje}: ${spisak}`;
+      });
+      if (delovi.length > 0) return delovi.join(' | ').slice(0, 300);
+    }
+  } catch {
+    /* nije JSON - ide sirov tekst */
+  }
+  return text.slice(0, 300);
+}
+
 export async function shopifyFetch<T>(path: string, opts: FetchOptions = {}): Promise<ShopifyResponse<T>> {
   const config = opts.config ?? getShopifyConfig();
   if (!config) {
@@ -230,7 +256,7 @@ export async function shopifyFetch<T>(path: string, opts: FetchOptions = {}): Pr
   }
   if (!res.ok) {
     const text = await res.text();
-    throw new ShopifyError(`Shopify greska ${res.status}: ${text.slice(0, 300)}`, res.status);
+    throw new ShopifyError(`Shopify greska ${res.status}: ${citljivaGreska(text)}`, res.status);
   }
 
   const link = res.headers.get('link') ?? '';

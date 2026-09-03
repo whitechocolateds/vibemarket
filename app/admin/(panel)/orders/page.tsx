@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState, useRef } from 'react';
 import Link from 'next/link';
-import { Search, RefreshCw, ShoppingBag, Download, Phone, Mail, MapPin, CheckSquare, Square, ChevronDown } from 'lucide-react';
+import { Search, RefreshCw, ShoppingBag, Download, Phone, Mail, MapPin, CheckSquare, Square, ChevronDown, AlertTriangle } from 'lucide-react';
 import { Order } from '@/lib/types';
 import { formatPrice } from '@/lib/format';
 import { STATUS_LABELS } from '@/components/admin/StatusBadge';
+import ShopifySyncBadge from '@/components/admin/ShopifySyncBadge';
 import { toast } from '@/components/admin/Toaster';
 import { downloadXls, XlsColumn } from '@/lib/exportOrders';
 import styles from '../../admin.module.css';
@@ -206,8 +207,48 @@ export default function AdminOrdersPage() {
 
   const totalRevenue = orders.filter((o) => o.status !== 'cancelled').reduce((s, o) => s + o.totalPrice, 0);
 
+  /*
+   * Neposlate se izdvajaju na vrh stranice.
+   * Same oznake u tabeli nisu dovoljne - da bi se primetile, treba pregledati
+   * svaki red. Ovo je jedina stvar na stranici koja trazi rucnu intervenciju.
+   */
+  const neposlate = orders.filter((o) => o.shopifySync?.status === 'neuspelo');
+  const cekaju = orders.filter((o) => o.shopifySync?.status === 'ceka');
+
   return (
     <>
+      {(neposlate.length > 0 || cekaju.length > 0) && (
+        <div className={styles.syncWarning} role="status">
+          <AlertTriangle size={17} strokeWidth={2.5} />
+          <div>
+            {neposlate.length > 0 && (
+              <p>
+                <strong>
+                  {neposlate.length === 1
+                    ? '1 porudžbina nije stigla u Shopify'
+                    : `${neposlate.length} porudžbina nije stiglo u Shopify`}
+                </strong>
+                {' — '}
+                {neposlate.slice(0, 5).map((o, i) => (
+                  <span key={o.id}>
+                    {i > 0 && ', '}
+                    <Link href={`/admin/orders/${o.id}`} className={styles.tableLink}>{o.orderNumber}</Link>
+                  </span>
+                ))}
+                {neposlate.length > 5 && ` i još ${neposlate.length - 5}`}
+                . Treba ih uneti ručno.
+              </p>
+            )}
+            {cekaju.length > 0 && (
+              <p className={styles.syncWarningMuted}>
+                {cekaju.length === 1 ? '1 porudžbina čeka' : `${cekaju.length} porudžbina čeka`} ishod slanja.
+                Ako ovo dugo stoji, slanje je prekinuto pre nego što se ishod upisao.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className={styles.pageHeader}>
         <div>
           <h1 className={styles.pageTitle}>Porudžbine</h1>
@@ -341,6 +382,7 @@ export default function AdminOrdersPage() {
                   <th>Stavki</th>
                   <th>Iznos</th>
                   <th>Status</th>
+                  <th>Shopify</th>
                   <th>Datum</th>
                 </tr>
               </thead>
@@ -386,6 +428,9 @@ export default function AdminOrdersPage() {
                           <option key={key} value={key}>{label}</option>
                         ))}
                       </select>
+                    </td>
+                    <td>
+                      <ShopifySyncBadge sync={order.shopifySync} />
                     </td>
                     <td className={styles.cellMuted}>{formatDate(order.createdAt)}</td>
                   </tr>

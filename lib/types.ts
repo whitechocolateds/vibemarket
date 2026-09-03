@@ -103,6 +103,27 @@ export interface OrderForm {
   paymentMethod: 'pouzeće';
 }
 
+/**
+ * Ishod slanja porudzbine u Shopify.
+ *
+ * Odvojeno od `status`, koji je stanje ISPORUKE i njime upravlja vlasnik.
+ * Porudzbina moze biti potvrdjena i poslata kupcu, a da nikada nije stigla u
+ * Shopify - to su dve nezavisne stvari i ne smeju da dele jedno polje.
+ *
+ * `ceka` znaci da je slanje zapoceto ali se ishod nije upisao. Ako takva
+ * porudzbina ostane u tom stanju, slanje je prekinuto na pola - i to se vidi,
+ * umesto da izgleda kao da nista nije ni pokusano.
+ */
+export interface ShopifySync {
+  status: 'ceka' | 'poslato' | 'neuspelo';
+  /** Kada je ishod zabelezen (ISO). */
+  at: string;
+  shopifyOrderId?: number;
+  shopifyOrderName?: string;
+  /** Razlog neuspeha, onako kako ga je Shopify vratio. */
+  error?: string;
+}
+
 export interface Order {
   id: string;
   orderNumber: string;
@@ -111,6 +132,8 @@ export interface Order {
   customerInfo: OrderForm;
   totalPrice: number;
   status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+  /** Nema ga kad je slanje u Shopify iskljuceno ili je porudzbina starija od ove provere. */
+  shopifySync?: ShopifySync;
 }
 
 export interface DailyStat {

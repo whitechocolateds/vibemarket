@@ -20,6 +20,7 @@ import {
 import { Order } from '@/lib/types';
 import { formatPrice } from '@/lib/format';
 import StatusBadge, { STATUS_LABELS } from '@/components/admin/StatusBadge';
+import ShopifySyncBadge from '@/components/admin/ShopifySyncBadge';
 import { toast } from '@/components/admin/Toaster';
 import GeminiCustomerMessageBox from '@/components/admin/GeminiCustomerMessageBox';
 import styles from '@/app/admin/admin.module.css';
@@ -120,6 +121,8 @@ export default function AdminOrderDetailPage() {
           <p className={styles.pageSubtitle}>{formatDate(order.createdAt)}</p>
         </div>
         <div className={styles.headerActions}>
+          {/* Stanje slanja stoji uz status isporuke - to su dve nezavisne stvari */}
+          <ShopifySyncBadge sync={order.shopifySync} puniRazlog />
           <StatusBadge status={order.status} />
           <button type="button" className="btn btn-secondary btn-sm" onClick={() => window.print()}>
             <Printer size={14} strokeWidth={2} /> Štampaj
