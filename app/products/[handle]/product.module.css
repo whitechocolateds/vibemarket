@@ -938,9 +938,30 @@
 
 @media (max-width: 640px) {
   .stickyShippingBadge { display: none; }
-  .stickyInner { padding: 10px var(--space-4); }
+  .stickyInner { padding: 10px var(--space-4); gap: 10px; }
   .stickyBuyBtn { padding: 10px 14px !important; font-size: 0.75rem !important; }
   .stickyCartBtn { padding: 10px 12px !important; font-size: 0.75rem !important; }
+
+  /*
+   * Na 375px dva dugmeta traze 243 od 375 piksela. Ostatak je ostajao levom delu,
+   * koji se stiskao na 28px - cena se tada prelamala u tri reda i prelivala preko
+   * svog okvira, pa je zavrsavala ispod dugmadi, a traka narasla na 92px.
+   *
+   * Naziv se ovde sklanja: kupac je vec na stranici tog proizvoda i naslov mu ne
+   * govori nista novo, a bas on je trosio prostor koji treba ceni.
+   */
+  .stickyTitle { display: none; }
+
+  /* Cena se NE stiska i NE prelama - ona je jedini podatak u traci */
+  .stickyProductWrap { flex-shrink: 0; gap: 10px; }
+  .stickyInfo { flex-shrink: 0; }
+  .stickyPrice { white-space: nowrap; font-size: 1rem; }
+  .stickyThumb { width: 40px; height: 40px; }
+
+  /* Dugmad dele preostalo; "Kupi odmah" uzima visak, "Dodaj" ostaje svoje sirine */
+  .stickyActions { flex: 1; min-width: 0; justify-content: flex-end; gap: 8px; }
+  .stickyBuyBtn { flex: 1 1 auto; min-width: 0; white-space: nowrap; }
+  .stickyCartBtn { flex: 0 0 auto; white-space: nowrap; }
 }
 
 .relatedSection {
