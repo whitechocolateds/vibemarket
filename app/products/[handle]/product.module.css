@@ -292,8 +292,13 @@
 }
 
 .priceBlock {
+  /* Odnos nova : stara = 2 : 3 stoji OVDE, na jednom mestu.
+     Menjanjem --cena-nova stara se pomera sama, pa odnos ne moze da se raspadne. */
+  --cena-nova: 1.75rem;
+  --cena-stara: calc(var(--cena-nova) * 1.5);
+
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: var(--space-4);
   flex-wrap: wrap;
   padding: var(--space-5) 0;
@@ -303,7 +308,7 @@
 
 .price {
   font-family: 'Prata', serif;
-  font-size: 1.75rem;
+  font-size: var(--cena-nova);
   color: var(--text-primary);
 }
 
@@ -716,8 +721,12 @@
 /* Precrtana stara cena je globalna klasa (koriste je i kartice i checkout),
    pa se uvecava SAMO ovde, u bloku sa cenom na stranici proizvoda. */
 .priceBlock :global(.price-compare) {
-  font-size: 1.05rem;
-  font-weight: 500;
+  font-size: var(--cena-stara);
+  font-weight: 400;
+  /* Krupan precrtan tekst deblja i samu crtu, pa se cifre teze citaju -
+     tanji potez i blaga providnost vracaju je na meru. */
+  opacity: 0.55;
+  text-decoration-thickness: 1px;
 }
 
 .topDescriptionText {
@@ -854,7 +863,8 @@
     line-height: 1.75;
   }
 
-  .priceBlock :global(.price-compare) { font-size: 1rem; }
+  /* Isti odnos 2:3, samo od manje osnove - da red sa cenama stane na telefon. */
+  .priceBlock { --cena-nova: 1.45rem; }
 }
 
 .stickyBar {
