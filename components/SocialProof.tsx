@@ -39,6 +39,14 @@ export default function SocialProof() {
 
   useEffect(() => {
     if (sessionStorage.getItem('vm-social-proof-off')) return;
+
+    /*
+     * Na telefonu se ne prikazuje uopste.
+     * Na uskom ekranu obavestenje prekriva sadrzaj (naslov proizvoda, cenu) i
+     * smeta umesto da pomaze. Provera je u efektu, pa se na telefonu preskacu i
+     * dohvatanje kataloga i svi tajmeri - ne trosi se ni saobracaj ni baterija.
+     */
+    if (window.matchMedia('(max-width: 768px)').matches) return;
     let alive = true;
     const timers: number[] = [];
     const schedule = (fn: () => void, ms: number) => timers.push(window.setTimeout(fn, ms));

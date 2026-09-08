@@ -264,7 +264,14 @@
   .viewers { padding-left: 0; border-left: none; width: 100%; }
 }
 
-.stars { display: flex; gap: 2px; color: var(--champagne); }
+/* Zvezdice: zasicenija zuta od --champagne (koja vuce na peskovito) i krupnije.
+   Velicina se namesta ovde, a ne kroz size= prop, da bi ostala jedno mesto. */
+.stars { display: flex; gap: 3px; color: #F5B301; }
+.stars svg {
+  width: 17px;
+  height: 17px;
+  filter: drop-shadow(0 1px 2px rgba(197, 138, 0, 0.35));
+}
 
 .ratingStarsBtn {
   display: inline-flex;
@@ -706,10 +713,20 @@
   color: var(--brand);
 }
 
+/* Precrtana stara cena je globalna klasa (koriste je i kartice i checkout),
+   pa se uvecava SAMO ovde, u bloku sa cenom na stranici proizvoda. */
+.priceBlock :global(.price-compare) {
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
 .topDescriptionText {
-  font-size: 0.93rem;
-  line-height: 1.68;
-  color: var(--text-secondary);
+  /* 3. Opis je najduzi tekst na stranici - vredi mu dati velicinu koja se cita
+     bez naprezanja, narocito na telefonu. */
+  font-size: 1.02rem;
+  line-height: 1.72;
+  color: var(--text-primary);
+  letter-spacing: 0.002em;
 }
 
 .topDescriptionText > :first-child {
@@ -735,8 +752,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 16px 0 7px;
-  font-size: 0.74rem;
+  margin: 20px 0 8px;
+  font-size: 0.8rem;
   font-weight: 800;
   letter-spacing: 0.07em;
   text-transform: uppercase;
@@ -827,12 +844,17 @@
 
 @media (max-width: 640px) {
   .topDescriptionBox {
-    padding: 16px 16px 18px;
+    padding: 18px 16px 20px;
   }
 
+  /* Ranije se ovde SMANJIVALO na 0.9rem - baš tamo gde je čitljivost najvažnija.
+     Sada ostaje puna veličina, uz nešto veći prored zbog uže kolone. */
   .topDescriptionText {
-    font-size: 0.9rem;
+    font-size: 1.02rem;
+    line-height: 1.75;
   }
+
+  .priceBlock :global(.price-compare) { font-size: 1rem; }
 }
 
 .stickyBar {

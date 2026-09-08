@@ -75,7 +75,13 @@ export default function Footer() {
               <a href="#" aria-label="Instagram" className={styles.socialBtn}>
                 <InstagramIcon />
               </a>
-              <a href="#" aria-label="Facebook" className={styles.socialBtn}>
+              <a
+                href="https://www.facebook.com/profile.php?id=61587439657039"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="VibeMarket na Facebook-u"
+                className={styles.socialBtn}
+              >
                 <FacebookIcon />
               </a>
             </div>
