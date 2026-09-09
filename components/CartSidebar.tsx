@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, Minus, Plus, Trash2, ShoppingBag, Truck, PartyPopper, ArrowRight, Sparkles, ShieldCheck } from 'lucide-react';
+import { X, Minus, Plus, Trash2, ShoppingBag, Truck, PartyPopper, ArrowRight, Sparkles, ShieldCheck, Gift } from 'lucide-react';
 import { useCartStore } from '@/lib/cart';
+import { GIFT_PRICE, GIFT_TITLE, giftTotal } from '@/lib/gift';
 import { formatPrice, getProductPrice } from '@/lib/format';
 import { FREE_SHIPPING_THRESHOLD } from '@/lib/shipping';
 import { bundleUnitPrice } from '@/lib/bundlePricing';
@@ -55,7 +56,9 @@ function UpsellList({ title, products, onAdd, onNavigate, className = '' }: {
 }
 
 export default function CartSidebar() {
-  const { items, totalItems, isOpen, closeCart, removeItem, updateQuantity, addItem } = useCartStore();
+  const { items, totalItems, isOpen, closeCart, removeItem, updateQuantity, addItem, gift: giftRaw, setGift } = useCartStore();
+  // Tip Cart nosi `gift?`, a checkbox i obračun traže pravi boolean
+  const gift = giftRaw === true;
   const [catalog, setCatalog] = useState<ProductListItem[]>([]);
 
   // Cene po stavci uključuju količinski popust (2 kom -10%, 3 kom -15%), isto kao na checkout-u
@@ -238,9 +241,20 @@ export default function CartSidebar() {
                       />
                     </div>
                   </div>
+                  <label className={styles.giftRow}>
+                    <input
+                      type="checkbox"
+                      checked={gift}
+                      onChange={(e) => setGift(e.target.checked)}
+                    />
+                    <Gift size={15} />
+                    <span className={styles.giftRowText}>{GIFT_TITLE}</span>
+                    <span className={styles.giftRowPrice}>+{formatPrice(GIFT_PRICE)}</span>
+                  </label>
+
                   <div className={styles.total}>
                     <span className={styles.totalLabel}>Ukupno</span>
-                    <span className={styles.totalPrice}>{formatPrice(totalPrice)}</span>
+                    <span className={styles.totalPrice}>{formatPrice(totalPrice + giftTotal(gift))}</span>
                   </div>
                   <p className={styles.note}>
                     <span><ShieldCheck size={13} /> Plaćanje pouzećem</span>

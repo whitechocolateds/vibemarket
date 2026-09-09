@@ -367,3 +367,29 @@
 @media (max-width: 480px) {
   .sidebar { width: 100%; }
 }
+
+/* ─── Poklon iznenađenje ─────────────────────────────────────────────────── */
+.giftRow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: var(--space-3);
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1.5px dashed rgba(var(--brand-rgb), 0.35);
+  background: rgba(var(--brand-rgb), 0.04);
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.giftRow:has(input:checked) {
+  border-style: solid;
+  border-color: var(--brand);
+  background: rgba(var(--brand-rgb), 0.09);
+}
+
+.giftRow input { width: 17px; height: 17px; accent-color: var(--brand); cursor: pointer; flex-shrink: 0; }
+.giftRow svg { color: var(--brand); flex-shrink: 0; }
+.giftRowText { flex: 1; min-width: 0; }
+.giftRowPrice { font-weight: 700; color: var(--brand); white-space: nowrap; }

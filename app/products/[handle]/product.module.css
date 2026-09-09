@@ -1070,3 +1070,55 @@
     font-size: 0.7rem;
   }
 }
+
+/* ─── Poklon iznenađenje ─────────────────────────────────────────────────── */
+.giftOption {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: var(--space-3);
+  padding: 12px var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1.5px dashed rgba(var(--brand-rgb), 0.35);
+  background: rgba(var(--brand-rgb), 0.04);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.giftOption:hover {
+  border-color: var(--brand);
+  background: rgba(var(--brand-rgb), 0.08);
+}
+
+/* Kad je čekiran, okvir prelazi u punu liniju - da se na prvi pogled vidi
+   da je poklon u porudžbini, bez čitanja same kvačice. */
+.giftOption:has(.giftCheckbox:checked) {
+  border-style: solid;
+  border-color: var(--brand);
+  background: rgba(var(--brand-rgb), 0.09);
+}
+
+.giftCheckbox {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: var(--brand);
+  cursor: pointer;
+}
+
+.giftIcon { color: var(--brand); flex-shrink: 0; }
+
+.giftText {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.giftPrice {
+  font-weight: 700;
+  color: var(--brand);
+  white-space: nowrap;
+}

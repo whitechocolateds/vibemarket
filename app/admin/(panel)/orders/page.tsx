@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useRef } from 'react';
 import Link from 'next/link';
-import { Search, RefreshCw, ShoppingBag, Download, Phone, Mail, MapPin, CheckSquare, Square, ChevronDown, AlertTriangle } from 'lucide-react';
+import { Search, RefreshCw, ShoppingBag, Download, Phone, Mail, MapPin, CheckSquare, Square, ChevronDown, AlertTriangle, Gift } from 'lucide-react';
 import { Order } from '@/lib/types';
 import { formatPrice } from '@/lib/format';
 import { STATUS_LABELS } from '@/components/admin/StatusBadge';
@@ -402,6 +402,12 @@ export default function AdminOrdersPage() {
                       <Link href={`/admin/orders/${order.id}`} className={styles.tableLink}>
                         {order.orderNumber}
                       </Link>
+                      {/* Poklon menja ono što se pakuje, pa stoji uz sam broj */}
+                      {order.gift && (
+                        <span className={styles.giftTag} title="Uz porudžbinu ide poklon iznenađenje">
+                          <Gift size={11} strokeWidth={2.5} /> POKLON
+                        </span>
+                      )}
                     </td>
                     <td>
                       <p className={styles.customerName}>{order.customerInfo.firstName} {order.customerInfo.lastName}</p>

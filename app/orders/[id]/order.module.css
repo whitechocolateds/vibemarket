@@ -338,3 +338,19 @@
 .supportLinks a:hover {
   text-decoration: underline;
 }
+
+/* ─── Poklon iznenađenje ─────────────────────────────────────────────────── */
+.giftNote {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: var(--space-5);
+  padding: 12px var(--space-5);
+  border-radius: var(--radius-lg);
+  background: rgba(var(--brand-rgb), 0.07);
+  border: 1.5px solid rgba(var(--brand-rgb), 0.25);
+  color: var(--brand-dark, #0b2a6b);
+  font-size: 0.9rem;
+}
+
+.giftNote svg { color: var(--brand); flex-shrink: 0; }

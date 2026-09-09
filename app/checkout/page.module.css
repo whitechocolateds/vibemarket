@@ -649,3 +649,28 @@
     width: 10px;
   }
 }
+
+/* ─── Poklon iznenađenje ─────────────────────────────────────────────────── */
+.giftPick {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: var(--space-3);
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1.5px dashed rgba(var(--brand-rgb), 0.35);
+  background: rgba(var(--brand-rgb), 0.04);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.giftPick:has(input:checked) {
+  border-style: solid;
+  border-color: var(--brand);
+  background: rgba(var(--brand-rgb), 0.09);
+}
+
+.giftPick input { width: 17px; height: 17px; accent-color: var(--brand); cursor: pointer; flex-shrink: 0; }
+.giftPick svg { color: var(--brand); flex-shrink: 0; }
+.giftPick span { flex: 1; min-width: 0; }
+.giftPick strong { color: var(--brand); white-space: nowrap; }

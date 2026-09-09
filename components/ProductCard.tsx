@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Sparkles, Clock, Flame, Zap, ShoppingCart, CheckCircle2 } from 'lucide-react';
+import { Sparkles, Clock, Flame, Zap, ShoppingCart, CheckCircle2, ImageOff } from 'lucide-react';
 import { ProductListItem } from '@/lib/types';
 import { useCartStore } from '@/lib/cart';
 import { formatPrice, getProductPrice } from '@/lib/format';
@@ -138,7 +138,15 @@ export default function ProductCard({ product, spotlight = false }: Props) {
               style={{ transform: hovered ? 'scale(1.06)' : 'scale(1)' }}
             />
           ) : (
-            <div className={styles.placeholder}>◆</div>
+            <div className={styles.placeholder}>
+              {/*
+                Zamena se crta OVDE, a ne upisuje kao lazna slika u katalog.
+                Tako nema podatka koji posle treba cistiti, ne odlazi u Shopify,
+                i nestaje sama cim se doda prava slika.
+              */}
+              <ImageOff size={26} strokeWidth={1.6} />
+              <span>Slika nije dostupna</span>
+            </div>
           )}
           <div className={styles.spotlightScrim} />
 
@@ -205,7 +213,15 @@ export default function ProductCard({ product, spotlight = false }: Props) {
               )}
             </>
           ) : (
-            <div className={styles.placeholder}>◆</div>
+            <div className={styles.placeholder}>
+              {/*
+                Zamena se crta OVDE, a ne upisuje kao lazna slika u katalog.
+                Tako nema podatka koji posle treba cistiti, ne odlazi u Shopify,
+                i nestaje sama cim se doda prava slika.
+              */}
+              <ImageOff size={26} strokeWidth={1.6} />
+              <span>Slika nije dostupna</span>
+            </div>
           )}
           <div className={styles.badges}>
             {discountPercent && <span className={styles.discountPill}>−{discountPercent}%</span>}

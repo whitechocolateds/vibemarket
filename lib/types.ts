@@ -88,7 +88,10 @@ export interface CartItem {
 export interface Cart {
   items: CartItem[];
   totalItems: number;
+  /** Zbir SAMO proizvoda. Poklon i dostava se dodaju kasnije, pri obračunu. */
   totalPrice: number;
+  /** Poklon iznenađenje je jedan po porudžbini, pa stoji na korpi, ne na stavci. */
+  gift?: boolean;
 }
 
 export interface OrderForm {
@@ -132,6 +135,8 @@ export interface Order {
   customerInfo: OrderForm;
   totalPrice: number;
   status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+  /** Kupac je uz porudžbinu uzeo i poklon iznenađenje — treba ga upakovati. */
+  gift?: boolean;
   /** Nema ga kad je slanje u Shopify iskljuceno ili je porudzbina starija od ove provere. */
   shopifySync?: ShopifySync;
 }

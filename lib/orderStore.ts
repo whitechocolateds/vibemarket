@@ -40,6 +40,8 @@ export async function saveOrder(params: {
   customerInfo: OrderForm;
   totalPrice: number;
   orderNumber: string;
+  /** Kupac je uzeo i poklon iznenađenje. */
+  gift?: boolean;
   /** Upisuje se odmah, u ISTOM upisu - da ne bude porudzbine bez traga o slanju. */
   shopifySync?: ShopifySync;
 }): Promise<Order> {
@@ -51,6 +53,7 @@ export async function saveOrder(params: {
     customerInfo: params.customerInfo,
     totalPrice: params.totalPrice,
     status: 'pending',
+    ...(params.gift ? { gift: true } : {}),
     ...(params.shopifySync ? { shopifySync: params.shopifySync } : {}),
   };
   await mutateOrders((orders) => {

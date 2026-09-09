@@ -6,6 +6,7 @@ import { bundleUnitPrice } from '@/lib/bundlePricing';
 import { isValidSerbianPhone } from '@/lib/phone';
 import { sendCapiEvent } from '@/lib/metaConversionsApi';
 import { isOrderPushEnabled, createShopifyOrder } from '@/lib/shopify';
+import { GIFT_PRICE, GIFT_TITLE, giftTotal } from '@/lib/gift';
 
 export const runtime = 'nodejs';
 /*
@@ -20,6 +21,8 @@ interface CreateOrderBody {
   customerInfo: OrderForm;
   totalPrice: number;
   eventId?: string;
+  /** Poklon iznenađenje; cena se uzima sa servera, ne iz ovog tela. */
+  gift?: boolean;
 }
 
 const REQUIRED_FIELDS: (keyof OrderForm)[] = [
@@ -30,6 +33,8 @@ export async function POST(req: NextRequest) {
   try {
     const body: CreateOrderBody = await req.json();
     const { items, customerInfo, eventId } = body;
+    // Samo zastavica dolazi od klijenta; iznos se uzima iz koda
+    const gift = body.gift === true;
 
     if (!items?.length) {
       return NextResponse.json({ error: 'Korpa je prazna' }, { status: 400 });
@@ -92,7 +97,12 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const totalPrice = verifiedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    /*
+     * Poklon se dodaje OVDE, cenom iz koda.
+     * Klijent šalje samo "da/ne" - da je slao i iznos, dovoljno bi bilo izmeniti
+     * zahtev pa da poklon košta nula.
+     */
+    const totalPrice = verifiedItems.reduce((sum, i) => sum + i.price * i.quantity, 0) + giftTotal(gift);
     const orderNumber = `VM-${Date.now().toString(36).toUpperCase()}`;
 
     await saveOrder({
@@ -100,6 +110,7 @@ export async function POST(req: NextRequest) {
       customerInfo,
       totalPrice,
       orderNumber,
+      gift,
       // Porudzbina se od prvog trenutka vidi kao "ceka slanje". Ako posao ispod
       // nikada ne stigne do kraja, ostace u tom stanju - a to je vidljivo.
       ...(isOrderPushEnabled()
@@ -149,13 +160,19 @@ export async function POST(req: NextRequest) {
           const r = await createShopifyOrder({
             orderNumber,
             totalPrice,
-            items: verifiedItems.map((i) => ({
-              title: i.title,
-              variantTitle: i.variantTitle,
-              price: i.price,
-              quantity: i.quantity,
-              shopifyVariantId: i.shopifyVariantId,
-            })),
+            items: [
+              ...verifiedItems.map((i) => ({
+                title: i.title,
+                variantTitle: i.variantTitle,
+                price: i.price,
+                quantity: i.quantity,
+                shopifyVariantId: i.shopifyVariantId,
+              })),
+              // Bez ove stavke iznos u Shopify-ju bio bi manji od naplaćenog
+              ...(gift
+                ? [{ title: GIFT_TITLE, variantTitle: '', price: GIFT_PRICE, quantity: 1 }]
+                : []),
+            ],
             customer: {
               firstName: customerInfo.firstName,
               lastName: customerInfo.lastName,

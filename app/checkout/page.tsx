@@ -4,12 +4,13 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, MapPin, Wallet, ShieldCheck, Truck, PackageCheck, PackageOpen, CheckCircle2, Lock, ArrowLeft, Phone, Mail, Building2, Hash } from 'lucide-react';
+import { User, MapPin, Wallet, ShieldCheck, Truck, PackageCheck, PackageOpen, CheckCircle2, Lock, ArrowLeft, Phone, Mail, Building2, Hash, Gift } from 'lucide-react';
 import { useCartStore } from '@/lib/cart';
 import { formatPrice } from '@/lib/format';
 import { OrderForm } from '@/lib/types';
 import { FREE_SHIPPING_THRESHOLD, shippingCostFor } from '@/lib/shipping';
 import { bundleUnitPrice } from '@/lib/bundlePricing';
+import { GIFT_PRICE, GIFT_TITLE, giftTotal } from '@/lib/gift';
 import { isValidSerbianPhone } from '@/lib/phone';
 import { trackPixel, newEventId } from '@/lib/metaEvents';
 import Reveal from '@/components/motion/Reveal';
@@ -39,7 +40,7 @@ function validateForm(form: OrderForm): FormErrors {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { items, totalItems, clearCart, updateQuantity } = useCartStore();
+  const { items, totalItems, clearCart, updateQuantity, gift, setGift } = useCartStore();
   const [form, setForm] = useState<OrderForm>(INITIAL_FORM);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitting, setSubmitting] = useState(false);
@@ -54,8 +55,11 @@ export default function CheckoutPage() {
   }));
   const totalPrice = discountedItems.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
   const totalSavings = discountedItems.reduce((sum, i) => sum + (i.price - i.unitPrice) * i.quantity, 0);
+  /* Poklon ne ulazi u prag za besplatnu dostavu - inače bi dodatak od 490 RSD
+     mogao sam sebi da otključa besplatnu dostavu. */
   const shippingCost = shippingCostFor(totalPrice);
-  const grandTotal = totalPrice + shippingCost;
+  const giftCost = giftTotal(gift === true);
+  const grandTotal = totalPrice + shippingCost + giftCost;
 
   useEffect(() => {
     if (totalItems === 0) return;
@@ -101,14 +105,14 @@ export default function CheckoutPage() {
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items, customerInfo: form, totalPrice: grandTotal, eventId }),
+        body: JSON.stringify({ items, customerInfo: form, totalPrice: grandTotal, eventId, gift: gift === true }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       clearCart();
       const contentIds = discountedItems.map((i) => i.productId).join(',');
       router.push(
-        `/orders/${data.orderId}?name=${encodeURIComponent(form.firstName)}&value=${grandTotal}&eventId=${eventId}&contentIds=${encodeURIComponent(contentIds)}`
+        `/orders/${data.orderId}?name=${encodeURIComponent(form.firstName)}&value=${grandTotal}&eventId=${eventId}&contentIds=${encodeURIComponent(contentIds)}${giftCost > 0 ? '&gift=1' : ''}`
       );
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Greška pri slanju');
@@ -259,6 +263,9 @@ export default function CheckoutPage() {
               {totalSavings > 0 && (
                 <div className={`${styles.summaryRow} ${styles.savingsRow}`}><span>Ušteda</span><span>−{formatPrice(totalSavings)}</span></div>
               )}
+              {giftCost > 0 && (
+                <div className={styles.summaryRow}><span>{GIFT_TITLE}</span><span>{formatPrice(GIFT_PRICE)}</span></div>
+              )}
               <div className={styles.summaryRow}><span>Dostava</span><span>{shippingCost === 0 ? 'Besplatna' : formatPrice(shippingCost)}</span></div>
               <div className={`${styles.summaryRow} ${styles.summaryTotal}`}><span>Ukupno</span><span>{formatPrice(grandTotal)}</span></div>
             </div>
@@ -313,6 +320,13 @@ export default function CheckoutPage() {
                 ))}
               </div>
               <div className={styles.divider} />
+              {/* Poklon se može dodati i ovde - kupac ga možda nije video na proizvodu */}
+              <label className={styles.giftPick}>
+                <input type="checkbox" checked={gift === true} onChange={(e) => setGift(e.target.checked)} />
+                <Gift size={15} />
+                <span>Dodaj {GIFT_TITLE}</span>
+                <strong>+{formatPrice(GIFT_PRICE)}</strong>
+              </label>
               <div className={styles.summaryRow}><span>Proizvodi</span><span>{formatPrice(totalPrice)}</span></div>
               {totalSavings > 0 && (
                 <div className={`${styles.summaryRow} ${styles.savingsRow}`}><span>Ušteda popust</span><span>−{formatPrice(totalSavings)}</span></div>

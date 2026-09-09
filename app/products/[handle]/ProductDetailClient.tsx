@@ -4,9 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useInView } from 'framer-motion';
-import { Truck, Wallet, ShieldCheck, Check, Heart, Share2, Star, Flame, Eye, Clock, MessageCircleHeart, HelpCircle, ListChecks, Home, ChevronRight, Zap, ShoppingCart, CheckCircle2, Tag, Sparkles, Maximize2 } from 'lucide-react';
+import { Truck, Wallet, ShieldCheck, Check, Heart, Share2, Star, Flame, Eye, Clock, MessageCircleHeart, HelpCircle, ListChecks, Home, ChevronRight, Zap, ShoppingCart, CheckCircle2, Tag, Sparkles, Maximize2, Gift } from 'lucide-react';
 import { Product, ProductVariant } from '@/lib/types';
 import { useCartStore } from '@/lib/cart';
+import { GIFT_PRICE, GIFT_TITLE } from '@/lib/gift';
 import { useWishlist } from '@/lib/useWishlist';
 import { formatPrice } from '@/lib/format';
 import { LOW_STOCK_THRESHOLD, FREE_SHIPPING_THRESHOLD } from '@/lib/shipping';
@@ -73,7 +74,7 @@ function viewersLabel(n: number): string {
 
 export default function ProductDetailClient({ product, related }: Props) {
   const router = useRouter();
-  const { addItem, closeCart } = useCartStore();
+  const { addItem, closeCart, gift, setGift } = useCartStore();
   const { isWished, toggle: toggleWishlist } = useWishlist(product.id);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(product.variants[0]);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -492,6 +493,22 @@ export default function ProductDetailClient({ product, related }: Props) {
                   DODAJ U KORPU
                 </motion.button>
               )}
+
+              {/* Poklon je jedan po porudžbini, pa stoji na korpi - kvačica ovde
+                  samo prebacuje isto stanje, gde god da je kupac klikne. */}
+              <label className={styles.giftOption}>
+                <input
+                  type="checkbox"
+                  checked={gift}
+                  onChange={(e) => setGift(e.target.checked)}
+                  className={styles.giftCheckbox}
+                />
+                <Gift size={17} className={styles.giftIcon} />
+                <span className={styles.giftText}>
+                  Dodaj <strong>{GIFT_TITLE}</strong>
+                  <span className={styles.giftPrice}>+{formatPrice(GIFT_PRICE)}</span>
+                </span>
+              </label>
               <div className={styles.shippingHintBar}>
                 {bundleTotal >= FREE_SHIPPING_THRESHOLD ? (
                   <div className={styles.freeShippingActive}>

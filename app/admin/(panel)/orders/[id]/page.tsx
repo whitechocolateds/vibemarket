@@ -16,6 +16,7 @@ import {
   Copy,
   Package,
   User,
+  Gift,
 } from 'lucide-react';
 import { Order } from '@/lib/types';
 import { formatPrice } from '@/lib/format';
@@ -129,6 +130,15 @@ export default function AdminOrderDetailPage() {
           </button>
         </div>
       </div>
+
+      {order.gift && (
+        <div className={styles.giftBanner}>
+          <Gift size={17} strokeWidth={2.5} />
+          <span>
+            <strong>Uz ovu porudžbinu ide poklon iznenađenje.</strong> Ubacite ga u paket pre slanja.
+          </span>
+        </div>
+      )}
 
       <div className={styles.card} style={{ marginBottom: 'var(--space-4)' }}>
         {cancelled ? (

@@ -9,6 +9,7 @@ interface CartStore extends Cart {
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
+  setGift: (gift: boolean) => void;
   isOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
@@ -26,6 +27,7 @@ export const useCartStore = create<CartStore>()(
       items: [],
       totalItems: 0,
       totalPrice: 0,
+      gift: false,
       isOpen: false,
 
       addItem: (newItem) =>
@@ -71,7 +73,10 @@ export const useCartStore = create<CartStore>()(
           return { items: updatedItems, ...computeTotals(updatedItems) };
         }),
 
-      clearCart: () => set({ items: [], totalItems: 0, totalPrice: 0 }),
+      // Poklon se briše zajedno sa korpom - inače bi ostao čekiran nad praznom korpom
+      clearCart: () => set({ items: [], totalItems: 0, totalPrice: 0, gift: false }),
+
+      setGift: (gift) => set({ gift }),
 
       openCart: () => set({ isOpen: true }),
       closeCart: () => set({ isOpen: false }),
@@ -83,6 +88,7 @@ export const useCartStore = create<CartStore>()(
         items: state.items,
         totalItems: state.totalItems,
         totalPrice: state.totalPrice,
+        gift: state.gift,
       }),
     }
   )

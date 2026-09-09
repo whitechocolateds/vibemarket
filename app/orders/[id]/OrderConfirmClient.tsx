@@ -5,9 +5,10 @@ import { KONTAKT } from '@/lib/legalContent';
 import Link from 'next/link';
 import { useSearchParams, useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { PackageCheck, Truck, Home, CheckCircle2, ShoppingBag, Sparkles, Phone, Mail, Copy, Check, Clock, ShieldCheck } from 'lucide-react';
+import { PackageCheck, Truck, Home, CheckCircle2, ShoppingBag, Sparkles, Phone, Mail, Copy, Check, Clock, ShieldCheck, Gift } from 'lucide-react';
 import { trackPixel } from '@/lib/metaEvents';
 import ConfettiBurst from '@/components/motion/ConfettiBurst';
+import { GIFT_TITLE } from '@/lib/gift';
 import styles from './order.module.css';
 
 export default function OrderConfirmClient() {
@@ -15,6 +16,9 @@ export default function OrderConfirmClient() {
   const searchParams = useSearchParams();
   const orderId = params.id as string;
   const name = searchParams.get('name') ?? 'kupče';
+  /* Stranica potvrde nema objekat porudžbine - radi iz URL-a, kao i za Pixel.
+     Zato poklon stiže kao zastavica u adresi, isto kao `value` i `eventId`. */
+  const gift = searchParams.get('gift') === '1';
   const firedRef = useRef(false);
   const [copied, setCopied] = useState(false);
 
@@ -88,6 +92,13 @@ export default function OrderConfirmClient() {
               Vrati se na početnu
             </Link>
           </div>
+
+          {gift && (
+            <div className={styles.giftNote}>
+              <Gift size={16} />
+              <span>Uz porudžbinu stiže i <strong>{GIFT_TITLE}</strong>.</span>
+            </div>
+          )}
 
           <div className={styles.deliveryCard}>
             <h3 className={styles.sectionTitle}>
