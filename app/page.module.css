@@ -183,9 +183,12 @@
 
 .accentCard {
   position: absolute;
-  top: -9%;
-  left: -13%;
-  width: 40%;
+  /* Pomereno dalje od rama: sličica je grickala gornji levi ugao slike.
+     Medija upiti ispod je vraćaju bliže kad ekran postane uzak, da ne izađe
+     iz vidnog polja. */
+  top: -17%;
+  left: -19%;
+  width: 33%;
   z-index: 2;
 }
 
@@ -209,11 +212,32 @@
   pointer-events: none;
 }
 
+.accentLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .accentImg {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  position: relative;
+  z-index: 1;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
   display: block;
+}
+
+.accentBackdrop {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(14px) saturate(1.1);
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 0;
 }
 
 @media (max-width: 960px) {
@@ -225,7 +249,16 @@
 }
 
 .stage {
-  aspect-ratio: 4/5;
+  /*
+   * Kvadrat, ne uspravni 4:5. Izmereno na katalogu: 49 od 73 naslovne slike su
+   * 1:1, a 18 su položene (do 2.2 široke). U ramu odnosa 0.8 sa `cover` širokom
+   * baneru se odsecalo levo i desno - baš tamo gde stoji natpis proizvoda.
+   */
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4%;
   border-radius: 32px;
   overflow: hidden;
   position: relative;
@@ -244,11 +277,29 @@
   z-index: 1;
 }
 
+/* `contain` prikazuje CELU sliku; zamućena kopija popunjava ostatak rama da ne
+   stoje prazne trake. Isti postupak kao u galeriji na stranici proizvoda. */
 .stageImg {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  position: relative;
+  z-index: 1;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
   display: block;
+}
+
+.stageBackdrop {
+  position: absolute;
+  inset: -8%;
+  background-size: cover;
+  background-position: center;
+  filter: blur(26px) saturate(1.15);
+  opacity: 0.45;
+  transform: scale(1.08);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .stageGround {

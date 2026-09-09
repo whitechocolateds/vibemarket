@@ -98,6 +98,11 @@ export default function HeroSpotlight({ products }: { products: Product[] }) {
             transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
           >
             <Link href={`/products/${accent.handle}`} className={styles.accentLink}>
+              <span
+                className={styles.accentBackdrop}
+                style={{ backgroundImage: `url(${accent.featuredImage.url})` }}
+                aria-hidden
+              />
               <AnimatePresence mode="wait">
                 <motion.img
                   key={accent.id}
@@ -124,15 +129,25 @@ export default function HeroSpotlight({ products }: { products: Product[] }) {
           onMouseMove={handleMouseMove}
           onMouseLeave={handleLeave}
         >
+          {/* Zamućena kopija iste slike popunjava ram oko slike u `contain` režimu */}
+          {product.featuredImage && (
+            <span
+              className={styles.stageBackdrop}
+              style={{ backgroundImage: `url(${product.featuredImage.url})` }}
+              aria-hidden
+            />
+          )}
           <AnimatePresence mode="wait">
             {product.featuredImage && (
               <motion.img
                 key={product.id}
                 src={product.featuredImage.url}
                 alt={product.featuredImage.altText ?? product.title}
-                initial={{ opacity: 0, scale: 1.06 }}
+                /* Nijedna vrednost ne sme preko 1: uz `contain` slika tacno
+                   ispunjava ram, pa bi je svako uvecanje odseklo na ivicama. */
+                initial={{ opacity: 0, scale: 0.94 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.97 }}
+                exit={{ opacity: 0, scale: 0.94 }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                 className={styles.stageImg}
               />
