@@ -4,10 +4,11 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useInView } from 'framer-motion';
-import { Truck, Wallet, ShieldCheck, Check, Heart, Share2, Star, Flame, Eye, Clock, MessageCircleHeart, HelpCircle, ListChecks, Home, ChevronRight, Zap, ShoppingCart, CheckCircle2, Tag, Sparkles, Maximize2, Gift } from 'lucide-react';
+import { Truck, Wallet, ShieldCheck, Check, Heart, Share2, Star, Flame, Eye, Clock, MessageCircleHeart, HelpCircle, ListChecks, Home, ChevronRight, Zap, ShoppingCart, CheckCircle2, Tag, Sparkles, Maximize2, Gift, FileDown } from 'lucide-react';
 import { Product, ProductVariant } from '@/lib/types';
 import { useCartStore } from '@/lib/cart';
 import { GIFT_PRICE, GIFT_TITLE } from '@/lib/gift';
+import { DOCS_PRODUCT_HANDLE, PRODUCT_DOCS } from '@/lib/productDocs';
 import { useWishlist } from '@/lib/useWishlist';
 import { formatPrice } from '@/lib/format';
 import { LOW_STOCK_THRESHOLD, FREE_SHIPPING_THRESHOLD } from '@/lib/shipping';
@@ -547,6 +548,38 @@ export default function ProductDetailClient({ product, related }: Props) {
                 </div>
               </div>
             </div>
+
+            {/* Vodici postoje samo za ovaj proizvod - vidi lib/productDocs.ts */}
+            {product.handle === DOCS_PRODUCT_HANDLE && (
+              <div className={styles.docsBox}>
+                <div className={styles.docsHeader}>
+                  <span className={styles.docsBadge}>BESPLATNO UZ PROIZVOD</span>
+                  <h3 className={styles.docsTitle}>Dva vodiča za preuzimanje</h3>
+                  <p className={styles.docsLead}>
+                    Preuzmite ih odmah — plan ishrane i plan vežbi napravljeni su baš za vežbanje ovom spravom.
+                  </p>
+                </div>
+                <div className={styles.docsList}>
+                  {PRODUCT_DOCS.map((doc) => (
+                    <a
+                      key={doc.href}
+                      href={doc.href}
+                      download
+                      className={styles.docsItem}
+                    >
+                      <span className={styles.docsIconWrap}>
+                        <FileDown size={18} />
+                      </span>
+                      <span className={styles.docsItemText}>
+                        <strong className={styles.docsItemTitle}>Preuzmi: {doc.naslov}</strong>
+                        <span className={styles.docsItemDesc}>{doc.opis}</span>
+                      </span>
+                      <span className={styles.docsMeta}>{doc.meta}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className={styles.trustBadgesBar}>
               <div className={styles.trustItem}>
