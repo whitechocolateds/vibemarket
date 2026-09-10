@@ -1079,15 +1079,15 @@
   margin-top: var(--space-3);
   padding: 12px var(--space-4);
   border-radius: var(--radius-lg);
-  border: 1.5px dashed rgba(var(--brand-rgb), 0.35);
-  background: rgba(var(--brand-rgb), 0.04);
+  border: 1.5px dashed rgba(240, 176, 12, 0.6);
+  background: rgba(255, 200, 56, 0.11);
   cursor: pointer;
   transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .giftOption:hover {
-  border-color: var(--brand);
-  background: rgba(var(--brand-rgb), 0.08);
+  border-color: #F0B00C;
+  background: rgba(255, 200, 56, 0.19);
 }
 
 /* Kad je čekiran, okvir prelazi u punu liniju - da se na prvi pogled vidi
@@ -1106,7 +1106,34 @@
   cursor: pointer;
 }
 
-.giftIcon { color: var(--brand); flex-shrink: 0; }
+/* Keyframes moraju da stoje u OVOM modulu: CSS moduli scope-uju i ime animacije,
+   pa referenca na globalni `vibeGiftPulse` ne bi pogodila ništa - animacija bi
+   tiho izostala. Isti blok zato postoji i u korpi i na checkoutu. */
+@keyframes vibeGiftPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(240, 176, 12, 0.5); }
+  50% { transform: scale(1.09); box-shadow: 0 0 0 7px rgba(240, 176, 12, 0); }
+}
+
+/* Topla ikona namerno odudara od plave okoline - poklon treba da se primeti. */
+.giftIcon {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  padding: 4.5px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  color: #fff;
+  background: linear-gradient(135deg, #FFC838 0%, #F0B00C 45%, rgb(var(--error-rgb)) 100%);
+  animation: vibeGiftPulse 2.2s ease-in-out infinite;
+}
+
+/* Kad je poklon izabran, kucanje prestaje - odradilo je svoj posao, a trajna
+   animacija na potvrđenoj opciji samo smeta. */
+.giftOption:has(.giftCheckbox:checked) .giftIcon { animation: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .giftIcon { animation: none; }
+}
 
 .giftText {
   display: flex;
@@ -1140,11 +1167,12 @@
   display: inline-block;
   padding: 3px 9px;
   border-radius: 999px;
-  background: var(--brand-gradient);
-  color: #fff;
+  background: var(--gold-gradient);
+  color: var(--dark);
   font-size: 0.62rem;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.09em;
+  box-shadow: 0 2px 8px rgba(240, 176, 12, 0.35);
 }
 
 .docsTitle {

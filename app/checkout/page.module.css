@@ -658,8 +658,8 @@
   margin-bottom: var(--space-3);
   padding: 10px 12px;
   border-radius: var(--radius-md);
-  border: 1.5px dashed rgba(var(--brand-rgb), 0.35);
-  background: rgba(var(--brand-rgb), 0.04);
+  border: 1.5px dashed rgba(240, 176, 12, 0.6);
+  background: rgba(255, 200, 56, 0.11);
   font-size: 0.85rem;
   cursor: pointer;
 }
@@ -671,6 +671,30 @@
 }
 
 .giftPick input { width: 17px; height: 17px; accent-color: var(--brand); cursor: pointer; flex-shrink: 0; }
-.giftPick svg { color: var(--brand); flex-shrink: 0; }
+/* Keyframes moraju da stoje u OVOM modulu: CSS moduli scope-uju i ime animacije,
+   pa referenca na globalni `vibeGiftPulse` ne bi pogodila ništa - animacija bi
+   tiho izostala. Isti blok zato postoji i u korpi i na checkoutu. */
+@keyframes vibeGiftPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(240, 176, 12, 0.5); }
+  50% { transform: scale(1.09); box-shadow: 0 0 0 7px rgba(240, 176, 12, 0); }
+}
+
+.giftPick svg {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  padding: 4.5px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  color: #fff;
+  background: linear-gradient(135deg, #FFC838 0%, #F0B00C 45%, rgb(var(--error-rgb)) 100%);
+  animation: vibeGiftPulse 2.2s ease-in-out infinite;
+}
+
+.giftPick:has(input:checked) svg { animation: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .giftPick svg { animation: none; }
+}
 .giftPick span { flex: 1; min-width: 0; }
 .giftPick strong { color: var(--brand); white-space: nowrap; }
