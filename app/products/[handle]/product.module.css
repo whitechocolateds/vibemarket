@@ -958,6 +958,14 @@
   border: none !important;
 }
 
+/* Ikona ne sme da se stiska. U uskoj traci na telefonu flex ju je sabijao sa 15px
+   na 0,4px, pa je od nje ostajao samo `gap` sa leve strane - tekst je zbog toga
+   sedeo ~4px desno od sredine dugmeta i delovao necentrirano. */
+.stickyBuyBtn svg,
+.stickyCartBtn svg {
+  flex-shrink: 0;
+}
+
 .stickyCartBtn {
   background: var(--bg-elevated) !important;
   color: var(--brand) !important;
@@ -994,6 +1002,24 @@
   .stickyActions { flex: 1; min-width: 0; justify-content: flex-end; gap: 8px; }
   .stickyBuyBtn { flex: 1 1 auto; min-width: 0; white-space: nowrap; }
   .stickyCartBtn { flex: 0 0 auto; white-space: nowrap; }
+}
+
+/*
+ * Ispod 380px traka vise ne stane: sa ikonom pune velicine natpis "KUPI ODMAH"
+ * iscuri iz svog dugmeta (mereno: 8px na 360, 28px na 320). Zato se prostor
+ * oslobadja redom, po vaznosti - prvo odlazi ono sto najmanje znaci.
+ *
+ * Slicica ide prva: kupac gleda upravo taj proizvod, pa mu njegova sitna slika
+ * ne govori nista novo, dok trosi 50px koji trebaju ceni i dugmetu.
+ */
+@media (max-width: 380px) {
+  .stickyThumb { display: none; }
+}
+
+/* Na najuzim ekranima ostaje samo cena i "Kupi odmah". Dodavanje u korpu je i
+   dalje moguce sa glavnog dugmeta iznad - traka cuva jednu, glavnu radnju. */
+@media (max-width: 340px) {
+  .stickyCartBtn { display: none; }
 }
 
 .relatedSection {
