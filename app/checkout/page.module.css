@@ -161,7 +161,10 @@
 }
 
 @media (max-width: 1024px) {
-  .layout { grid-template-columns: 1fr; }
+  /* minmax(0, 1fr) umesto golog 1fr: "1fr" je skraćeno od "minmax(auto, 1fr)", pa se
+     kolona ne može skupiti ispod min-content širine svog sadržaja. Jedno predugačko
+     dugme je tako širilo celu stranicu i "vuklo" je udesno na telefonu. */
+  .layout { grid-template-columns: minmax(0, 1fr); }
   .summary { order: -1; }
   .stepper { display: none; }
 }
@@ -627,9 +630,17 @@
     padding: var(--space-4);
   }
 
+  /* Natpis sa iznosom ("POTVRDI PORUDŽBINU · 13.481 RSD") je tražio 395px i bio
+     stvarni uzrok horizontalnog pomeranja. Uže bočno punjenje i manji razmak
+     između slova ga vraćaju u širinu kolone, a "white-space: normal" je sigurnosna
+     mreža: kod vrlo velikog iznosa tekst se prelomi umesto da iscuri iz dugmeta. */
   .submitBtn {
-    height: 54px !important;
+    height: auto !important;
+    min-height: 54px !important;
     font-size: 0.88rem !important;
+    padding: 14px 16px !important;
+    letter-spacing: 0.03em !important;
+    white-space: normal !important;
   }
 }
 
