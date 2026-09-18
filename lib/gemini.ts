@@ -1,4 +1,5 @@
 import { buildDescriptionHtml, type CopySection, type StructuredCopy } from './productHtml';
+import type { LandingPage } from './landing';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
@@ -618,4 +619,97 @@ export async function generateSalesInsightsAI(
   const sys = `Ti si vrhunski AI E-commerce Analitičar za prodavnicu VibeMarket. Na osnovu datih statistika generiši kratak izveštaj sa 3 konkretna saveta kako povećati prodaju. Piši na srpskom.`;
   const prompt = `Statistika prodavnice: Prihod: ${stats.totalRevenue} RSD, Porudžbine: ${stats.totalOrders}, Na čekanju: ${stats.pendingOrders}, Danas: ${stats.todayRevenue} RSD, Proizvodi: ${stats.totalProducts}. Daj analizu i savete.`;
   return await callGemini(prompt, sys, selectedModel, false);
+}
+
+// ─── Landing page sadrzaj ────────────────────────────────────────────────────
+
+/** Sve sto AI popunjava; `enabled` i tema ostaju na korisniku. */
+export type GeneratedLanding = Omit<LandingPage, 'enabled' | 'theme' | 'accentFrom' | 'accentTo' | 'problemImage' | 'solutionImage'>;
+
+export interface LandingContext {
+  title: string;
+  description?: string;
+  comparisonPoints?: string[];
+  faqs?: { question: string; answer: string }[];
+  price?: number;
+}
+
+/**
+ * Popunjava tekst landing stranice iz onoga sto o proizvodu vec znamo.
+ *
+ * Statistika je ovde jedini osetljiv deo: izmisljene brojke o prodaji i
+ * ocenama su lazno oglasavanje, pa prompt izricito trazi SAMO ono sto je
+ * proverljivo iz uslova prodavnice (rok isporuke, placanje pouzecem, zakonski
+ * rok za odustanak) ili necifarske tvrdnje. Brojevi koje model ipak izmisli
+ * odbacuju se posle odgovora - provera je u kodu, ne samo u promptu.
+ */
+export async function generateLandingWithAI(
+  ctx: LandingContext,
+  selectedModel?: string
+): Promise<GeneratedLanding> {
+  const systemInstruction = `Ti pises narativnu prodajnu (landing) stranicu na SRPSKOM jeziku, latinicom, za prodavnicu VibeMarket.
+
+Stil: kao dobar clanak, ne kao katalog. Obracas se citaocu sa "vi". Konkretno i mirno, bez uzvicnika, bez "revolucionarno", "najbolje na trzistu" i slicnih praznih superlativa.
+
+KLJUCNO PRAVILO O BROJKAMA:
+- NE IZMISLJAJ brojeve prodatih komada, broj kupaca, ocene, procente zadovoljstva niti bilo kakvu statistiku koju ne mozes da izvedes iz datih podataka.
+- U polju "stats" koristi ISKLJUCIVO ono sto je proverljivo iz uslova prodavnice: rok isporuke (1-3 radna dana), placanje pouzecem, zakonski rok za odustanak (14 dana), ili necifarske tvrdnje ("Bez avansa").
+- Ako nemas cime da popunis stat, izostavi ga. Bolje dva istinita nego cetiri izmisljena.
+
+Vracaj ISKLJUCIVO cist JSON bez markdown ograda, sa ovim poljima:
+{
+  "badge": "kratka oznaka, 2-4 reci, npr. Novo u Srbiji",
+  "heroTitle": "emotivan naslov koji imenuje problem, do 60 znakova, BEZ naziva proizvoda",
+  "heroLead": "2-3 recenice koje postavljaju situaciju u kojoj se kupac prepoznaje",
+  "problemCaption": "jedna udarna recenica uz sliku problema",
+  "story": "3-4 pasusa narativnog teksta razdvojena praznim redom (\\n\\n). Prvi pasus imenuje problem, poslednji najavljuje resenje. BEZ nabrajanja i bez specifikacija.",
+  "solutionTitle": "naslov koji predstavlja proizvod kao resenje, do 55 znakova",
+  "solutionLead": "2-3 recenice kako proizvod resava bas taj problem",
+  "benefits": [
+    {"icon": "zap", "title": "kratak naslov", "subtitle": "2-3 reci, velikim slovima se prikazuje", "text": "1-2 recenice", "check": "kratak dodatak na dnu kartice"}
+  ],
+  "stats": [{"value": "1-3 dana", "label": "prosecno vreme dostave"}],
+  "objections": [{"question": "strah ili prigovor kao pitanje", "answer": "miran, konkretan odgovor"}],
+  "ctaTitle": "poziv na akciju, do 40 znakova",
+  "ctaLead": "1-2 recenice, pomeni placanje pouzecem i rok isporuke"
+}
+
+Za "benefits" daj TACNO 4 kartice. Dozvoljene vrednosti za "icon": sparkles, zap, shield, check, clock, heart, home, leaf, lock, package, star, truck, wallet, wrench, gauge, battery. Biraj ikonu prema sadrzaju kartice.
+Za "objections" daj 3 stavke.`;
+
+  const prompt = `Proizvod: ${ctx.title}
+${ctx.price ? `Cena: ${ctx.price} RSD` : ''}
+${ctx.description ? `Opis:\n${ctx.description.slice(0, 1500)}` : ''}
+${ctx.comparisonPoints?.length ? `Prednosti:\n- ${ctx.comparisonPoints.join('\n- ')}` : ''}
+${ctx.faqs?.length ? `Postojeca pitanja kupaca:\n${ctx.faqs.map((f) => `${f.question} -> ${f.answer}`).join('\n')}` : ''}
+
+Napisi landing stranicu za ovaj proizvod.`;
+
+  const parsed = await callGeminiJson<GeneratedLanding>(prompt, {
+    systemInstruction,
+    model: selectedModel,
+    temperature: 0.9,
+  });
+
+  return sanitizeLanding(parsed);
+}
+
+/** Brojke koje zvuce kao izmisljena statistika prodaje. */
+const SUMNJIVA_STATISTIKA = /\d[\d.,]*\s*(\+|k\b|hilj|miliona?)|\b\d[\d.,]*\s*(kupac|kupaca|korisnik|korisnika|prodat|komada)\b|\b\d[,.]\d\s*\/\s*5\b|\b\d{1,3}\s*%/i;
+
+/**
+ * Prompt je uputstvo, ne garancija - model ume da vrati "12.400+ prodatih".
+ * Takve stavke se ovde izbacuju, jer bi ih prodavnica objavila kao svoju tvrdnju.
+ */
+export function sanitizeLanding(raw: GeneratedLanding): GeneratedLanding {
+  const stats = (raw.stats ?? []).filter(
+    (s) => s?.value && s?.label && !SUMNJIVA_STATISTIKA.test(`${s.value} ${s.label}`)
+  );
+
+  return {
+    ...raw,
+    stats,
+    benefits: (raw.benefits ?? []).filter((b) => b?.title).slice(0, 6),
+    objections: (raw.objections ?? []).filter((o) => o?.question && o?.answer).slice(0, 6),
+  };
 }

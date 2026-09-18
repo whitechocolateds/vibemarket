@@ -381,7 +381,19 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
         </div>
       </div>
 
-      <LandingEditor value={landing} onChange={setLanding} disabled={saving} handle={initial?.handle} />
+      <LandingEditor
+        value={landing}
+        onChange={setLanding}
+        disabled={saving}
+        handle={initial?.handle}
+        context={{
+          title: form.title,
+          description: htmlToPlainText(descriptionHtmlDraft),
+          comparisonPoints: comparisonPointsStr.split('\n').map((p) => p.trim()).filter(Boolean),
+          faqs: parseFaqs(faqsStr),
+          price: form.price,
+        }}
+      />
 
       <div className={styles.formSection}>
         <div className={styles.formSectionTitle}>

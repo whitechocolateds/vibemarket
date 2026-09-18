@@ -1,12 +1,14 @@
 'use client';
 
-import { ExternalLink, LayoutTemplate } from 'lucide-react';
+import { useState } from 'react';
+import { ExternalLink, LayoutTemplate, Sparkles } from 'lucide-react';
 import ImageUploader from '@/components/admin/ImageUploader';
 import {
   LANDING_THEMES, DEFAULT_LANDING_THEME, landingTheme,
   benefitsToStr, parseBenefits, statsToStr, parseStats,
   objectionsToStr, parseObjections, type LandingPage,
 } from '@/lib/landing';
+import type { LandingContext } from '@/lib/gemini';
 import styles from '@/app/admin/admin.module.css';
 
 interface Props {
@@ -16,6 +18,8 @@ interface Props {
    * Namerno se ne koristi slug iz forme - dok se ne sacuva, ta adresa ne postoji.
    */
   handle?: string;
+  /** Tekuci sadrzaj forme; AI pise landing iz njega, ne iz sacuvanog proizvoda. */
+  context?: LandingContext;
   onChange: (next: LandingPage) => void;
   disabled?: boolean;
 }
@@ -35,10 +39,36 @@ function jednaSlika(trenutna: string | undefined, primeni: (url: string) => void
   };
 }
 
-export default function LandingEditor({ value, onChange, disabled, handle }: Props) {
+export default function LandingEditor({ value, onChange, disabled, handle, context }: Props) {
   const lp = value ?? PRAZAN;
   const set = (patch: Partial<LandingPage>) => onChange({ ...lp, ...patch });
   const tema = landingTheme(lp.theme);
+  const [ai, setAi] = useState(false);
+  const [aiError, setAiError] = useState('');
+
+  /** Popunjava SAMO tekst; tema, boje i slike ostaju kako ih je korisnik postavio. */
+  const generisi = async () => {
+    if (!context?.title?.trim()) {
+      setAiError('Prvo unesite naziv proizvoda.');
+      return;
+    }
+    setAi(true);
+    setAiError('');
+    try {
+      const res = await fetch('/api/admin/ai/generate-landing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ context }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Generisanje nije uspelo.');
+      onChange({ ...lp, ...json.data });
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : 'Generisanje nije uspelo.');
+    } finally {
+      setAi(false);
+    }
+  };
 
   return (
     <div className={styles.formSection}>
@@ -63,6 +93,28 @@ export default function LandingEditor({ value, onChange, disabled, handle }: Pro
             Ostali proizvodi ostaju nepromenjeni.
           </span>
         </div>
+
+        {lp.enabled && (
+          <div className={`form-group ${styles.formGridFull}`}>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={generisi}
+              disabled={disabled || ai}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
+            >
+              <Sparkles size={15} />
+              {ai ? 'Generišem…' : 'Generiši Landing Page sadržaj pomoću AI'}
+            </button>
+            <span className={styles.fieldHint}>
+              Piše tekst svih sekcija iz naziva, opisa i prednosti proizvoda. Slike, temu i boje ne dira.
+              Sve možete doraditi pre čuvanja.
+            </span>
+            {aiError && (
+              <span className={styles.fieldHint} style={{ color: 'var(--color-error)' }}>{aiError}</span>
+            )}
+          </div>
+        )}
 
         {lp.enabled && handle && (
           <div className={`form-group ${styles.formGridFull}`}>
