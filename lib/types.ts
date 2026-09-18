@@ -1,3 +1,5 @@
+import type { LandingPage } from './landing';
+
 export interface ProductImage {
   url: string;
   altText: string | null;
@@ -59,6 +61,8 @@ export interface Product {
   comparisonPoints?: string[];
   /** Pitanja i odgovori specifični za ovaj proizvod */
   faqs?: ProductFaq[];
+  /** Narativni landing format; kad nedostaje ili je enabled=false, vazi standardna stranica. */
+  landing?: LandingPage;
   /** Poreklo sa Shopify-ja; postoji samo na uvezenim proizvodima. Bez njega se
    *  porudzbina ne moze vezati za pravi artikal nego ide kao slobodna stavka. */
   shopifyProductId?: number;
@@ -249,6 +253,7 @@ export interface ProductInput {
   availableForSale: boolean;
   comparisonPoints?: string[];
   faqs?: ProductFaq[];
+  landing?: LandingPage;
   shopifyProductId?: number;
   shopifyVariantId?: number;
 }

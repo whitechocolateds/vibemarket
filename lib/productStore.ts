@@ -158,6 +158,7 @@ function buildProduct(input: ProductInput, id?: string): Product {
     availableForSale: input.availableForSale,
     comparisonPoints: (input.comparisonPoints ?? []).map((p) => p.trim()).filter(Boolean),
     faqs: (input.faqs ?? []).filter((f) => f.question.trim() && f.answer.trim()),
+    ...(input.landing ? { landing: input.landing } : {}),
     ...(input.shopifyProductId ? { shopifyProductId: input.shopifyProductId } : {}),
   };
 }

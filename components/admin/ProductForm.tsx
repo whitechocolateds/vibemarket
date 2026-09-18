@@ -11,6 +11,8 @@ import GeminiProductGenerator from '@/components/admin/GeminiProductGenerator';
 import CompetitorImport from '@/components/admin/CompetitorImport';
 import ShopifyImport from '@/components/admin/ShopifyImport';
 import ImageUploader from '@/components/admin/ImageUploader';
+import LandingEditor from '@/components/admin/LandingEditor';
+import type { LandingPage } from '@/lib/landing';
 import { GeneratedProduct } from '@/lib/gemini';
 import styles from '@/app/admin/admin.module.css';
 
@@ -78,6 +80,7 @@ function productToInput(p: Product): ProductInput {
     availableForSale: p.availableForSale,
     comparisonPoints: p.comparisonPoints ?? [],
     faqs: p.faqs ?? [],
+    landing: p.landing,
   };
 }
 
@@ -90,6 +93,7 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
     (initial?.comparisonPoints ?? []).join('\n')
   );
   const [faqsStr, setFaqsStr] = useState(faqsToStr(initial?.faqs));
+  const [landing, setLanding] = useState<LandingPage | undefined>(initial?.landing);
   // Stranica proizvoda prikazuje descriptionHtml, pa editor radi direktno nad NJIM -
   // inace admin menja jedno a u prodavnici se vidi drugo.
   const [descriptionHtmlDraft, setDescriptionHtmlDraft] = useState(
@@ -139,6 +143,7 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
         compareAtPrice: form.compareAtPrice || null,
         comparisonPoints: comparisonPointsStr.split('\n').map((p) => p.trim()).filter(Boolean),
         faqs: parseFaqs(faqsStr),
+        landing,
       };
       if (!data.title.trim()) throw new Error('Naziv je obavezan');
       if (!data.description.trim()) throw new Error('Opis je obavezan');
@@ -375,6 +380,8 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
           </div>
         </div>
       </div>
+
+      <LandingEditor value={landing} onChange={setLanding} disabled={saving} />
 
       <div className={styles.formSection}>
         <div className={styles.formSectionTitle}>
