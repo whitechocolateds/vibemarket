@@ -381,7 +381,7 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
         </div>
       </div>
 
-      <LandingEditor value={landing} onChange={setLanding} disabled={saving} />
+      <LandingEditor value={landing} onChange={setLanding} disabled={saving} handle={initial?.handle} />
 
       <div className={styles.formSection}>
         <div className={styles.formSectionTitle}>

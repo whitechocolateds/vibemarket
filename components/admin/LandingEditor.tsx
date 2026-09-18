@@ -1,6 +1,6 @@
 'use client';
 
-import { LayoutTemplate } from 'lucide-react';
+import { ExternalLink, LayoutTemplate } from 'lucide-react';
 import ImageUploader from '@/components/admin/ImageUploader';
 import {
   LANDING_THEMES, DEFAULT_LANDING_THEME, landingTheme,
@@ -11,6 +11,11 @@ import styles from '@/app/admin/admin.module.css';
 
 interface Props {
   value?: LandingPage;
+  /**
+   * Handle SACUVANOG proizvoda; bez njega nema linka za pregled.
+   * Namerno se ne koristi slug iz forme - dok se ne sacuva, ta adresa ne postoji.
+   */
+  handle?: string;
   onChange: (next: LandingPage) => void;
   disabled?: boolean;
 }
@@ -30,7 +35,7 @@ function jednaSlika(trenutna: string | undefined, primeni: (url: string) => void
   };
 }
 
-export default function LandingEditor({ value, onChange, disabled }: Props) {
+export default function LandingEditor({ value, onChange, disabled, handle }: Props) {
   const lp = value ?? PRAZAN;
   const set = (patch: Partial<LandingPage>) => onChange({ ...lp, ...patch });
   const tema = landingTheme(lp.theme);
@@ -58,6 +63,23 @@ export default function LandingEditor({ value, onChange, disabled }: Props) {
             Ostali proizvodi ostaju nepromenjeni.
           </span>
         </div>
+
+        {lp.enabled && handle && (
+          <div className={`form-group ${styles.formGridFull}`}>
+            <a
+              href={`/products/${handle}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-outline"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
+            >
+              <ExternalLink size={15} /> Pogledaj landing stranicu
+            </a>
+            <span className={styles.fieldHint}>
+              Otvara se u novom tabu. Prikazuje POSLEDNJE SAČUVANO stanje — sačuvajte izmene pre provere.
+            </span>
+          </div>
+        )}
 
         {lp.enabled && (
           <>
