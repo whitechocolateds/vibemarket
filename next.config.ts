@@ -21,6 +21,12 @@ const nextConfig: NextConfig = {
         hostname: '*.public.blob.vercel-storage.com',
         pathname: '/**',
       },
+      {
+        // Slike proizvoda uvezenih sa Shopify-ja. Drzi usklađeno sa lib/imageHost.ts.
+        protocol: 'https',
+        hostname: 'cdn.shopify.com',
+        pathname: '/**',
+      },
     ],
   },
 };

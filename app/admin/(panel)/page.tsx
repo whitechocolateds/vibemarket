@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { isOptimizableImageUrl } from '@/lib/imageHost';
 import {
   Wallet,
   ShoppingBag,
@@ -252,7 +253,7 @@ export default async function AdminDashboardPage() {
                   <Link key={p.productId} href={`/products/${p.handle}`} target="_blank" className={styles.miniItem}>
                     <span className={styles.miniRank}>{i + 1}</span>
                     {p.image ? (
-                      <Image src={p.image} alt={p.title} width={36} height={36} className={styles.miniThumb} />
+                      <Image src={p.image} alt={p.title} width={36} height={36} unoptimized={!isOptimizableImageUrl(p.image)} className={styles.miniThumb} />
                     ) : (
                       <div className={styles.miniThumb}><Package size={15} strokeWidth={1.5} /></div>
                     )}
@@ -277,7 +278,7 @@ export default async function AdminDashboardPage() {
                 {stats.lowStockProducts.map((p) => (
                   <Link key={p.id} href={`/admin/products/${p.id}/edit`} className={styles.miniItem}>
                     {p.image ? (
-                      <Image src={p.image} alt={p.title} width={36} height={36} className={styles.miniThumb} />
+                      <Image src={p.image} alt={p.title} width={36} height={36} unoptimized={!isOptimizableImageUrl(p.image)} className={styles.miniThumb} />
                     ) : (
                       <div className={styles.miniThumb}><Package size={15} strokeWidth={1.5} /></div>
                     )}

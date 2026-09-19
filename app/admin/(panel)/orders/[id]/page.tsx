@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import { isOptimizableImageUrl } from '@/lib/imageHost';
 import {
   ArrowLeft,
   Check,
@@ -219,6 +220,7 @@ export default function AdminOrderDetailPage() {
                       alt={item.title}
                       width={52}
                       height={52}
+                      unoptimized={!isOptimizableImageUrl(item.image.url)}
                       className={styles.orderItemImg}
                     />
                   ) : (

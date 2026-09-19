@@ -1,4 +1,6 @@
-const OPTIMIZABLE_HOSTS = ['images.unsplash.com', 'plastikaonline.rs'];
+// Drzi usklađeno sa images.remotePatterns u next.config.ts - next/image puca na host koji
+// je naveden ovde a nije tamo.
+const OPTIMIZABLE_HOSTS = ['images.unsplash.com', 'plastikaonline.rs', 'cdn.shopify.com'];
 const OPTIMIZABLE_HOST_SUFFIXES = ['.public.blob.vercel-storage.com'];
 
 /**

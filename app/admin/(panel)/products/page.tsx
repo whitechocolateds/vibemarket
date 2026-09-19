@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { isOptimizableImageUrl } from '@/lib/imageHost';
 import { Search, RefreshCw, Package, ExternalLink, Pencil, Trash2, LayoutGrid, List } from 'lucide-react';
 import { Product } from '@/lib/types';
 import { formatPrice } from '@/lib/format';
@@ -237,6 +238,7 @@ export default function AdminProductsPage() {
                       alt={product.title}
                       width={300}
                       height={300}
+                      unoptimized={!isOptimizableImageUrl(product.featuredImage.url)}
                       className={styles.productCardImg}
                     />
                   ) : (
@@ -311,6 +313,7 @@ export default function AdminProductsPage() {
                               alt={product.title}
                               width={40}
                               height={40}
+                              unoptimized={!isOptimizableImageUrl(product.featuredImage.url)}
                               className={styles.productThumb}
                             />
                           ) : (
