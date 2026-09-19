@@ -55,6 +55,11 @@ export interface LandingPage {
   solutionImage?: string;
 
   benefits?: LandingBenefit[];
+
+  /** Mala najavna slika neposredno iznad statistike; naslov preko nje je manji od glavnog. */
+  statsImage?: string;
+  statsTitle?: string;
+
   stats?: LandingStat[];
   objections?: LandingObjection[];
 

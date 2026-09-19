@@ -299,6 +299,27 @@ export default function LandingEditor({ value, onChange, disabled, handle, conte
             </div>
 
             {/* 6. Statistika */}
+            {/* Najava ka statistici */}
+            <div className="form-group">
+              <label className="form-label">Mala slika iznad statistike</label>
+              <ImageUploader
+                value={lp.statsImage ? [lp.statsImage] : []}
+                onChange={jednaSlika(lp.statsImage, (url) => set({ statsImage: url }))}
+                disabled={disabled}
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="lpStatsTitle">Naslov preko te slike</label>
+              <input id="lpStatsTitle" className="input" value={lp.statsTitle ?? ''} disabled={disabled}
+                onChange={(e) => set({ statsTitle: e.target.value })}
+                placeholder="Npr. Brojke koje {{stoje iza}} proizvoda" />
+              <span className={styles.fieldHint}>
+                Manji i tiši od glavnog naslova preko slike — ovo je prelaz ka brojkama.
+                Prikazuje se samo kad postoje i slika i naslov, i kad ispod ima bar jedne popunjene kartice.
+              </span>
+            </div>
+
             <div className={`form-group ${styles.formGridFull}`}>
               <label className="form-label" htmlFor="lpStats">Podaci koji grade poverenje (broj | opis)</label>
               <textarea id="lpStats" className="textarea" rows={3}

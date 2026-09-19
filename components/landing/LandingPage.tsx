@@ -22,6 +22,39 @@ const IKONE: Record<string, LucideIcon> = {
   battery: Battery,
 };
 
+/**
+ * Slika sa tekstom preko nje. Koristi se dva puta: krupno za glavnu "problem"
+ * sliku i `compact` za malu najavu iznad statistike - zato je izdvojeno,
+ * umesto da isti markup stoji na dva mesta i razilazi se.
+ */
+function OverlayFigure({
+  image, title, badge, caption, compact = false,
+}: {
+  image: string;
+  title: string;
+  badge?: string;
+  caption?: string;
+  compact?: boolean;
+}) {
+  return (
+    <figure className={`${styles.figure} ${styles.figureOverlay} ${compact ? styles.figureCompact : ''}`}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={image} alt="" className={styles.figureImg} loading="lazy" />
+      <div className={styles.figureScrim} aria-hidden="true" />
+      <figcaption className={styles.figureText}>
+        {badge && (
+          <span className={`${styles.pill} ${styles.pillGlass}`}>
+            <span className={styles.pillDot} aria-hidden="true" />
+            {badge}
+          </span>
+        )}
+        <p className={styles.figureTitle}><RichText text={title} /></p>
+        {caption && <p className={styles.figureLead}><RichText text={caption} /></p>}
+      </figcaption>
+    </figure>
+  );
+}
+
 export default function LandingPage({ product, landing }: { product: Product; landing: Landing }) {
   const prica = storyParagraphs(landing.story);
   const benefits = landing.benefits ?? [];
@@ -50,23 +83,12 @@ export default function LandingPage({ product, landing }: { product: Product; la
         <section className={styles.sectionTight}>
           <div className={styles.wrap}>
             {landing.problemTitle ? (
-              <figure className={`${styles.figure} ${styles.figureOverlay}`}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={landing.problemImage} alt="" className={styles.figureImg} loading="lazy" />
-                <div className={styles.figureScrim} aria-hidden="true" />
-                <figcaption className={styles.figureText}>
-                  {landing.problemBadge && (
-                    <span className={`${styles.pill} ${styles.pillGlass}`}>
-                      <span className={styles.pillDot} aria-hidden="true" />
-                      {landing.problemBadge}
-                    </span>
-                  )}
-                  <p className={styles.figureTitle}><RichText text={landing.problemTitle} /></p>
-                  {landing.problemCaption && (
-                    <p className={styles.figureLead}><RichText text={landing.problemCaption} /></p>
-                  )}
-                </figcaption>
-              </figure>
+              <OverlayFigure
+                image={landing.problemImage}
+                title={landing.problemTitle}
+                badge={landing.problemBadge}
+                caption={landing.problemCaption}
+              />
             ) : (
               <figure className={styles.figure}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -139,10 +161,17 @@ export default function LandingPage({ product, landing }: { product: Product; la
         </section>
       )}
 
-      {/* 6. Podaci koji grade poverenje */}
+      {/* 6. Podaci koji grade poverenje, sa malom najavnom slikom iznad.
+             Najava se prikazuje samo uz statistiku - sama, bez brojeva ispod,
+             bila bi slika niotkuda. */}
       {stats.length > 0 && (
         <section className={styles.sectionTight}>
           <div className={styles.wrap}>
+            {landing.statsImage && landing.statsTitle && (
+              <div className={styles.statsIntro}>
+                <OverlayFigure image={landing.statsImage} title={landing.statsTitle} compact />
+              </div>
+            )}
             <LandingStats stats={stats} />
           </div>
         </section>

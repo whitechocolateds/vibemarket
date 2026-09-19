@@ -624,7 +624,10 @@ export async function generateSalesInsightsAI(
 // ─── Landing page sadrzaj ────────────────────────────────────────────────────
 
 /** Sve sto AI popunjava; `enabled` i tema ostaju na korisniku. */
-export type GeneratedLanding = Omit<LandingPage, 'enabled' | 'theme' | 'accentFrom' | 'accentTo' | 'problemImage' | 'solutionImage'>;
+export type GeneratedLanding = Omit<
+  LandingPage,
+  'enabled' | 'theme' | 'accentFrom' | 'accentTo' | 'problemImage' | 'solutionImage' | 'statsImage'
+>;
 
 export interface LandingContext {
   title: string;
@@ -677,6 +680,7 @@ Vracaj ISKLJUCIVO cist JSON bez markdown ograda, sa ovim poljima:
   "benefits": [
     {"icon": "zap", "title": "kratak naslov", "subtitle": "2-3 reci, velikim slovima se prikazuje", "text": "1-2 recenice", "check": "kratak dodatak na dnu kartice"}
   ],
+  "statsTitle": "kratak naslov za malu najavnu sliku iznad brojki, do 40 znakova, moze jedna {{istaknuta fraza}}",
   "stats": [{"value": "", "label": "prosecno vreme dostave"}],
   "objections": [{"question": "strah ili prigovor kao pitanje", "answer": "miran, konkretan odgovor"}],
   "ctaTitle": "poziv na akciju, do 40 znakova, sa jednom {{istaknutom frazom}}",
@@ -749,6 +753,7 @@ export function sanitizeLanding(raw: GeneratedLanding): GeneratedLanding {
     problemBadge: ocistiIsticanje(raw.problemBadge),
     problemTitle: ocistiIsticanje(raw.problemTitle),
     problemCaption: ocistiIsticanje(raw.problemCaption),
+    statsTitle: ocistiIsticanje(raw.statsTitle),
     story: ocistiIsticanje(raw.story),
     solutionTitle: ocistiIsticanje(raw.solutionTitle),
     solutionLead: ocistiIsticanje(raw.solutionLead),
