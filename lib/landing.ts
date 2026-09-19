@@ -43,6 +43,9 @@ export interface LandingPage {
   heroLead?: string;
 
   problemImage?: string;
+  /** Kad postoji, slika dobija tamni preklop i tekst preko sebe umesto ispod. */
+  problemTitle?: string;
+  problemBadge?: string;
   problemCaption?: string;
 
   story?: string;
@@ -184,7 +187,25 @@ export function benefitsToStr(items?: LandingBenefit[]): string {
 export function parseStats(s: string): LandingStat[] {
   return redovi(s)
     .map(([value, label]) => ({ value: value || '', label: label || '' }))
-    .filter((x) => x.value && x.label);
+    .filter((x) => x.label);
+}
+
+/** Na sajt ide samo kartica koja ima upisan broj - prazna se ne prikazuje. */
+export function visibleStats(stats?: LandingStat[]): LandingStat[] {
+  return (stats ?? []).filter((s) => s.value.trim() && s.label.trim());
+}
+
+/**
+ * '500+' -> {broj: 500, prefiks: '', sufiks: '+'}; '1-3 dana' -> broj null.
+ * Bez broja nema odbrojavanja - tekst se prikaze kakav jeste.
+ */
+export function parseStatValue(value: string): { broj: number | null; prefiks: string; sufiks: string } {
+  const m = value.match(/^(\D*?)([\d.,]+)(.*)$/);
+  if (!m) return { broj: null, prefiks: '', sufiks: '' };
+  // '12.400' je hiljadarka, '4,8' je decimala - srpski zapis, ne engleski.
+  const broj = Number(m[2].replace(/\./g, '').replace(',', '.'));
+  if (!Number.isFinite(broj)) return { broj: null, prefiks: '', sufiks: '' };
+  return { broj, prefiks: m[1], sufiks: m[3] };
 }
 
 export function statsToStr(items?: LandingStat[]): string {

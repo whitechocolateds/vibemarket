@@ -490,3 +490,137 @@
     transform: none;
   }
 }
+
+/* ── Isticanje reči u tekstu ({{ovako}} iz admin panela) ─────────────────── */
+
+.highlight {
+  color: var(--lp-to);
+  font-weight: inherit;
+}
+
+/* ── Tekst preko slike (sekcija 2, kad postoji problemTitle) ─────────────── */
+
+.figureOverlay {
+  position: relative;
+  max-width: 1100px;
+  border-radius: 24px;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Minimalna visina drži kadar i kad je slika niska; bez nje tekst prepuni okvir. */
+.figureOverlay .figureImg {
+  min-height: clamp(340px, 52vw, 560px);
+  object-fit: cover;
+  border: none;
+  border-radius: 0;
+}
+
+/* Preklop ide od providnog ka podlozi teme - tekst je čitljiv na bilo kojoj slici. */
+.figureScrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--lp-bg) 12%, transparent) 0%,
+    color-mix(in srgb, var(--lp-bg) 48%, transparent) 52%,
+    color-mix(in srgb, var(--lp-bg) 92%, transparent) 100%
+  );
+}
+
+.figureText {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: clamp(24px, 4vw, 48px);
+  text-align: left;
+}
+
+/* Staklena pilula preko slike - puni gradijent bi na fotografiji bio pregrub. */
+.pillGlass {
+  background: color-mix(in srgb, var(--lp-bg) 55%, transparent);
+  border: 1px solid color-mix(in srgb, #ffffff 22%, transparent);
+  backdrop-filter: blur(10px);
+  color: #fff;
+}
+
+.pillDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--lp-to);
+  flex-shrink: 0;
+}
+
+.figureTitle {
+  margin: 18px 0 0;
+  max-width: 16ch;
+  font-size: clamp(1.9rem, 5.4vw, 3.4rem);
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+.figureLead {
+  margin: 16px 0 0;
+  max-width: 44ch;
+  font-size: clamp(0.95rem, 2vw, 1.08rem);
+  line-height: 1.6;
+  color: color-mix(in srgb, #ffffff 82%, transparent);
+}
+
+/* ── Blago disanje kartica ───────────────────────────────────────────────── */
+
+/*
+ * Namerno jedva primetno: ikona se "nadiše" za 4% uz mek prsten. Jače od ovoga
+ * na mreži od četiri kartice postaje nemirno i vuče pogled sa teksta.
+ */
+@keyframes lpDisanje {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 color-mix(in srgb, var(--lp-to) 30%, transparent); }
+  50% { transform: scale(1.04); box-shadow: 0 0 0 8px color-mix(in srgb, var(--lp-to) 0%, transparent); }
+}
+
+.cardIcon {
+  animation: lpDisanje 3.6s ease-in-out infinite;
+}
+
+/* Razmaknuti početak, da kartice ne pulsiraju uglas kao semafor. */
+.card:nth-child(2) .cardIcon { animation-delay: 0.9s; }
+.card:nth-child(3) .cardIcon { animation-delay: 1.8s; }
+.card:nth-child(4) .cardIcon { animation-delay: 2.7s; }
+
+.card {
+  transition: border-color 0.25s ease, transform 0.25s ease;
+}
+
+.card:hover {
+  border-color: color-mix(in srgb, var(--lp-to) 45%, var(--lp-border));
+  transform: translateY(-3px);
+}
+
+/* ── Traka ispod brojke ──────────────────────────────────────────────────── */
+
+.statBar {
+  margin-top: 12px;
+  height: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--lp-ink) 12%, transparent);
+  overflow: hidden;
+}
+
+/* scaleX umesto width: menja se samo kompozit, bez preračunavanja rasporeda. */
+.statBarFill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--lp-from), var(--lp-to));
+  transform-origin: left center;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cardIcon { animation: none; }
+  .card { transition: none; }
+  .card:hover { transform: none; }
+}

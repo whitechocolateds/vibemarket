@@ -92,6 +92,10 @@ export default function LandingEditor({ value, onChange, disabled, handle, conte
             Zamenjuje standardnu stranicu proizvoda narativnom prodajnom stranicom.
             Ostali proizvodi ostaju nepromenjeni.
           </span>
+          <span className={styles.fieldHint}>
+            U naslovima i tekstovima radi: <code>**podebljano**</code> i{' '}
+            <code>{'{{istaknuto}}'}</code> — istaknuto dobija akcenatsku boju teme.
+          </span>
         </div>
 
         {lp.enabled && (
@@ -221,6 +225,24 @@ export default function LandingEditor({ value, onChange, disabled, handle, conte
             </div>
 
             <div className="form-group">
+              <label className="form-label" htmlFor="lpProblemTitle">Naslov PREKO slike (opciono)</label>
+              <input id="lpProblemTitle" className="input" value={lp.problemTitle ?? ''} disabled={disabled}
+                onChange={(e) => set({ problemTitle: e.target.value })}
+                placeholder="Npr. 60 km slobode. {{Bez kapi goriva.}}" />
+              <span className={styles.fieldHint}>
+                Kad ovo popunite, tekst ide preko slike sa tamnim preklopom. Prazno = tekst ostaje ispod slike.
+              </span>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="lpProblemBadge">Oznaka preko slike</label>
+              <input id="lpProblemBadge" className="input" value={lp.problemBadge ?? ''} disabled={disabled}
+                onChange={(e) => set({ problemBadge: e.target.value })}
+                placeholder="Npr. Budućnost mobilnosti" />
+              <span className={styles.fieldHint}>Prikazuje se samo uz naslov preko slike.</span>
+            </div>
+
+            <div className={`form-group ${styles.formGridFull}`}>
               <label className="form-label" htmlFor="lpProblemCaption">Rečenica uz sliku</label>
               <textarea id="lpProblemCaption" className="textarea" rows={3} value={lp.problemCaption ?? ''} disabled={disabled}
                 onChange={(e) => set({ problemCaption: e.target.value })}
@@ -277,11 +299,16 @@ export default function LandingEditor({ value, onChange, disabled, handle, conte
 
             {/* 6. Statistika */}
             <div className={`form-group ${styles.formGridFull}`}>
-              <label className="form-label" htmlFor="lpStats">Podaci koji grade poverenje (vrednost | opis)</label>
+              <label className="form-label" htmlFor="lpStats">Podaci koji grade poverenje (broj | opis)</label>
               <textarea id="lpStats" className="textarea" rows={3}
                 value={statsToStr(lp.stats)} disabled={disabled}
                 onChange={(e) => set({ stats: parseStats(e.target.value) })}
-                placeholder={'12.400+ | prodatih komada u regionu\n4,8/5 | prosečna ocena kupaca\n1–3 dana | prosečno vreme dostave'} />
+                placeholder={'500+ | Zadovoljnih kupaca u regionu\n5 | godina iskustva\n14 | dana za povraćaj'} />
+              <span className={styles.fieldHint}>
+                <strong>Brojeve upisujete vi</strong> — AI predlaže samo kategoriju i ostavlja broj prazan,
+                da se ne bi objavila izmišljena statistika. Kartica bez broja se ne prikazuje na sajtu.
+                Broj se na stranici odbrojava od nule, uz traku koja se puni.
+              </span>
             </div>
 
             {/* 7. Prigovori */}

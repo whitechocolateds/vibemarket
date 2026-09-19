@@ -652,9 +652,10 @@ export async function generateLandingWithAI(
 Stil: kao dobar clanak, ne kao katalog. Obracas se citaocu sa "vi". Konkretno i mirno, bez uzvicnika, bez "revolucionarno", "najbolje na trzistu" i slicnih praznih superlativa.
 
 KLJUCNO PRAVILO O BROJKAMA:
-- NE IZMISLJAJ brojeve prodatih komada, broj kupaca, ocene, procente zadovoljstva niti bilo kakvu statistiku koju ne mozes da izvedes iz datih podataka.
-- U polju "stats" koristi ISKLJUCIVO ono sto je proverljivo iz uslova prodavnice: rok isporuke (1-3 radna dana), placanje pouzecem, zakonski rok za odustanak (14 dana), ili necifarske tvrdnje ("Bez avansa").
-- Ako nemas cime da popunis stat, izostavi ga. Bolje dva istinita nego cetiri izmisljena.
+- NE IZMISLJAJ nijedan broj: ni prodate komade, ni broj kupaca, ni ocene, ni procente.
+- U polju "stats" predlazes SAMO KATEGORIJU kartice kroz "label", a "value" ostavljas PRAZAN string. Broj upisuje vlasnik prodavnice rucno.
+- Dobre kategorije: "zadovoljnih kupaca", "godina iskustva", "dana za povracaj", "prosecno vreme dostave", "prodatih komada".
+- Ni u "label" ne sme da se pojavi brojka.
 
 Vracaj ISKLJUCIVO cist JSON bez markdown ograda, sa ovim poljima:
 {
@@ -668,7 +669,7 @@ Vracaj ISKLJUCIVO cist JSON bez markdown ograda, sa ovim poljima:
   "benefits": [
     {"icon": "zap", "title": "kratak naslov", "subtitle": "2-3 reci, velikim slovima se prikazuje", "text": "1-2 recenice", "check": "kratak dodatak na dnu kartice"}
   ],
-  "stats": [{"value": "1-3 dana", "label": "prosecno vreme dostave"}],
+  "stats": [{"value": "", "label": "prosecno vreme dostave"}],
   "objections": [{"question": "strah ili prigovor kao pitanje", "answer": "miran, konkretan odgovor"}],
   "ctaTitle": "poziv na akciju, do 40 znakova",
   "ctaLead": "1-2 recenice, pomeni placanje pouzecem i rok isporuke"
@@ -702,9 +703,14 @@ const SUMNJIVA_STATISTIKA = /\d[\d.,]*\s*(\+|k\b|hilj|miliona?)|\b\d[\d.,]*\s*(k
  * Takve stavke se ovde izbacuju, jer bi ih prodavnica objavila kao svoju tvrdnju.
  */
 export function sanitizeLanding(raw: GeneratedLanding): GeneratedLanding {
-  const stats = (raw.stats ?? []).filter(
-    (s) => s?.value && s?.label && !SUMNJIVA_STATISTIKA.test(`${s.value} ${s.label}`)
-  );
+  /*
+   * Vrednost se BRISE bez obzira na to sta je model vratio: broj je tvrdnja
+   * prodavnice i upisuje ga covek u admin panelu. Model sme samo da predlozi
+   * kategoriju, pa se i `label` odbacuje ako u njemu ima brojke.
+   */
+  const stats = (raw.stats ?? [])
+    .filter((s) => s?.label && !SUMNJIVA_STATISTIKA.test(s.label))
+    .map((s) => ({ value: '', label: s.label }));
 
   return {
     ...raw,
