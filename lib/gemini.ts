@@ -657,26 +657,35 @@ KLJUCNO PRAVILO O BROJKAMA:
 - Dobre kategorije: "zadovoljnih kupaca", "godina iskustva", "dana za povracaj", "prosecno vreme dostave", "prodatih komada".
 - Ni u "label" ne sme da se pojavi brojka.
 
+ISTICANJE RECI:
+- Kljucnu frazu u tekstu obavijas viticastim zagradama: {{ovako}}. Ona na stranici dobija akcenatsku boju.
+- Koristi i **ovako** za podebljano, unutar recenice.
+- MERA: najvise JEDNA {{fraza}} po naslovu i najvise jedna po pasusu. Ako je istaknuto pola teksta, nista nije istaknuto.
+- Istice se fraza koja nosi obecanje ili olaksanje, ne nasumicna rec. Zagrade uvek zatvori.
+
 Vracaj ISKLJUCIVO cist JSON bez markdown ograda, sa ovim poljima:
 {
   "badge": "kratka oznaka, 2-4 reci, npr. Novo u Srbiji",
-  "heroTitle": "emotivan naslov koji imenuje problem, do 60 znakova, BEZ naziva proizvoda",
+  "heroTitle": "emotivan naslov koji imenuje problem, do 60 znakova, BEZ naziva proizvoda, sa jednom {{istaknutom frazom}}",
   "heroLead": "2-3 recenice koje postavljaju situaciju u kojoj se kupac prepoznaje",
-  "problemCaption": "jedna udarna recenica uz sliku problema",
+  "problemBadge": "2-4 reci za pilulu preko slike, npr. Svakodnevna scena",
+  "problemTitle": "kratak udaran naslov PREKO slike, do 45 znakova, sa jednom {{istaknutom frazom}}",
+  "problemCaption": "jedna recenica ispod tog naslova, pojacava problem",
   "story": "3-4 pasusa narativnog teksta razdvojena praznim redom (\\n\\n). Prvi pasus imenuje problem, poslednji najavljuje resenje. BEZ nabrajanja i bez specifikacija.",
-  "solutionTitle": "naslov koji predstavlja proizvod kao resenje, do 55 znakova",
+  "solutionTitle": "naslov koji predstavlja proizvod kao resenje, do 55 znakova, sa jednom {{istaknutom frazom}}",
   "solutionLead": "2-3 recenice kako proizvod resava bas taj problem",
   "benefits": [
     {"icon": "zap", "title": "kratak naslov", "subtitle": "2-3 reci, velikim slovima se prikazuje", "text": "1-2 recenice", "check": "kratak dodatak na dnu kartice"}
   ],
   "stats": [{"value": "", "label": "prosecno vreme dostave"}],
   "objections": [{"question": "strah ili prigovor kao pitanje", "answer": "miran, konkretan odgovor"}],
-  "ctaTitle": "poziv na akciju, do 40 znakova",
+  "ctaTitle": "poziv na akciju, do 40 znakova, sa jednom {{istaknutom frazom}}",
   "ctaLead": "1-2 recenice, pomeni placanje pouzecem i rok isporuke"
 }
 
 Za "benefits" daj TACNO 4 kartice. Dozvoljene vrednosti za "icon": sparkles, zap, shield, check, clock, heart, home, leaf, lock, package, star, truck, wallet, wrench, gauge, battery. Biraj ikonu prema sadrzaju kartice.
-Za "objections" daj 3 stavke.`;
+Za "objections" daj 3 stavke.
+Za "stats" daj 3 do 4 kategorije, uvek sa praznim "value".`;
 
   const prompt = `Proizvod: ${ctx.title}
 ${ctx.price ? `Cena: ${ctx.price} RSD` : ''}
@@ -695,8 +704,28 @@ Napisi landing stranicu za ovaj proizvod.`;
   return sanitizeLanding(parsed);
 }
 
-/** Brojke koje zvuce kao izmisljena statistika prodaje. */
-const SUMNJIVA_STATISTIKA = /\d[\d.,]*\s*(\+|k\b|hilj|miliona?)|\b\d[\d.,]*\s*(kupac|kupaca|korisnik|korisnika|prodat|komada)\b|\b\d[,.]\d\s*\/\s*5\b|\b\d{1,3}\s*%/i;
+/**
+ * Cisti nesparene viticaste zagrade iz isticanja.
+ *
+ * RichText prikazuje samo ispravan par {{ovako}}; sve drugo bi kupac video kao
+ * doslovno "{{" u tekstu. Ako je bilo sta nesparano, brisu se SVE zagrade u tom
+ * polju - bolje je izgubiti isticanje nego prikazati smece.
+ */
+export function ocistiIsticanje(s?: string): string | undefined {
+  if (!s) return s;
+  const ostatak = s.replace(/\{\{[^{}]+\}\}/g, '');
+  return /[{}]/.test(ostatak) ? s.replace(/[{}]/g, '') : s;
+}
+
+/**
+ * Kategorija statistike ne sme da sadrzi NIJEDNU cifru.
+ *
+ * Ranije je ovde stajala heuristika koja je hvatala oblike tipa "12.400+" i
+ * "98%", ali je propustala golu brojku - izmereno: "preko 500 gradova" je
+ * prolazilo. Posto model ionako dobija uputstvo da u kategoriji nema brojeva,
+ * pravilo je i jednostavnije i strože ovako.
+ */
+const BROJKA = /\d/;
 
 /**
  * Prompt je uputstvo, ne garancija - model ume da vrati "12.400+ prodatih".
@@ -709,13 +738,27 @@ export function sanitizeLanding(raw: GeneratedLanding): GeneratedLanding {
    * kategoriju, pa se i `label` odbacuje ako u njemu ima brojke.
    */
   const stats = (raw.stats ?? [])
-    .filter((s) => s?.label && !SUMNJIVA_STATISTIKA.test(s.label))
+    .filter((s) => s?.label && !BROJKA.test(s.label))
     .map((s) => ({ value: '', label: s.label }));
 
   return {
     ...raw,
+    badge: ocistiIsticanje(raw.badge),
+    heroTitle: ocistiIsticanje(raw.heroTitle),
+    heroLead: ocistiIsticanje(raw.heroLead),
+    problemBadge: ocistiIsticanje(raw.problemBadge),
+    problemTitle: ocistiIsticanje(raw.problemTitle),
+    problemCaption: ocistiIsticanje(raw.problemCaption),
+    story: ocistiIsticanje(raw.story),
+    solutionTitle: ocistiIsticanje(raw.solutionTitle),
+    solutionLead: ocistiIsticanje(raw.solutionLead),
+    ctaTitle: ocistiIsticanje(raw.ctaTitle),
+    ctaLead: ocistiIsticanje(raw.ctaLead),
     stats,
-    benefits: (raw.benefits ?? []).filter((b) => b?.title).slice(0, 6),
+    benefits: (raw.benefits ?? [])
+      .filter((b) => b?.title)
+      .slice(0, 6)
+      .map((b) => ({ ...b, title: ocistiIsticanje(b.title)!, text: ocistiIsticanje(b.text) })),
     objections: (raw.objections ?? []).filter((o) => o?.question && o?.answer).slice(0, 6),
   };
 }

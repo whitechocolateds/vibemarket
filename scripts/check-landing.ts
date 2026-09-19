@@ -9,8 +9,29 @@
  * pada kad se pokvari.
  */
 import assert from 'assert';
-import { sanitizeLanding } from '../lib/gemini';
+import { sanitizeLanding, ocistiIsticanje } from '../lib/gemini';
 import { parseStatValue, visibleStats } from '../lib/landing';
+
+// 0. Isticanje: ispravni parovi prezive, nesparene zagrade se brisu cele
+assert.strictEqual(ocistiIsticanje('60 km {{slobode}}'), '60 km {{slobode}}');
+assert.strictEqual(ocistiIsticanje('dva {{ovo}} i {{ono}}'), 'dva {{ovo}} i {{ono}}');
+assert.strictEqual(ocistiIsticanje('bez zagrada'), 'bez zagrada');
+// nesparano -> bez ijedne zagrade, ali tekst ostaje citljiv
+assert.strictEqual(ocistiIsticanje('pola {{otvoreno'), 'pola otvoreno');
+assert.strictEqual(ocistiIsticanje('{{a}} i {{b'), 'a i b');
+assert.strictEqual(ocistiIsticanje('visak}}'), 'visak');
+assert.strictEqual(ocistiIsticanje(undefined), undefined);
+
+// Isticanje prolazi kroz sanitizeLanding na svim tekstualnim poljima
+const ist = sanitizeLanding({
+  heroTitle: 'Teretana je {{predaleko}}',
+  problemTitle: 'pokvareno {{ovde',
+  benefits: [{ icon: 'zap', title: 'ok {{ovo}}', text: 'lose {{ovde' }],
+});
+assert.strictEqual(ist.heroTitle, 'Teretana je {{predaleko}}');
+assert.strictEqual(ist.problemTitle, 'pokvareno ovde');
+assert.strictEqual(ist.benefits?.[0]?.title, 'ok {{ovo}}');
+assert.strictEqual(ist.benefits?.[0]?.text, 'lose ovde');
 
 // 1. Vrednost se brise uvek, i kad je model sam popuni
 for (const value of ['12.400+', '4,8 / 5', '98%', '500+', '1–3 dana']) {
@@ -19,8 +40,9 @@ for (const value of ['12.400+', '4,8 / 5', '98%', '500+', '1–3 dana']) {
   assert.strictEqual(r.stats?.[0]?.label, 'zadovoljnih kupaca', 'kategorija je trebalo da ostane');
 }
 
-// 2. Kategorija sa brojkom u sebi se odbacuje cela
-for (const label of ['preko 12.000 kupaca', '98% zadovoljnih', 'ocena 4,8 / 5']) {
+// 2. Kategorija sa brojkom u sebi se odbacuje cela - bilo kakvom brojkom.
+//    'preko 500 gradova' je ranije prolazilo kroz heuristiku, pa je pravilo pooštreno.
+for (const label of ['preko 12.000 kupaca', '98% zadovoljnih', 'ocena 4,8 / 5', 'preko 500 gradova', '5 godina iskustva']) {
   const r = sanitizeLanding({ stats: [{ value: '', label }] });
   assert.strictEqual(r.stats?.length, 0, `kategoriju je trebalo odbaciti: ${label}`);
 }
@@ -56,4 +78,4 @@ assert.deepStrictEqual(prazno.stats, []);
 assert.strictEqual(prazno.benefits?.length, 0);
 assert.strictEqual(prazno.objections?.length, 0);
 
-console.log('OK: brojke od modela se brisu, kategorije sa ciframa odbacuju, prazne kartice ne idu na sajt.');
+console.log('OK: isticanje ocisceno, brojke od modela obrisane, kategorije sa ciframa odbacene, prazne kartice ne idu na sajt.');

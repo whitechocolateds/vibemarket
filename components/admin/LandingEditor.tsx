@@ -111,8 +111,9 @@ export default function LandingEditor({ value, onChange, disabled, handle, conte
               {ai ? 'Generišem…' : 'Generiši Landing Page sadržaj pomoću AI'}
             </button>
             <span className={styles.fieldHint}>
-              Piše tekst svih sekcija iz naziva, opisa i prednosti proizvoda. Slike, temu i boje ne dira.
-              Sve možete doraditi pre čuvanja.
+              Piše tekst svih sekcija iz naziva, opisa i prednosti proizvoda — uključujući naslov preko
+              slike, istaknute fraze u <code>{'{{}}'}</code> i predloge kategorija za statistiku (bez brojeva).
+              Slike, temu i boje ne dira. Ništa ne ide uživo dok ne sačuvate, pa sve možete prethodno izmeniti.
             </span>
             {aiError && (
               <span className={styles.fieldHint} style={{ color: 'var(--color-error)' }}>{aiError}</span>
