@@ -22,7 +22,8 @@
     "products:sku": "npx tsx scripts/backfill-sku.ts",
     "check:sku": "npx tsx scripts/check-sku.ts",
     "telegram:test": "npx tsx scripts/test-telegram.ts",
-    "check:contrast": "npx tsx scripts/check-contrast.ts"
+    "check:contrast": "npx tsx scripts/check-contrast.ts",
+    "landing:migrate": "npx tsx scripts/migrate-landing-variant.ts"
   },
   "dependencies": {
     "@tiptap/core": "^3.30.0",

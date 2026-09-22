@@ -16,12 +16,7 @@ const TRAJANJE = 1400;
  * Vrednost bez broja ("1-3 dana", "Pouzecem") se ne odbrojava nego se ispise
  * kakva jeste; traka tada odmah stoji puna.
  */
-/**
- * `className` postoji zato sto varijanta konverzije ovu mrezu smesta u svoju
- * traku, koja vec ima okvir i podlogu - podrazumevani omotac bi tu udvostrucio
- * ivicu. Logika odbrojavanja se NE duplira.
- */
-export default function LandingStats({ stats, className }: { stats: LandingStat[]; className?: string }) {
+export default function LandingStats({ stats }: { stats: LandingStat[] }) {
   const ref = useRef<HTMLDivElement>(null);
 
   /*
@@ -80,7 +75,7 @@ export default function LandingStats({ stats, className }: { stats: LandingStat[
   }, []);
 
   return (
-    <div className={className ?? styles.stats} ref={ref}>
+    <div className={styles.stats} ref={ref}>
       {stats.map((s, i) => {
         const { broj, prefiks, sufiks } = parseStatValue(s.value);
         const decimale = broj !== null && !Number.isInteger(broj) ? 1 : 0;

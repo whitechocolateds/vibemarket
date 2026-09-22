@@ -422,10 +422,9 @@
 }
 
 .buyBtn {
-  background: linear-gradient(120deg, var(--lp-buy-from), var(--lp-buy-to));
-  /* Boja natpisa je izmerena po temi; na 'prici' ostaje bela. */
-  color: var(--lp-on-cta);
-  box-shadow: 0 14px 34px color-mix(in srgb, var(--lp-buy-from) 32%, transparent);
+  background: linear-gradient(120deg, var(--lp-from), var(--lp-to));
+  color: #fff;
+  box-shadow: 0 14px 34px color-mix(in srgb, var(--lp-from) 32%, transparent);
 }
 
 .cartBtn {
@@ -525,10 +524,10 @@
 /*
  * Preklop je UVEK taman, bez obzira na temu.
  *
- * Ranije je tamnio ka --lp-bg, sto je radilo samo dok su sve teme bile tamne.
- * Na svetloj temi ('signal', 'harvest', 'slate') podloga je skoro bela, pa je
- * beli naslov zavrsavao na beloj pozadini - neproziv. Tekst preko fotografije
- * mora da se oslanja na sopstveni preklop, ne na paletu.
+ * Ranije je tamnio ka --lp-bg, sto radi samo dok je tema tamna. Na svetlim
+ * temama ('mint', 'sand') podloga je skoro bela, pa bi beli naslov zavrsio na
+ * beloj pozadini - neproziv. Tekst preko fotografije mora da se oslanja na
+ * sopstveni preklop, ne na paletu.
  */
 .figureScrim {
   position: absolute;

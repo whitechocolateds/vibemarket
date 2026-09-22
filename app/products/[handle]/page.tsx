@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import ProductDetailClient from './ProductDetailClient';
 import LandingPage from '@/components/landing/LandingPage';
-import LandingConversion from '@/components/landing/LandingConversion';
 import { getProductByHandle, getAllProducts } from '@/lib/productStore';
 import { stableReviewCount, STORE_RATING } from '@/lib/reviewStats';
 import { escapeJsonLd } from '@/lib/sanitizeHtml';
@@ -78,13 +77,9 @@ export default async function ProductDetailPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: escapeJsonLd(JSON.stringify(buildProductSchema(product))) }}
       />
-      {product.landing?.enabled ? (
-        product.landing.variant === 'konverzija'
-          ? <LandingConversion product={product} landing={product.landing} />
-          : <LandingPage product={product} landing={product.landing} />
-      ) : (
-        <ProductDetailClient product={product} related={fallbackRelated} />
-      )}
+      {product.landing?.enabled
+        ? <LandingPage product={product} landing={product.landing} />
+        : <ProductDetailClient product={product} related={fallbackRelated} />}
     </>
   );
 }

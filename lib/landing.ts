@@ -30,22 +30,9 @@ export interface LandingObjection {
   answer: string;
 }
 
-/**
- * Dva paralelna rasporeda istog sadrzaja.
- *
- * 'prica'      - narativni tok: problem, prica, resenje, pa tek na dnu kupovina.
- * 'konverzija' - ponuda odmah u zaglavlju, dokazi odmah ispod, prica na kraju;
- *                dugme za kupovinu se ponavlja tri puta.
- *
- * Polje je opciono zbog proizvoda sacuvanih pre ove podele - oni ostaju 'prica'.
- */
-export type LandingVariant = 'prica' | 'konverzija';
-
 export interface LandingPage {
   enabled: boolean;
-  /** Raspored sekcija; bez njega vazi 'prica'. */
-  variant?: LandingVariant;
-  /** Id teme iz skupa koji pripada izabranoj varijanti. */
+  /** Id teme iz LANDING_THEMES. */
   theme: string;
   /** Prepisuju gradijent teme kad su oba data - da proizvod moze da ima svoju boju. */
   accentFrom?: string;
@@ -92,16 +79,6 @@ export interface LandingTheme {
   ink: string;
   muted: string;
   border: string;
-  /** Boja dugmeta za kupovinu. Kad nedostaje, koristi se gradijent (from/to). */
-  cta?: string;
-  /** Boja teksta NA tom dugmetu. Bira se merenjem kontrasta, ne po oseceju. */
-  onCta?: string;
-  /**
-   * Boja teksta preko gradijenta (pilule, ikone).
-   * Na svetlom gradijentu belo pada ispod praga, pa neke teme traze crno -
-   * izmereno, nije stvar ukusa.
-   */
-  onGradient?: string;
 }
 
 /**
@@ -141,56 +118,11 @@ export const LANDING_THEMES: LandingTheme[] = [
   },
 ];
 
-/**
- * Teme za 'konverzija'. Izvedene iz paleta koje je predlozio ui-ux-pro-max za
- * e-commerce sa naglaskom na hitnost, pa proverene merenjem kontrasta
- * (npm run check:contrast) - odatle i `onCta`, koji nije biran po oseceju:
- * beli tekst na narandzastoj ne prolazi 4.5:1, crni prolazi.
- *
- * Namerno odvojene od tema za 'pricu': tamo je gradijent glavni nosilac boje,
- * ovde postoji ZASEBNA boja dugmeta koja se probija iz palete.
- */
-export const KONVERZIJA_THEMES: LandingTheme[] = [
-  {
-    id: 'signal',
-    name: 'Signal (plava + narandžasti CTA)',
-    from: '#1D4ED8', to: '#2563EB', onGradient: '#FFFFFF',
-    bg: '#F8FAFC', surface: '#FFFFFF', ink: '#1E293B', muted: '#475569', border: '#CBD5E1',
-    cta: '#EA580C', onCta: '#000000',
-  },
-  {
-    id: 'harvest',
-    name: 'Harvest (zelena + narandžasti CTA)',
-    from: '#065F46', to: '#047857', onGradient: '#FFFFFF',
-    bg: '#ECFDF5', surface: '#FFFFFF', ink: '#064E3B', muted: '#3F6212', border: '#A7F3D0',
-    cta: '#EA580C', onCta: '#000000',
-  },
-  {
-    id: 'nocturne',
-    name: 'Nocturne (tamna + topli CTA)',
-    from: '#EF4444', to: '#F97316', onGradient: '#000000',
-    bg: '#020617', surface: '#111827', ink: '#F8FAFC', muted: '#9CA3AF', border: '#1F2937',
-    cta: '#EF4444', onCta: '#000000',
-  },
-  {
-    id: 'slate',
-    name: 'Slate (mornarska + plavi CTA)',
-    from: '#0F172A', to: '#1E3A5F', onGradient: '#FFFFFF',
-    bg: '#F8FAFC', surface: '#FFFFFF', ink: '#020617', muted: '#475569', border: '#CBD5E1',
-    cta: '#0369A1', onCta: '#FFFFFF',
-  },
-];
-
 export const DEFAULT_LANDING_THEME = LANDING_THEMES[0];
 
-/** Teme koje pripadaju datoj varijanti; svaka ima svoj skup. */
-export function themesFor(variant?: LandingVariant): LandingTheme[] {
-  return variant === 'konverzija' ? KONVERZIJA_THEMES : LANDING_THEMES;
-}
 
-export function landingTheme(id?: string, variant?: LandingVariant): LandingTheme {
-  const skup = themesFor(variant);
-  return skup.find((t) => t.id === id) ?? skup[0];
+export function landingTheme(id?: string): LandingTheme {
+  return LANDING_THEMES.find((t) => t.id === id) ?? DEFAULT_LANDING_THEME;
 }
 
 /** '#1652BE' -> '22, 82, 190'; --brand-rgb ocekuje trojku, ne hex. */
@@ -203,26 +135,12 @@ function rgbTriple(hex: string): string {
 
 /** Tema kao CSS promenljive; sekcija ih koristi, pa je bojenje jedno mesto. */
 export function landingVars(landing: LandingPage): Record<string, string> {
-  const t = landingTheme(landing.theme, landing.variant);
+  const t = landingTheme(landing.theme);
   const from = landing.accentFrom?.trim() || t.from;
   const to = landing.accentTo?.trim() || t.to;
-  // Boja radnje: na 'konverziji' zasebna boja dugmeta, inace kraj gradijenta.
-  const akcija = t.cta ?? to;
   return {
     '--lp-from': from,
     '--lp-to': to,
-    // Dugme za kupovinu; kad tema nema zasebnu boju, pada na kraj gradijenta.
-    '--lp-cta': t.cta ?? to,
-    '--lp-on-cta': t.onCta ?? '#ffffff',
-    '--lp-on-gradient': t.onGradient ?? '#ffffff',
-    /*
-     * Zavrsno dugme deli LandingPage.module.css sa 'pricom'. Bez zasebnih
-     * promenljivih moralo bi da se bira izmedju gradijenta (i 'prica' ostaje
-     * netaknuta) i boje radnje (i 'konverzija' je dosledna). Ovako oba:
-     * bez "cta" ostaje gradijent, sa "cta" postaje puna boja dugmeta.
-     */
-    '--lp-buy-from': t.cta ?? from,
-    '--lp-buy-to': t.cta ?? to,
     '--lp-bg': t.bg,
     '--lp-surface': t.surface,
     '--lp-ink': t.ink,
@@ -234,14 +152,8 @@ export function landingVars(landing: LandingPage): Record<string, string> {
      * Premapiranje TIH tokena unutar landing omotaca je jedini nacin da izbor
      * paketa dobije temu landing stranice, a da se sama komponenta ne dira.
      */
-    /*
-     * Na 'konverziji' se --brand vezuje za boju DUGMETA, ne za gradijent.
-     * Zavrsni blok deli BundlePicker i LandingBuy sa 'pricom', pa bi inace
-     * poslednje dugme bilo plavo dok su dva iznad njega narandzasta - jedna
-     * radnja, dve boje.
-     */
-    '--brand': akcija,
-    '--brand-rgb': rgbTriple(akcija),
+    '--brand': from,
+    '--brand-rgb': rgbTriple(from),
     '--brand-dark': to,
     '--bg-elevated': t.surface,
     '--bg-tint': t.bg,

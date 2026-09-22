@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { ExternalLink, LayoutTemplate, Sparkles } from 'lucide-react';
 import ImageUploader from '@/components/admin/ImageUploader';
 import {
-  themesFor, DEFAULT_LANDING_THEME, landingTheme, type LandingVariant,
+  LANDING_THEMES, DEFAULT_LANDING_THEME, landingTheme,
   benefitsToStr, parseBenefits, statsToStr, parseStats,
   objectionsToStr, parseObjections, type LandingPage,
 } from '@/lib/landing';
@@ -42,7 +42,7 @@ function jednaSlika(trenutna: string | undefined, primeni: (url: string) => void
 export default function LandingEditor({ value, onChange, disabled, handle, context }: Props) {
   const lp = value ?? PRAZAN;
   const set = (patch: Partial<LandingPage>) => onChange({ ...lp, ...patch });
-  const tema = landingTheme(lp.theme, lp.variant);
+  const tema = landingTheme(lp.theme);
   const [ai, setAi] = useState(false);
   const [aiError, setAiError] = useState('');
 
@@ -141,27 +141,6 @@ export default function LandingEditor({ value, onChange, disabled, handle, conte
         {lp.enabled && (
           <>
             <div className="form-group">
-              <label className="form-label" htmlFor="lpVariant">Raspored</label>
-              <select
-                id="lpVariant"
-                className="select"
-                value={lp.variant ?? 'prica'}
-                disabled={disabled}
-                onChange={(e) => {
-                  // Teme su vezane za varijantu; stara bi ovde bila nepostojeci id.
-                  const variant = e.target.value as LandingVariant;
-                  set({ variant, theme: themesFor(variant)[0].id });
-                }}
-              >
-                <option value="prica">Priča — narativni tok, kupovina na dnu</option>
-                <option value="konverzija">Konverzija — ponuda odmah, dugme na tri mesta</option>
-              </select>
-              <span className={styles.fieldHint}>
-                Isti tekst, drugi raspored sekcija. Svaka varijanta ima svoje teme boja.
-              </span>
-            </div>
-
-            <div className="form-group">
               <label className="form-label" htmlFor="lpTheme">Tema</label>
               <select
                 id="lpTheme"
@@ -170,7 +149,7 @@ export default function LandingEditor({ value, onChange, disabled, handle, conte
                 disabled={disabled}
                 onChange={(e) => set({ theme: e.target.value })}
               >
-                {themesFor(lp.variant).map((t) => (
+                {LANDING_THEMES.map((t) => (
                   <option key={t.id} value={t.id}>{t.name}</option>
                 ))}
               </select>
