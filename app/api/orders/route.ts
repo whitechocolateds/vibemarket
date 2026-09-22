@@ -93,6 +93,9 @@ export async function POST(req: NextRequest) {
         compareAtPrice: variant.compareAtPrice ? parseFloat(variant.compareAtPrice.amount) : undefined,
         quantity,
         image: product.featuredImage,
+        // Prepisuje se, ne cita iz kataloga kasnije: porudzbina mora da ostane
+        // tacna i ako se proizvod posle preimenuje ili obrise.
+        ...(product.sku ? { sku: product.sku } : {}),
         ...(variant.shopifyVariantId ? { shopifyVariantId: variant.shopifyVariantId } : {}),
       });
     }
@@ -118,6 +121,7 @@ export async function POST(req: NextRequest) {
         : {}),
     });
     await decrementStock(verifiedItems.map((i) => ({ productId: i.productId, quantity: i.quantity })));
+
 
     // Server-side Purchase event (Conversions API) - backup kanal za Meta Ads, radi i kad browser blokira Pixel.
     // Isti eventId kao klijentski Pixel Purchase event, radi deduplikacije u Meta Events Manageru.

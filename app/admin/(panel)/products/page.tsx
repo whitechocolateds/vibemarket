@@ -248,6 +248,7 @@ export default function AdminProductsPage() {
                   )}
                   <div className={styles.productCardBody}>
                     <p className={styles.productCardTitle}>{product.title}</p>
+                    {product.sku && <p className={styles.cellMuted}><code>{product.sku}</code></p>}
                     <p className={styles.productCardMeta}>{product.productType || 'Bez kategorije'}</p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
                       <strong style={{ fontSize: '0.9rem', color: '#0f172a' }}>{formatPrice(price)}</strong>
@@ -323,7 +324,11 @@ export default function AdminProductsPage() {
                             <Link href={`/admin/products/${product.id}/edit`} className={styles.tableLink}>
                               {product.title}
                             </Link>
-                            <p className={styles.cellMuted}>/{product.handle}</p>
+                            <p className={styles.cellMuted}>
+                              {product.sku ? <code>{product.sku}</code> : null}
+                              {product.sku ? ' · ' : null}
+                              /{product.handle}
+                            </p>
                           </div>
                         </div>
                       </td>

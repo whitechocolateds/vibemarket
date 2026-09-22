@@ -56,6 +56,8 @@ export interface Product {
   vendor: string;
   productType: string;
   availableForSale: boolean;
+  /** Sifra artikla; generise se automatski i ostaje ista kroz preimenovanja. */
+  sku?: string;
   collections?: Collection[];
   /** Zašto baš ovaj proizvod - specifično za njega, prikazano u tabeli poređenja na strani proizvoda */
   comparisonPoints?: string[];
@@ -79,6 +81,8 @@ export interface Collection {
 export interface CartItem {
   id: string; // variantId
   productId: string;
+  /** Prepisuje se sa proizvoda u trenutku porudzbine, da ostane i ako se katalog izmeni. */
+  sku?: string;
   handle: string;
   title: string;
   variantTitle: string;

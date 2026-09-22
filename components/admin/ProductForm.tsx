@@ -246,6 +246,12 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
       <div className={styles.formSection}>
         <div className={styles.formSectionTitle}>
           <FileText size={14} strokeWidth={2} /> Osnovni podaci
+          {/* Sifra se ne unosi rucno; dodeljuje se pri prvom cuvanju i ostaje ista. */}
+          {initial?.sku && (
+            <span className={styles.fieldHint} style={{ marginLeft: 'auto' }}>
+              Šifra: <code>{initial.sku}</code>
+            </span>
+          )}
         </div>
         <div className={styles.formGrid}>
           <div className={`form-group ${styles.formGridFull}`}>

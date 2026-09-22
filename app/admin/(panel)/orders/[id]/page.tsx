@@ -228,6 +228,7 @@ export default function AdminOrderDetailPage() {
                   )}
                   <div className={styles.orderItemBody}>
                     <p className={styles.orderItemTitle}>{item.title}</p>
+                    {item.sku && <p className={styles.orderItemMeta}><code>{item.sku}</code></p>}
                     {item.variantTitle && <p className={styles.orderItemMeta}>{item.variantTitle}</p>}
                     <p className={styles.orderItemMeta}>
                       {item.quantity} × {formatPrice(item.price)}

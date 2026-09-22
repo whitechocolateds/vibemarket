@@ -18,7 +18,9 @@
     "products:clean-demo": "npx tsx scripts/clean-demo.ts",
     "shopify:availability": "npx tsx scripts/sync-availability.ts",
     "blob:clean-images": "npx tsx scripts/clean-orphan-images.ts",
-    "check:landing": "npx tsx scripts/check-landing.ts"
+    "check:landing": "npx tsx scripts/check-landing.ts",
+    "products:sku": "npx tsx scripts/backfill-sku.ts",
+    "check:sku": "npx tsx scripts/check-sku.ts"
   },
   "dependencies": {
     "@tiptap/core": "^3.30.0",

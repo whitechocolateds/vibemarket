@@ -2,6 +2,7 @@ import { MOCK_PRODUCTS } from './mockData';
 import { readJsonFileResult, updateJsonFile, writeJsonFile } from './db';
 import { Product, ProductInput } from './types';
 import { slugify } from './slugify';
+import { ensureSkus } from './sku';
 import { sanitizeProductHtml, htmlToPlainText, escapeHtml } from './sanitizeHtml';
 
 const FILE = 'products.json';
@@ -74,11 +75,28 @@ async function mutateProducts(
     }
     const products = (Array.isArray(current) ? current : []).map(harden);
     const changed = mutate(products);
+    /*
+     * Sifre se dopisuju ovde, u jedinom levku kroz koji prolazi svaka izmena
+     * kataloga. Tako i stari proizvodi dobiju sifru pri prvom sledecem upisu,
+     * bez posebne migracije, a novi je dobiju odmah pri kreiranju.
+     */
+    const noveSifre = ensureSkus(products);
     result = products;
-    return changed ? products : null;
+    return changed || noveSifre > 0 ? products : null;
   });
 
   return result;
+}
+
+/** Dopisuje sifre svima koji ih nemaju. Koristi `npm run products:sku`. */
+export async function backfillSkus(): Promise<{ ukupno: number; dodato: number }> {
+  let dodato = 0;
+  const products = await mutateProducts((lista) => {
+    // ensureSkus u mutateProducts radi sam posao; ovde samo merimo koliko fali.
+    dodato = lista.filter((p) => !p.sku).length;
+    return false;
+  });
+  return { ukupno: products.length, dodato };
 }
 
 export async function getAllProducts(): Promise<Product[]> {
@@ -200,6 +218,8 @@ export async function saveProductsBulk(
         const existing = products[index];
         const updated = buildProduct({ ...input, handle }, existing.id);
         updated.variants[0].id = existing.variants[0]?.id ?? updated.variants[0].id;
+        // Isti razlog kao u updateProduct: sifra prezivljava ponovni uvoz.
+        if (existing.sku) updated.sku = existing.sku;
         products[index] = updated;
         outcomes.push({ input, action: 'azuriran', product: updated });
       } else {
@@ -245,6 +265,12 @@ export async function updateProduct(id: string, input: ProductInput): Promise<Pr
 
     updated = buildProduct({ ...input, handle }, id);
     updated.variants[0].id = products[index].variants[0]?.id ?? updated.variants[0].id;
+    /*
+     * Sifra se PRENOSI sa postojeceg proizvoda. buildProduct pravi nov objekat,
+     * pa bi je izmena inace obrisala - a ensureSkus bi zatim dodelio drugu.
+     * Sifra na vec odstampanom papiru mora da ostane vazeca.
+     */
+    if (products[index].sku) updated.sku = products[index].sku;
     products[index] = updated;
     return true;
   });
