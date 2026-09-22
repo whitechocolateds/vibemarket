@@ -7,6 +7,7 @@ import { isValidSerbianPhone } from '@/lib/phone';
 import { sendCapiEvent } from '@/lib/metaConversionsApi';
 import { isOrderPushEnabled, createShopifyOrder } from '@/lib/shopify';
 import { GIFT_PRICE, GIFT_TITLE, giftTotal } from '@/lib/gift';
+import { sendOrderToTelegram } from '@/lib/telegram';
 
 export const runtime = 'nodejs';
 /*
@@ -122,6 +123,21 @@ export async function POST(req: NextRequest) {
     });
     await decrementStock(verifiedItems.map((i) => ({ productId: i.productId, quantity: i.quantity })));
 
+    /*
+     * Obavestenje na Telegram ide POSLE odgovora kupcu i nikad ga ne blokira.
+     * sendOrderToTelegram ne baca; dok TELEGRAM_* promenljive nisu podesene,
+     * tiho ne radi nista.
+     */
+    after(async () => {
+      const poslato = await sendOrderToTelegram({
+        orderNumber,
+        items: verifiedItems,
+        customerInfo,
+        totalPrice,
+        gift,
+      });
+      if (!poslato) console.log(`[telegram] porudzbina ${orderNumber} nije javljena`);
+    });
 
     // Server-side Purchase event (Conversions API) - backup kanal za Meta Ads, radi i kad browser blokira Pixel.
     // Isti eventId kao klijentski Pixel Purchase event, radi deduplikacije u Meta Events Manageru.

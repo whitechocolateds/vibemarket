@@ -20,7 +20,8 @@
     "blob:clean-images": "npx tsx scripts/clean-orphan-images.ts",
     "check:landing": "npx tsx scripts/check-landing.ts",
     "products:sku": "npx tsx scripts/backfill-sku.ts",
-    "check:sku": "npx tsx scripts/check-sku.ts"
+    "check:sku": "npx tsx scripts/check-sku.ts",
+    "telegram:test": "npx tsx scripts/test-telegram.ts"
   },
   "dependencies": {
     "@tiptap/core": "^3.30.0",
