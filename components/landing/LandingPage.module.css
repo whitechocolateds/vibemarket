@@ -563,6 +563,16 @@
   flex-shrink: 0;
 }
 
+/*
+ * Isticanje PREKO slike ide posvetljenom nijansom. Na tamnom preklopu tamna
+ * akcenatska boja pada na 3.13:1 - tehnicki prolazi kao krupan tekst, ali se
+ * jedva cita. Na svetloj podlozi ista boja mora da ostane tamna, pa ovde ide
+ * zasebna vrednost.
+ */
+.figureTitle .highlight {
+  color: var(--lp-to-light);
+}
+
 .figureTitle {
   margin: 12px 0 0;
   max-width: 16ch;

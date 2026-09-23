@@ -101,14 +101,14 @@ export const LANDING_THEMES: LandingTheme[] = [
   {
     id: 'mint',
     name: 'Mint (svetla, tirkizna)',
-    from: '#0D9488', to: '#22C55E',
-    bg: '#F6FBF9', surface: '#FFFFFF', ink: '#0B2822', muted: '#5B7A72', border: '#DCEBE6',
+    from: '#0F766E', to: '#15803D',
+    bg: '#F6FBF9', surface: '#FFFFFF', ink: '#0B2822', muted: '#47635C', border: '#DCEBE6',
   },
   {
     id: 'sand',
     name: 'Sand (svetla, topla neutralna)',
-    from: '#B45309', to: '#D97706',
-    bg: '#FBF8F3', surface: '#FFFFFF', ink: '#2A1F14', muted: '#7A6A57', border: '#EADFCE',
+    from: '#92400E', to: '#B45309',
+    bg: '#FBF8F3', surface: '#FFFFFF', ink: '#2A1F14', muted: '#6B5B49', border: '#EADFCE',
   },
   {
     id: 'midnight',
@@ -123,6 +123,21 @@ export const DEFAULT_LANDING_THEME = LANDING_THEMES[0];
 
 export function landingTheme(id?: string): LandingTheme {
   return LANDING_THEMES.find((t) => t.id === id) ?? DEFAULT_LANDING_THEME;
+}
+
+/**
+ * Posvetljuje boju ka beloj. Koristi se za istaknutu frazu PREKO slike: tamo je
+ * podloga tamni preklop, pa tamna akcenatska boja pada ispod praga citljivosti
+ * (izmereno: 3.13:1 za 'mint'). Ista boja na svetloj podlozi mora da ostane
+ * tamna, pa jedna vrednost ne moze da pokrije oba slucaja.
+ */
+function posvetli(hex: string, udeo: number): string {
+  const h = hex.replace('#', '');
+  const pun = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  const v = parseInt(pun, 16);
+  const kanali = [(v >> 16) & 255, (v >> 8) & 255, v & 255]
+    .map((k) => Math.round(k + (255 - k) * udeo));
+  return '#' + kanali.map((k) => k.toString(16).padStart(2, '0')).join('');
 }
 
 /** '#1652BE' -> '22, 82, 190'; --brand-rgb ocekuje trojku, ne hex. */
@@ -141,6 +156,7 @@ export function landingVars(landing: LandingPage): Record<string, string> {
   return {
     '--lp-from': from,
     '--lp-to': to,
+    '--lp-to-light': posvetli(to, 0.55),
     '--lp-bg': t.bg,
     '--lp-surface': t.surface,
     '--lp-ink': t.ink,

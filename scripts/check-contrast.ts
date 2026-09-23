@@ -18,7 +18,15 @@
  * Granica kartice se NE meri: WCAG 1.4.11 trazi 3:1 za granice UI KONTROLA -
  * dugme, polje - a kartica sa tekstom je sadrzaj, ne kontrola.
  */
-import { LANDING_THEMES, type LandingTheme } from '../lib/landing';
+import { LANDING_THEMES, landingVars, type LandingTheme } from '../lib/landing';
+
+/**
+ * Najsvetlija tacka koju dno preklopa preko slike moze da ima.
+ *
+ * Preklop je rgba(0,0,0,0.86); preko potpuno bele fotografije to daje otprilike
+ * ovu vrednost. Merenje ide nad najgorim slucajem, ne nad tamnom slikom.
+ */
+const PREKLOP_NAJSVETLIJI = '#232323';
 
 /** Relativna luminanca po WCAG - nije prosek kanala nego gama-korigovan zbir. */
 function luminanca(hex: string): number {
@@ -40,7 +48,14 @@ function odnos(a: string, b: string): number {
 }
 
 function provereZaTemu(t: LandingTheme) {
+  // Posvetljena nijansa se racuna u landingVars, pa se odatle i cita -
+  // da provera meri bas ono sto stranica stvarno koristi.
+  const svetlija = landingVars({ enabled: true, theme: t.id })['--lp-to-light'];
+
   return [
+    // Naslov preko slike je krupan i podebljan (>=30px), pa je prag 3.0.
+    { opis: 'beli naslov preko slike', prednja: '#ffffff', pozadina: PREKLOP_NAJSVETLIJI, prag: 3.0 },
+    { opis: 'istaknuta fraza preko slike', prednja: svetlija, pozadina: PREKLOP_NAJSVETLIJI, prag: 3.0 },
     { opis: 'glavni tekst na podlozi', prednja: t.ink, pozadina: t.bg, prag: 4.5 },
     { opis: 'prigušeni tekst na podlozi', prednja: t.muted, pozadina: t.bg, prag: 4.5 },
     { opis: 'glavni tekst na kartici', prednja: t.ink, pozadina: t.surface, prag: 4.5 },
