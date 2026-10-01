@@ -49,8 +49,6 @@ export interface LandingPage {
   problemCaption?: string;
 
   story?: string;
-  /** Mala plutajuca slika usred price, na prelazu sa problema na resenje. */
-  storyImage?: string;
   /** Imena ikona iz IKONE (components/landing/LandingPage.tsx), po jedna za svaki pasus. */
   storyIcons?: string[];
 

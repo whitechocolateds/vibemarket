@@ -139,11 +139,7 @@
   margin-bottom: 0;
 }
 
-/*
- * Ikona stoji u levoj margini, apsolutno pozicionirana - NAMERNO ne preko
- * flex-a. Flex kontejner pravi nov formatting context i tada se tekst ne
- * obavija oko plutajuce slike nego bi cela kolona bila odgurnuta u stranu.
- */
+/* Ikona stoji u levoj margini, apsolutno - pa ne ulazi u tekstualnu kolonu. */
 .storyRow {
   position: relative;
   padding-left: 42px;
@@ -160,23 +156,6 @@
   border-radius: 10px;
   background: linear-gradient(135deg, var(--lp-from), var(--lp-to));
   color: #fff;
-}
-
-/* Mala slika usred price. Tekst poslednjeg pasusa je obavija. */
-.storyFigure {
-  float: right;
-  width: min(44%, 272px);
-  margin: 4px 0 14px 26px;
-  border-radius: 18px;
-  overflow: hidden;
-  border: 1px solid var(--lp-border);
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.26);
-}
-
-.storyFigureImg {
-  display: block;
-  width: 100%;
-  height: auto;
 }
 
 /* Pasus se pojavljuje kad dodje u vidno polje (StoryRow.tsx postavlja atribut). */
@@ -531,17 +510,6 @@
 }
 
 @media (max-width: 700px) {
-  /*
-   * Plutanje se ukida: u uskoj koloni bi slika od 44% stisnula tekst na
-   * nekoliko reci po redu. Umesto toga slika ide iznad pasusa, puna sirina.
-   */
-  .storyFigure {
-    float: none;
-    width: 100%;
-    max-width: 340px;
-    margin: 0 auto 18px;
-  }
-
   .storyRow {
     padding-left: 36px;
   }

@@ -1,4 +1,3 @@
-import { Fragment } from 'react';
 import Link from 'next/link';
 import {
   BadgeCheck, Battery, Check, Clock, Dumbbell, Gauge, Heart, Home, Leaf, Lock,
@@ -33,7 +32,6 @@ export default function LandingPage({ product, landing }: { product: Product; la
   const stats = visibleStats(landing.stats);
   const objections = landing.objections ?? [];
   const solutionImage = landing.solutionImage || product.featuredImage?.url;
-  const storyImage = landing.storyImage;
 
   return (
     <div className={styles.page} style={landingVars(landing) as React.CSSProperties}>
@@ -77,33 +75,21 @@ export default function LandingPage({ product, landing }: { product: Product; la
         </section>
       )}
 
-      {/* 3. Priča.
-             Slika se ubacuje PRE poslednjeg pasusa - tu prica prelazi sa
-             problema na resenje - i pluta desno, pa je tekst obavija.
-             Na uzem ekranu float pada (CSS) i slika ide iznad pasusa. */}
+      {/* 3. Priča */}
       {prica.length > 0 && (
         <section className={styles.section}>
           <div className={`${styles.wrap} ${styles.narrow} ${styles.story}`}>
             {prica.map((p, i) => {
               const Ikona = IKONE[landing.storyIcons?.[i] ?? ''];
-              const slikaOvde = storyImage && prica.length > 1 && i === prica.length - 1;
               return (
-                <Fragment key={i}>
-                  {slikaOvde && (
-                    <figure className={styles.storyFigure}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={storyImage} alt={product.title} className={styles.storyFigureImg} loading="lazy" />
-                    </figure>
+                <StoryRow key={i} delay={i * 90}>
+                  {Ikona && (
+                    <span className={styles.storyIcon} aria-hidden="true">
+                      <Ikona size={17} strokeWidth={2.2} />
+                    </span>
                   )}
-                  <StoryRow delay={i * 90}>
-                    {Ikona && (
-                      <span className={styles.storyIcon} aria-hidden="true">
-                        <Ikona size={17} strokeWidth={2.2} />
-                      </span>
-                    )}
-                    <p><RichText text={p} /></p>
-                  </StoryRow>
-                </Fragment>
+                  <p><RichText text={p} /></p>
+                </StoryRow>
               );
             })}
           </div>

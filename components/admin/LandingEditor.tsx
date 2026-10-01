@@ -270,18 +270,6 @@ export default function LandingEditor({ value, onChange, disabled, handle, conte
               </span>
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Mala slika usred priče</label>
-              <ImageUploader
-                value={lp.storyImage ? [lp.storyImage] : []}
-                onChange={jednaSlika(lp.storyImage, (url) => set({ storyImage: url }))}
-                disabled={disabled}
-              />
-              <span className={styles.fieldHint}>
-                Pluta pored poslednjeg pasusa; na telefonu ide iznad njega. Prazno = nema slike.
-              </span>
-            </div>
-
             {/* 4. Rešenje */}
             <div className="form-group">
               <label className="form-label" htmlFor="lpSolutionTitle">Naslov sekcije &bdquo;rešenje&ldquo;</label>
