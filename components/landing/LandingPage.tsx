@@ -5,7 +5,10 @@ import {
   Zap, type LucideIcon,
 } from 'lucide-react';
 import { Product } from '@/lib/types';
-import { LandingPage as Landing, landingVars, storyParagraphs, visibleStats } from '@/lib/landing';
+import {
+  LandingPage as Landing, landingVars, storyParagraphs, visibleStats,
+  jeLandingIkona, type LandingIkona,
+} from '@/lib/landing';
 import RichText from './RichText';
 import LandingStats from './LandingStats';
 import OverlayFigure from './OverlayFigure';
@@ -14,16 +17,23 @@ import LandingBuy from './LandingBuy';
 import styles from './LandingPage.module.css';
 
 /**
- * Dozvoljene ikone za kartice prednosti. Namerno uzak spisak umesto celog
- * lucide skupa: ceo skup bi se zavrsio u bundlu, a admin panel nema pretragu
- * ikona pa bi vecina imena ionako bila pogodjena napamet.
+ * Ime ikone -> lucide komponenta.
+ *
+ * Imena NE stoje ovde nego u LANDING_IKONE (lib/landing.ts), odakle ih cita i
+ * prompt za AI. Tip `Record<LandingIkona, LucideIcon>` je zasto to ostaje
+ * usklađeno: dodaš ime tamo a komponentu ne ovde - tsc pada.
  */
-const IKONE: Record<string, LucideIcon> = {
+const IKONE: Record<LandingIkona, LucideIcon> = {
   sparkles: Sparkles, zap: Zap, shield: Shield, check: BadgeCheck, clock: Clock,
   heart: Heart, home: Home, leaf: Leaf, lock: Lock, package: Package,
   star: Star, truck: Truck, wallet: Wallet, wrench: Wrench, gauge: Gauge,
   battery: Battery, traffic: TrafficCone, dumbbell: Dumbbell, sofa: Sofa,
 };
+
+/** Ime iz podataka (gde sme da bude i prazno ili pogresno) -> komponenta ili undefined. */
+function ikona(ime: string | undefined): LucideIcon | undefined {
+  return ime && jeLandingIkona(ime) ? IKONE[ime] : undefined;
+}
 
 
 export default function LandingPage({ product, landing }: { product: Product; landing: Landing }) {
@@ -80,7 +90,7 @@ export default function LandingPage({ product, landing }: { product: Product; la
         <section className={styles.section}>
           <div className={`${styles.wrap} ${styles.narrow} ${styles.story}`}>
             {prica.map((p, i) => {
-              const Ikona = IKONE[landing.storyIcons?.[i] ?? ''];
+              const Ikona = ikona(landing.storyIcons?.[i]);
               return (
                 <StoryRow key={i} delay={i * 90}>
                   {Ikona && (
@@ -123,7 +133,7 @@ export default function LandingPage({ product, landing }: { product: Product; la
           <div className={styles.wrap}>
             <div className={styles.grid}>
               {benefits.map((b, i) => {
-                const Ikona = IKONE[b.icon] ?? Sparkles;
+                const Ikona = ikona(b.icon) ?? Sparkles;
                 return (
                   <article key={i} className={styles.card}>
                     <span className={styles.cardIcon}><Ikona size={22} /></span>

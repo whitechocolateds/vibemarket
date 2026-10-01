@@ -10,7 +10,7 @@
  */
 import assert from 'assert';
 import { sanitizeLanding, ocistiIsticanje } from '../lib/gemini';
-import { parseStatValue, visibleStats } from '../lib/landing';
+import { parseStatValue, visibleStats, LANDING_IKONE, storyParagraphs } from '../lib/landing';
 
 // 0. Isticanje: ispravni parovi prezive, nesparene zagrade se brisu cele
 assert.strictEqual(ocistiIsticanje('60 km {{slobode}}'), '60 km {{slobode}}');
@@ -78,4 +78,51 @@ assert.deepStrictEqual(prazno.stats, []);
 assert.strictEqual(prazno.benefits?.length, 0);
 assert.strictEqual(prazno.objections?.length, 0);
 
-console.log('OK: isticanje ocisceno, brojke od modela obrisane, kategorije sa ciframa odbacene, prazne kartice ne idu na sajt.');
+// 7. Ikone uz pasuse: polozaj u nizu je veza sa pasusom, pa se pogresno ime
+//    zamenjuje praznim mestom - nikad se ne izbacuje, jer bi se sve posle njega
+//    pomerilo na pogresan pasus.
+const PRICA_3 = 'prvi pasus\n\ndrugi pasus\n\ntreci pasus';
+assert.strictEqual(storyParagraphs(PRICA_3).length, 3, 'test se oslanja na tri pasusa');
+
+const i7 = sanitizeLanding({ story: PRICA_3, storyIcons: ['traffic', 'izmisljena', 'sofa'] });
+assert.deepStrictEqual(i7.storyIcons, ['traffic', '', 'sofa'], 'pogresno ime -> prazno mesto, bez pomeranja');
+
+// Visak preko broja pasusa se odseca - nema gde da se prikaze
+assert.deepStrictEqual(
+  sanitizeLanding({ story: PRICA_3, storyIcons: ['zap', 'home', 'leaf', 'star', 'truck'] }).storyIcons,
+  ['zap', 'home', 'leaf']
+);
+
+// Manje imena od pasusa je dozvoljeno: pasusi bez imena prosto nemaju ikonu
+assert.deepStrictEqual(sanitizeLanding({ story: PRICA_3, storyIcons: ['zap'] }).storyIcons, ['zap']);
+
+// Bez price nema ni ikona, bez obzira na to sta je model vratio
+assert.deepStrictEqual(sanitizeLanding({ storyIcons: ['zap', 'home'] }).storyIcons, []);
+assert.deepStrictEqual(sanitizeLanding({ story: PRICA_3 }).storyIcons, []);
+
+// Ne-stringovi iz JSON-a ne smeju da prodju kao ime
+assert.deepStrictEqual(
+  sanitizeLanding({ story: PRICA_3, storyIcons: [null, 42, 'zap'] as unknown as string[] }).storyIcons,
+  ['', '', 'zap']
+);
+
+// Svako ime iz jedinog izvora stvarno prolazi validaciju
+const svaImena = Object.keys(LANDING_IKONE);
+const i7b = sanitizeLanding({
+  story: svaImena.map((_, n) => `pasus ${n}`).join('\n\n'),
+  storyIcons: svaImena,
+});
+assert.deepStrictEqual(i7b.storyIcons, svaImena, 'ime iz LANDING_IKONE ne sme da bude odbaceno');
+
+// 8. Ikona kartice iz AI-ja mora da bude dozvoljeno ime
+assert.strictEqual(
+  sanitizeLanding({ benefits: [{ icon: 'nepostojeca', title: 'ok' }] }).benefits?.[0]?.icon,
+  'sparkles',
+  'nepoznata ikona kartice pada na podrazumevanu, a ne u prikaz'
+);
+assert.strictEqual(
+  sanitizeLanding({ benefits: [{ icon: 'dumbbell', title: 'ok' }] }).benefits?.[0]?.icon,
+  'dumbbell'
+);
+
+console.log(`OK: isticanje ocisceno, brojke od modela obrisane, kategorije sa ciframa odbacene, prazne kartice ne idu na sajt, ikone validirane (${svaImena.length} dozvoljenih imena).`);

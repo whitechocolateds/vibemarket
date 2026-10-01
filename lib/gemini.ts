@@ -1,5 +1,5 @@
 import { buildDescriptionHtml, type CopySection, type StructuredCopy } from './productHtml';
-import type { LandingPage } from './landing';
+import { LANDING_IKONE, jeLandingIkona, storyParagraphs, type LandingPage } from './landing';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
@@ -623,6 +623,11 @@ export async function generateSalesInsightsAI(
 
 // ─── Landing page sadrzaj ────────────────────────────────────────────────────
 
+/** Spisak za prompt: "ime - opis" po redu, iz jedinog izvora u lib/landing.ts. */
+const SPISAK_IKONA = Object.entries(LANDING_IKONE)
+  .map(([ime, opis]) => `- ${ime}: ${opis}`)
+  .join('\n');
+
 /** Sve sto AI popunjava; `enabled` i tema ostaju na korisniku. */
 export type GeneratedLanding = Omit<
   LandingPage,
@@ -675,6 +680,7 @@ Vracaj ISKLJUCIVO cist JSON bez markdown ograda, sa ovim poljima:
   "problemTitle": "kratak udaran naslov PREKO slike, do 45 znakova, sa jednom {{istaknutom frazom}}",
   "problemCaption": "jedna recenica ispod tog naslova, pojacava problem",
   "story": "3-4 pasusa narativnog teksta razdvojena praznim redom (\\n\\n). Prvi pasus imenuje problem, poslednji najavljuje resenje. BEZ nabrajanja i bez specifikacija.",
+  "storyIcons": ["po jedno ime ikone za svaki pasus iz \"story\", istim redosledom"],
   "solutionTitle": "naslov koji predstavlja proizvod kao resenje, do 55 znakova, sa jednom {{istaknutom frazom}}",
   "solutionLead": "2-3 recenice kako proizvod resava bas taj problem",
   "benefits": [
@@ -687,7 +693,12 @@ Vracaj ISKLJUCIVO cist JSON bez markdown ograda, sa ovim poljima:
   "ctaLead": "1-2 recenice, pomeni placanje pouzecem i rok isporuke"
 }
 
-Za "benefits" daj TACNO 4 kartice. Dozvoljene vrednosti za "icon": sparkles, zap, shield, check, clock, heart, home, leaf, lock, package, star, truck, wallet, wrench, gauge, battery. Biraj ikonu prema sadrzaju kartice.
+DOZVOLJENE IKONE (ime - kada se koristi):
+${SPISAK_IKONA}
+Nijedno drugo ime ne vazi. Biraj po znacenju, ne po tome kako ime zvuci.
+
+Za "benefits" daj TACNO 4 kartice i svakoj ikonu iz spiska, prema sadrzaju kartice.
+Za "storyIcons" daj TACNO jedno ime po pasusu price, u ISTOM redosledu kao pasusi u "story": prvi element je ikona prvog pasusa. Ako nijedna ikona ne odgovara pasusu, stavi prazan string na to mesto - ne preskaci ga i ne skracuj niz.
 Za "objections" daj 3 stavke.
 Za "stats" daj 3 do 4 kategorije, uvek sa praznim "value".`;
 
@@ -745,8 +756,23 @@ export function sanitizeLanding(raw: GeneratedLanding): GeneratedLanding {
     .filter((s) => s?.label && !BROJKA.test(s.label))
     .map((s) => ({ value: '', label: s.label }));
 
+  /*
+   * Ikone uz pasuse se vezuju za pasus POLOZAJEM u nizu, pa se pogresno ime
+   * zamenjuje praznim mestom - nikad se ne izbacuje. Da se izbaci, svaka ikona
+   * posle njega pomerila bi se na pogresan pasus, a to izgleda namerno i gore je
+   * od ikone koje nema.
+   *
+   * Niz se odseca na broj pasusa: visak ne bi imao gde da se prikaze, a u JSON-u
+   * bi ostao da visi i da zbuni sledeceg koji otvori admin panel.
+   */
+  const pasusa = storyParagraphs(raw.story).length;
+  const storyIcons = (raw.storyIcons ?? [])
+    .slice(0, pasusa)
+    .map((ime) => (typeof ime === 'string' && jeLandingIkona(ime) ? ime : ''));
+
   return {
     ...raw,
+    storyIcons,
     badge: ocistiIsticanje(raw.badge),
     heroTitle: ocistiIsticanje(raw.heroTitle),
     heroLead: ocistiIsticanje(raw.heroLead),
@@ -763,7 +789,13 @@ export function sanitizeLanding(raw: GeneratedLanding): GeneratedLanding {
     benefits: (raw.benefits ?? [])
       .filter((b) => b?.title)
       .slice(0, 6)
-      .map((b) => ({ ...b, title: ocistiIsticanje(b.title)!, text: ocistiIsticanje(b.text) })),
+      .map((b) => ({
+        ...b,
+        // Isti razlog kao gore: nepoznato ime bi na stranici tiho palo na podrazumevanu ikonu.
+        icon: jeLandingIkona(b.icon) ? b.icon : 'sparkles',
+        title: ocistiIsticanje(b.title)!,
+        text: ocistiIsticanje(b.text),
+      })),
     objections: (raw.objections ?? []).filter((o) => o?.question && o?.answer).slice(0, 6),
   };
 }

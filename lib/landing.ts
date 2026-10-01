@@ -30,6 +30,51 @@ export interface LandingObjection {
   answer: string;
 }
 
+/**
+ * Dozvoljene ikone na landing stranici - JEDINI izvor spiska.
+ *
+ * Namerno uzak skup umesto celog lucide-a: ceo skup bi se zavrsio u bundlu, a
+ * admin panel nema pretragu ikona pa bi vecina imena ionako bila pogodjena
+ * napamet.
+ *
+ * Spisak je prethodno stajao na dva mesta - mapa komponenti u LandingPage.tsx i
+ * rucno pisan niz imena u promptu za AI - i razisao se: prompt nije znao za
+ * traffic, dumbbell i sofa. Sada oba citaju odavde, pa se razilazenje vise ne
+ * moze ponoviti: LandingPage.tsx mapira `Record<LandingIkona, LucideIcon>`, sto
+ * tsc obara ako ime ovde dodas a komponentu ne.
+ *
+ * Opis nije ukras - ide u prompt, da model bira ikonu po znacenju a ne po imenu.
+ */
+export const LANDING_IKONE = {
+  sparkles: 'nesto novo, prijatno, iznenadjenje',
+  zap: 'brzina, snaga, trenutni efekat',
+  shield: 'zastita, sigurnost, garancija',
+  check: 'potvrda, provereno, ispunjeno obecanje',
+  clock: 'vreme, ustedjeno vreme, rok',
+  heart: 'zdravlje, briga, nesto voljeno',
+  home: 'dom, stan, kuca',
+  leaf: 'priroda, biljke, basta, eko',
+  lock: 'bezbednost, privatnost, zakljucavanje',
+  package: 'pakovanje, dostava, sadrzaj kutije',
+  star: 'kvalitet, ocena, preporuka',
+  truck: 'dostava, prevoz, isporuka',
+  wallet: 'cena, usteda, novac',
+  wrench: 'montaza, alat, popravka',
+  gauge: 'merenje, snaga, performanse',
+  battery: 'baterija, punjenje, trajanje',
+  traffic: 'saobracaj, guzva, putovanje, zastoj',
+  dumbbell: 'vezbanje, trening, teretana, oprema',
+  sofa: 'udobnost, odmor, dnevna soba, kauc',
+} as const satisfies Record<string, string>;
+
+/** Ime ikone iz LANDING_IKONE. */
+export type LandingIkona = keyof typeof LANDING_IKONE;
+
+/** Da li je ime ikone dozvoljeno. Koristi se i pri cuvanju AI predloga. */
+export function jeLandingIkona(ime: string): ime is LandingIkona {
+  return Object.hasOwn(LANDING_IKONE, ime);
+}
+
 export interface LandingPage {
   enabled: boolean;
   /** Id teme iz LANDING_THEMES. */
@@ -49,7 +94,7 @@ export interface LandingPage {
   problemCaption?: string;
 
   story?: string;
-  /** Imena ikona iz IKONE (components/landing/LandingPage.tsx), po jedna za svaki pasus. */
+  /** Imena ikona iz LANDING_IKONE, po jedno za svaki pasus price; prazan string = bez ikone. */
   storyIcons?: string[];
 
   solutionTitle?: string;
