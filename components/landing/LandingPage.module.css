@@ -128,14 +128,67 @@
   color: var(--lp-muted);
 }
 
-/* Prvi pasus nosi ton celog teksta, pa je krupniji i u punoj boji. */
-.story p:first-child {
+/* Prvi pasus nosi ton celog teksta, pa je krupniji i u punoj boji.
+   Cilja se PRVI RED, ne p:first-child - svaki pasus je prvo dete svog reda. */
+.story .storyRow:first-child p {
   font-size: clamp(1.1rem, 2.2vw, 1.28rem);
   color: var(--lp-ink);
 }
 
-.story p:last-child {
+.story .storyRow:last-child p {
   margin-bottom: 0;
+}
+
+/*
+ * Ikona stoji u levoj margini, apsolutno pozicionirana - NAMERNO ne preko
+ * flex-a. Flex kontejner pravi nov formatting context i tada se tekst ne
+ * obavija oko plutajuce slike nego bi cela kolona bila odgurnuta u stranu.
+ */
+.storyRow {
+  position: relative;
+  padding-left: 42px;
+}
+
+.storyIcon {
+  position: absolute;
+  left: 0;
+  top: 0.3em;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--lp-from), var(--lp-to));
+  color: #fff;
+}
+
+/* Mala slika usred price. Tekst poslednjeg pasusa je obavija. */
+.storyFigure {
+  float: right;
+  width: min(44%, 272px);
+  margin: 4px 0 14px 26px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid var(--lp-border);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.26);
+}
+
+.storyFigureImg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Pasus se pojavljuje kad dodje u vidno polje (StoryRow.tsx postavlja atribut). */
+.reveal {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.reveal[data-vidljivo='false'] {
+  opacity: 0;
+  transform: translateY(16px);
 }
 
 /* ── 4. Rešenje ──────────────────────────────────────────────────────────── */
@@ -355,11 +408,20 @@
   color: var(--lp-muted);
 }
 
+/*
+ * Red sa cenom sme da se prelomi IZMEDJU delova, nikad unutar njih.
+ *
+ * Bez flex-wrap je na 390px izmereno da se red stisne i da svaki deo pukne na
+ * dve linije ("1.799" / "RSD"), visina 102px umesto 51px. Sama cena vise ne
+ * moze da pukne - formatPrice vraca nerazdvojnu razmaknicu - a oznaka popusta
+ * se prebacuje u novi red kad nema mesta.
+ */
 .priceRow {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   justify-content: center;
-  gap: 14px;
+  gap: 6px 14px;
   margin-top: 20px;
 }
 
@@ -468,6 +530,23 @@
   color: var(--lp-ink);
 }
 
+@media (max-width: 700px) {
+  /*
+   * Plutanje se ukida: u uskoj koloni bi slika od 44% stisnula tekst na
+   * nekoliko reci po redu. Umesto toga slika ide iznad pasusa, puna sirina.
+   */
+  .storyFigure {
+    float: none;
+    width: 100%;
+    max-width: 340px;
+    margin: 0 auto 18px;
+  }
+
+  .storyRow {
+    padding-left: 36px;
+  }
+}
+
 @media (max-width: 860px) {
   .solution {
     grid-template-columns: 1fr;
@@ -480,6 +559,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* Pasus stoji vidljiv; StoryRow ga u ovom slucaju i ne skriva. */
+  .reveal {
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
+
   .buyBtn,
   .cartBtn {
     transition: none;

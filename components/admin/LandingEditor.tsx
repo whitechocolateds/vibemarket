@@ -259,6 +259,29 @@ export default function LandingEditor({ value, onChange, disabled, handle, conte
               <span className={styles.fieldHint}>Prazan red razdvaja pasuse. Prvi pasus se prikazuje krupnije.</span>
             </div>
 
+            <div className="form-group">
+              <label className="form-label" htmlFor="lpStoryIcons">Ikone uz pasuse</label>
+              <input id="lpStoryIcons" className="input" value={(lp.storyIcons ?? []).join(', ')} disabled={disabled}
+                onChange={(e) => set({ storyIcons: e.target.value.split(',').map((x) => x.trim()).filter(Boolean) })}
+                placeholder="Npr. traffic, dumbbell, sofa" />
+              <span className={styles.fieldHint}>
+                Po jedno ime za svaki pasus, razdvojeno zapetom. Ista imena kao u karticama prednosti
+                (traffic, dumbbell, sofa, home, clock, zap, shield, heart, truck, wallet, wrench...).
+              </span>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Mala slika usred priče</label>
+              <ImageUploader
+                value={lp.storyImage ? [lp.storyImage] : []}
+                onChange={jednaSlika(lp.storyImage, (url) => set({ storyImage: url }))}
+                disabled={disabled}
+              />
+              <span className={styles.fieldHint}>
+                Pluta pored poslednjeg pasusa; na telefonu ide iznad njega. Prazno = nema slike.
+              </span>
+            </div>
+
             {/* 4. Rešenje */}
             <div className="form-group">
               <label className="form-label" htmlFor="lpSolutionTitle">Naslov sekcije &bdquo;rešenje&ldquo;</label>
