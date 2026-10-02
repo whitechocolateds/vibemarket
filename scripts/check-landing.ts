@@ -22,6 +22,20 @@ assert.strictEqual(ocistiIsticanje('{{a}} i {{b'), 'a i b');
 assert.strictEqual(ocistiIsticanje('visak}}'), 'visak');
 assert.strictEqual(ocistiIsticanje(undefined), undefined);
 
+// 0b. Kapice (^^fraza^^, serifni font): ispravni parovi prezive, nesparene se brisu
+assert.strictEqual(ocistiIsticanje('i ^^kauc pobedjuje^^ na kraju'), 'i ^^kauc pobedjuje^^ na kraju');
+assert.strictEqual(ocistiIsticanje('^^jedna^^ i ^^druga^^'), '^^jedna^^ i ^^druga^^');
+assert.strictEqual(ocistiIsticanje('pola ^^otvoreno'), 'pola otvoreno');
+assert.strictEqual(ocistiIsticanje('visak^^'), 'visak');
+// Tri vrste isticanja se ne mesaju - svaka prezivi uz druge dve
+assert.strictEqual(
+  ocistiIsticanje('**bold** pa {{boja}} pa ^^serif^^'),
+  '**bold** pa {{boja}} pa ^^serif^^'
+);
+// Pokvarena jedna vrsta ne obara ostale
+assert.strictEqual(ocistiIsticanje('{{ok}} ali ^^pokvareno'), '{{ok}} ali pokvareno');
+assert.strictEqual(ocistiIsticanje('^^ok^^ ali {{pokvareno'), '^^ok^^ ali pokvareno');
+
 // Isticanje prolazi kroz sanitizeLanding na svim tekstualnim poljima
 const ist = sanitizeLanding({
   heroTitle: 'Teretana je {{predaleko}}',
@@ -29,6 +43,10 @@ const ist = sanitizeLanding({
   benefits: [{ icon: 'zap', title: 'ok {{ovo}}', text: 'lose {{ovde' }],
 });
 assert.strictEqual(ist.heroTitle, 'Teretana je {{predaleko}}');
+assert.strictEqual(
+  sanitizeLanding({ story: 'pasus sa ^^serifnom frazom^^ unutra' }).story,
+  'pasus sa ^^serifnom frazom^^ unutra'
+);
 assert.strictEqual(ist.problemTitle, 'pokvareno ovde');
 assert.strictEqual(ist.benefits?.[0]?.title, 'ok {{ovo}}');
 assert.strictEqual(ist.benefits?.[0]?.text, 'lose ovde');

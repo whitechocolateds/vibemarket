@@ -686,6 +686,32 @@
   font-weight: inherit;
 }
 
+/*
+ * Treca vrsta isticanja: ^^fraza^^ u tekstu dobija isti serifni font koji
+ * nose naslovi. Stack je ispisan jer ga projekat tako i drzi - isti red stoji
+ * na pravilu za h1-h4 u app/globals.css, bez promenljive.
+ *
+ * Prata ima samo debljinu 400, pa se nasledjena debljina izricito vraca na
+ * normalnu: inace bi pretrazivac crtao sinteticki bold i fraza bi izgledala
+ * razmazano. Boja je puni --lp-ink, a ne prigusena boja pasusa, da fraza i u
+ * telu teksta stoji kao deo naslovnog sloja.
+ *
+ * Font je neznatno veci (1.06em) da serifna fraza ne izgleda sitnija od teksta
+ * oko sebe - Prata ima nizu x-visinu od Bricolage Grotesque-a u telu teksta.
+ *
+ * NEMA white-space: nowrap, iako bi fraza tada ostajala u jednom redu: duza
+ * fraza koju neko upise u admin panelu bi onda iscurila izvan kolone, a prelom
+ * izvan okvira je gori od preloma na razmaku. Isto vazi i za {{isticanje}}
+ * bojom, koje se vec lomi kad zatreba.
+ */
+.display {
+  font-family: 'Prata', Georgia, serif;
+  font-weight: 400;
+  font-size: 1.06em;
+  letter-spacing: -0.01em;
+  color: var(--lp-ink);
+}
+
 /* ── Tekst preko slike (sekcija 2, kad postoji problemTitle) ─────────────── */
 
 .figureOverlay {

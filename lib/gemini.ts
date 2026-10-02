@@ -670,6 +670,11 @@ ISTICANJE RECI:
 - Koristi i **ovako** za podebljano, unutar recenice.
 - MERA: najvise JEDNA {{fraza}} po naslovu i najvise jedna po pasusu. Ako je istaknuto pola teksta, nista nije istaknuto.
 - Istice se fraza koja nosi obecanje ili olaksanje, ne nasumicna rec. Zagrade uvek zatvori.
+- Treca vrsta isticanja, SAMO u pasusima price: ^^ovako^^ daje frazi isti serifni font koji nose naslovi.
+  U svakom pasusu price obelezi 1 do 2 kljucne reci ili kratku frazu (najvise tri reci) ovom sintaksom.
+  Birati onu koja nosi poentu bas tog pasusa - sliku koja ostaje u glavi, ne pridev.
+  Istu frazu NE obavijati i viticastim zagradama i kapicama; to su dva razlicita isticanja.
+  Kapice uvek zatvori.
 
 Vracaj ISKLJUCIVO cist JSON bez markdown ograda, sa ovim poljima:
 {
@@ -679,7 +684,7 @@ Vracaj ISKLJUCIVO cist JSON bez markdown ograda, sa ovim poljima:
   "problemBadge": "2-4 reci za pilulu preko slike, npr. Svakodnevna scena",
   "problemTitle": "kratak udaran naslov PREKO slike, do 45 znakova, sa jednom {{istaknutom frazom}}",
   "problemCaption": "jedna recenica ispod tog naslova, pojacava problem",
-  "story": "3-4 pasusa narativnog teksta razdvojena praznim redom (\\n\\n). Prvi pasus imenuje problem, poslednji najavljuje resenje. BEZ nabrajanja i bez specifikacija.",
+  "story": "3-4 pasusa narativnog teksta razdvojena praznim redom (\\n\\n). Prvi pasus imenuje problem, poslednji najavljuje resenje. U svakom pasusu 1-2 fraze u ^^kapicama^^. BEZ nabrajanja i bez specifikacija.",
   "storyIcons": ["po jedno ime ikone za svaki pasus iz \"story\", istim redosledom"],
   "solutionTitle": "naslov koji predstavlja proizvod kao resenje, do 55 znakova, sa jednom {{istaknutom frazom}}",
   "solutionLead": "2-3 recenice kako proizvod resava bas taj problem",
@@ -728,8 +733,16 @@ Napisi landing stranicu za ovaj proizvod.`;
  */
 export function ocistiIsticanje(s?: string): string | undefined {
   if (!s) return s;
-  const ostatak = s.replace(/\{\{[^{}]+\}\}/g, '');
-  return /[{}]/.test(ostatak) ? s.replace(/[{}]/g, '') : s;
+
+  // Viticaste zagrade: ako ostane ijedna nesparena, brisu se SVE - pola
+  // otvorenog isticanja bi se na stranici videlo kao golo "{{" u tekstu.
+  let r = s;
+  if (/[{}]/.test(r.replace(/\{\{[^{}]+\}\}/g, ''))) r = r.replace(/[{}]/g, '');
+
+  // Kapice (^^fraza^^ u serifnom fontu) po istom pravilu.
+  if (/\^/.test(r.replace(/\^\^[^^]+\^\^/g, ''))) r = r.replace(/\^/g, '');
+
+  return r;
 }
 
 /**
