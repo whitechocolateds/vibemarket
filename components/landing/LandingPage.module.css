@@ -545,6 +545,121 @@
   }
 }
 
+/* ── Lepljiva traka sa cenom ─────────────────────────────────────────────── */
+
+/*
+ * Marker granice uvoda. 1px, a ne 0: nulta visina u pojedinim pretrazivacima
+ * ne daje presek pa IntersectionObserver nikad ne javi prelaz.
+ */
+.gate {
+  height: 1px;
+}
+
+/*
+ * Traka cita ISTE --lp-* promenljive kao ostatak stranice, pa se boji po temi
+ * proizvoda. Fiksna ljubicasta bi bila pogresna na cetiri od pet tema; na
+ * svetlim ('mint', 'sand') bi tamna traka bila i strano telo na stranici.
+ *
+ * Na desktopu je centrirana kartica, ne traka od ivice do ivice: landing ima
+ * jezik zaobljenih kartica i vazduha, a traka preko cele sirine izgleda kao
+ * hrom standardne prodavnice - izmereno na 1000px, kartica se bolje uklapa.
+ * Na telefonu ide puna sirina, jer tamo kartica samo trosi dragocenu sirinu.
+ */
+.stickyBar {
+  position: fixed;
+  z-index: 90;
+  /*
+   * Centrira se preko left/right + margin-inline: auto, NE preko
+   * translateX(-50%): framer-motion za ulaznu animaciju postavlja `transform`
+   * inline, pa bi pomeraj za centriranje pregazio i traka bi otisla desno
+   * izvan ekrana.
+   */
+  left: 0;
+  right: 0;
+  margin-inline: auto;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  width: min(560px, calc(100% - 28px));
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--lp-to) 26%, var(--lp-border));
+  background: color-mix(in srgb, var(--lp-surface) 88%, transparent);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.32);
+}
+
+.stickyInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 10px 10px 18px;
+}
+
+.stickyPrices {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.stickyPrice {
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--lp-ink);
+}
+
+.stickyCompare {
+  font-size: 0.86rem;
+  color: var(--lp-muted);
+  text-decoration: line-through;
+}
+
+.stickyBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--lp-from), var(--lp-to));
+  color: #fff;
+  font-size: 0.86rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stickyBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--lp-to) 38%, transparent);
+}
+
+@media (max-width: 560px) {
+  /* Puna sirina dna: na uskom ekranu je svaki piksel sirine dugmeta vredan. */
+  .stickyBar {
+    bottom: 0;
+    width: 100%;
+    border-radius: 16px 16px 0 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stickyBtn {
+    transition: none;
+  }
+
+  .stickyBtn:hover {
+    transform: none;
+  }
+}
+
 /* ── Isticanje reči u tekstu ({{ovako}} iz admin panela) ─────────────────── */
 
 .highlight {
@@ -563,13 +678,24 @@
 }
 
 /*
- * Visina je FIKSNA, ne min-height: uz "height: auto" skoro kvadratna slika je
- * u širokom okviru davala traku od 831px — izmereno, i za "malu" i za veliku
- * varijantu jednako. Uz "object-fit: cover" kadar je predvidljiv bez obzira
- * na to kakvu sliku admin otpremi.
+ * Oblik kadra se zadaje preko `aspect-ratio`, a ne fiksnom visinom.
+ *
+ * Fiksna visina je davala 952x440 na 1000px ekrana - odnos 2.16:1, siroko i
+ * nisko. U takav okvir GIF ili video ulazi sa "cover" pa mu se vertikalno
+ * odseca skoro pola kadra, cesto bas pokret. Sa 4/3 kao zeljenim oblikom i
+ * gornjom granicom visine odnos pada na oko 1.5:1, a na telefonu kadar postaje
+ * kvadratan.
+ *
+ * `height: auto` je ovde bezopasan iako je ranije davao traku od 831px: tada
+ * je visina dolazila iz same slike, a sada iz zadatog odnosa. Donja granica
+ * drzi uzak ekran da ne spljoska kadar, gornja siroki da hero ne pojede ceo
+ * prvi ekran. `object-fit: cover` i dalje cini kadar predvidljivim.
  */
 .figureOverlay .figureImg {
-  height: clamp(300px, 44vw, 500px);
+  height: auto;
+  aspect-ratio: 4 / 3;
+  min-height: 340px;
+  max-height: min(72vh, 620px);
   object-fit: cover;
   border: none;
   border-radius: 0;
@@ -708,16 +834,26 @@
 }
 
 /*
- * Namerno pliće i tiše od glavne "problem" slike: ovo je prelaz ka brojkama,
- * ne zasebna scena. Niža minimalna visina, manji naslov, bez velikih slova.
+ * Namerno tiše od glavne "problem" slike: ovo je prelaz ka brojkama, ne
+ * zasebna scena. Manji naslov, bez velikih slova.
+ *
+ * Ali NE preko cele sirine: na 1000px je kao traka 952x200 davala odnos
+ * 4.76:1, u kom se od GIF-a vidi uska pruga. Umesto da raste u visinu preko
+ * cele sirine - sto bi bila druga hero slika - okvir se suzava i dobija isti
+ * zeljeni oblik 4/3. Na 1000px to daje oko 1.6:1, na telefonu tacno 4:3.
  */
 .figureCompact {
-  max-width: 100%;
+  max-width: 680px;
+  margin-inline: auto;
   border-radius: 18px;
 }
 
+/* Sve tri granice se prepisuju, inace bi one iz .figureOverlay ostale na snazi. */
 .figureCompact .figureImg {
-  height: clamp(150px, 20vw, 220px);
+  height: auto;
+  aspect-ratio: 4 / 3;
+  min-height: 240px;
+  max-height: 420px;
 }
 
 .figureCompact .figureText {

@@ -85,6 +85,14 @@ export default function LandingPage({ product, landing }: { product: Product; la
         </section>
       )}
 
+      {/*
+          Granica uvoda. Lepljiva traka (LandingBuy) se pojavljuje kad ovaj
+          marker izadje iznad ekrana - dakle kad su hero i slika problema
+          prescrolovani. Marker, ne sama sekcija, jer slike problema ne mora
+          da bude, a granica treba da postoji svakako.
+      */}
+      <div className={styles.gate} data-lp-gate aria-hidden="true" />
+
       {/* 3. Priča */}
       {prica.length > 0 && (
         <section className={styles.section}>
@@ -193,7 +201,7 @@ export default function LandingPage({ product, landing }: { product: Product; la
       {/* 8. Kupovina */}
       <section className={styles.section}>
         <div className={`${styles.wrap} ${styles.narrow}`}>
-          <div className={styles.cta}>
+          <div className={styles.cta} data-lp-cta>
             <h2 className={styles.ctaTitle}>
               <RichText text={landing.ctaTitle || 'Naručite danas'} />
             </h2>
