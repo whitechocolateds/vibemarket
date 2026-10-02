@@ -95,6 +95,7 @@ export default function LandingEditor({ value, onChange, disabled, handle, conte
           <span className={styles.fieldHint}>
             U naslovima i tekstovima radi: <code>**podebljano**</code> i{' '}
             <code>{'{{istaknuto}}'}</code> — istaknuto dobija akcenatsku boju teme.
+            U pasusima priče isticanje ide kroz <code>^^fraza^^</code>.
           </span>
         </div>
 
@@ -256,7 +257,17 @@ export default function LandingEditor({ value, onChange, disabled, handle, conte
               <textarea id="lpStory" className="textarea" rows={8} value={lp.story ?? ''} disabled={disabled}
                 onChange={(e) => set({ story: e.target.value })}
                 placeholder={'Duži tekst, kao članak.\n\nPrazan red pravi novi pasus.'} />
-              <span className={styles.fieldHint}>Prazan red razdvaja pasuse. Prvi pasus se prikazuje krupnije.</span>
+              <span className={styles.fieldHint}>
+                Prazan red razdvaja pasuse. Prvi pasus se prikazuje krupnije.
+              </span>
+              <span className={styles.fieldHint}>
+                Isticanje u pasusima: <code>^^fraza^^</code> daje serifni font naslova u
+                akcenatskoj boji teme. AI predlaže po jednu frazu u svakom pasusu, a vi je
+                slobodno pomerite — dodajte ili uklonite <code>^^</code> oko bilo koje reči
+                i tekst ostaje nedirnut. Kapice uvek zatvorite; nesparena se briše.
+                Serifna fraza nosi istu akcenatsku boju kao <code>{'{{istaknuto}}'}</code>, pa u
+                pasusima nema potrebe za zagradama — AI ih tu i ne predlaže.
+              </span>
             </div>
 
             <div className="form-group">

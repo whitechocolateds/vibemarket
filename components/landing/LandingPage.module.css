@@ -693,8 +693,12 @@
  *
  * Prata ima samo debljinu 400, pa se nasledjena debljina izricito vraca na
  * normalnu: inace bi pretrazivac crtao sinteticki bold i fraza bi izgledala
- * razmazano. Boja je puni --lp-ink, a ne prigusena boja pasusa, da fraza i u
- * telu teksta stoji kao deo naslovnog sloja.
+ * razmazano.
+ *
+ * Boja je --lp-to, ista promenljiva koju koristi i .highlight, dakle ista
+ * nijansa koju nosi akcenatski deo hero naslova - i menja se po temi. Fraza
+ * tako nosi i font i boju naslovnog sloja. Par (--lp-to na --lp-bg) je isti
+ * koji check-contrast.ts vec meri kao "istaknuta fraza na podlozi".
  *
  * Font je neznatno veci (1.06em) da serifna fraza ne izgleda sitnija od teksta
  * oko sebe - Prata ima nizu x-visinu od Bricolage Grotesque-a u telu teksta.
@@ -709,7 +713,7 @@
   font-weight: 400;
   font-size: 1.06em;
   letter-spacing: -0.01em;
-  color: var(--lp-ink);
+  color: var(--lp-to);
 }
 
 /* ── Tekst preko slike (sekcija 2, kad postoji problemTitle) ─────────────── */
