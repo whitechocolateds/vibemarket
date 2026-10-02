@@ -7,10 +7,18 @@
 .page {
   background: var(--lp-bg);
   color: var(--lp-ink);
-  /* Traka zaglavlja prodavnice je svetla, pa tamna tema mora da pocne ispod nje. */
-  padding-top: var(--header-height);
   overflow-x: hidden;
 }
+
+/*
+ * Nema odmaka za zaglavlje. Ovde je stajalo padding-top: var(--header-height)
+ * sa objasnjenjem da tamna tema mora da pocne ispod svetle trake zaglavlja - a
+ * to je bilo dvostruko: <main> u opstem rasporedu vec ima isti odmak, jer je
+ * zaglavlje `position: fixed` i ne zauzima mesto. Pozadina ove stranice i bez
+ * tog odmaka pocinje tacno ispod zaglavlja, posto je to vrh njenog okvira;
+ * odmak je samo uvlacio sadrzaj, pa je 76px tamne povrsine stajalo prazno.
+ */
+
 
 .wrap {
   width: 100%;
@@ -55,9 +63,20 @@
 
 /* ── 1. Hero ─────────────────────────────────────────────────────────────── */
 
+/*
+ * Gornji odmak je PREPOLOVLJEN (bio clamp(44px, 6.5vw, 92px)).
+ *
+ * Iznad bedza stoji i odmak cele stranice za traku zaglavlja, pa se to
+ * sabiralo: na 1000px je bedz pocinjao na 217px od vrha, od cega 141px cist
+ * gradijent bez sadrzaja. Donji odmak ostaje - on razdvaja hero od slike.
+ *
+ * Donja granica je 24px, ne 22px koliko bi tacna polovina bila: 24px je
+ * bocni odmak stranice, dakle najmanji odmak koji ova stranica inace koristi.
+ * Ispod toga bedz pocinje da izgleda zalepljen za traku zaglavlja.
+ */
 .hero {
   position: relative;
-  padding: clamp(44px, 6.5vw, 92px) 0 clamp(32px, 4.5vw, 60px);
+  padding: clamp(24px, 3.25vw, 46px) 0 clamp(32px, 4.5vw, 60px);
   text-align: center;
 }
 
@@ -837,14 +856,18 @@
  * Namerno tiše od glavne "problem" slike: ovo je prelaz ka brojkama, ne
  * zasebna scena. Manji naslov, bez velikih slova.
  *
- * Ali NE preko cele sirine: na 1000px je kao traka 952x200 davala odnos
- * 4.76:1, u kom se od GIF-a vidi uska pruga. Umesto da raste u visinu preko
- * cele sirine - sto bi bila druga hero slika - okvir se suzava i dobija isti
- * zeljeni oblik 4/3. Na 1000px to daje oko 1.6:1, na telefonu tacno 4:3.
+ * Sirina je ISTA kao kod statistike neposredno ispod - oba su puna sirina
+ * .wrap-a (947px na 1000px ekrana). Okvir je neko vreme bio uzi (680px), ali
+ * se tada nije poklapao sa brojkama pod njim i dva elementa su izgledala kao
+ * da pripadaju razlicitim sirinama.
+ *
+ * Posto je sada siri, gornja granica visine je podignuta na 460px: na istoj
+ * visini bi siri okvir ispao plici i izduzen. Daje oko 2:1 na 1000px, umesto
+ * 4.76:1 koliko je davala prvobitna fiksna visina. Na telefonu granica ne
+ * stupa na snagu, pa tamo ostaje tacno 4:3.
  */
 .figureCompact {
-  max-width: 680px;
-  margin-inline: auto;
+  max-width: 100%;
   border-radius: 18px;
 }
 
@@ -853,7 +876,7 @@
   height: auto;
   aspect-ratio: 4 / 3;
   min-height: 240px;
-  max-height: 420px;
+  max-height: 460px;
 }
 
 .figureCompact .figureText {
