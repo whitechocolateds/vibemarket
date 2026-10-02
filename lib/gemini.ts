@@ -666,15 +666,16 @@ KLJUCNO PRAVILO O BROJKAMA:
 - Ni u "label" ne sme da se pojavi brojka.
 
 ISTICANJE RECI:
-- Kljucnu frazu u tekstu obavijas viticastim zagradama: {{ovako}}. Ona na stranici dobija akcenatsku boju.
-- Koristi i **ovako** za podebljano, unutar recenice.
-- MERA: najvise JEDNA {{fraza}} po naslovu i najvise jedna po pasusu. Ako je istaknuto pola teksta, nista nije istaknuto.
-- Istice se fraza koja nosi obecanje ili olaksanje, ne nasumicna rec. Zagrade uvek zatvori.
-- Treca vrsta isticanja, SAMO u pasusima price: ^^ovako^^ daje frazi isti serifni font koji nose naslovi.
-  U svakom pasusu price obelezi 1 do 2 kljucne reci ili kratku frazu (najvise tri reci) ovom sintaksom.
+- {{ovako}} daje frazi akcenatsku boju. Koristi se SAMO u naslovima i kratkim uvodnim recenicama
+  (heroTitle, heroLead, problemTitle, problemCaption, solutionTitle, solutionLead, statsTitle,
+  ctaTitle, ctaLead). U pasusima price NE koristi viticaste zagrade.
+- U pasusima price ("story") istice se SAMO ^^ovako^^: fraza dobija isti serifni font koji nose
+  naslovi. U svakom pasusu obelezi 1 do 2 kljucne reci ili kratku frazu, najvise tri reci.
   Birati onu koja nosi poentu bas tog pasusa - sliku koja ostaje u glavi, ne pridev.
-  Istu frazu NE obavijati i viticastim zagradama i kapicama; to su dva razlicita isticanja.
-  Kapice uvek zatvori.
+- Koristi i **ovako** za podebljano, unutar recenice.
+- MERA: najvise JEDNA istaknuta fraza po naslovu, i nikad dve vrste isticanja na istoj frazi.
+  Ako je istaknuto pola teksta, nista nije istaknuto.
+- Istice se fraza koja nosi obecanje ili olaksanje, ne nasumicna rec. Zagrade i kapice uvek zatvori.
 
 Vracaj ISKLJUCIVO cist JSON bez markdown ograda, sa ovim poljima:
 {
@@ -684,7 +685,7 @@ Vracaj ISKLJUCIVO cist JSON bez markdown ograda, sa ovim poljima:
   "problemBadge": "2-4 reci za pilulu preko slike, npr. Svakodnevna scena",
   "problemTitle": "kratak udaran naslov PREKO slike, do 45 znakova, sa jednom {{istaknutom frazom}}",
   "problemCaption": "jedna recenica ispod tog naslova, pojacava problem",
-  "story": "3-4 pasusa narativnog teksta razdvojena praznim redom (\\n\\n). Prvi pasus imenuje problem, poslednji najavljuje resenje. U svakom pasusu 1-2 fraze u ^^kapicama^^. BEZ nabrajanja i bez specifikacija.",
+  "story": "3-4 pasusa narativnog teksta razdvojena praznim redom (\\n\\n). Prvi pasus imenuje problem, poslednji najavljuje resenje. U svakom pasusu 1-2 fraze u ^^kapicama^^, bez viticastih zagrada. BEZ nabrajanja i bez specifikacija.",
   "storyIcons": ["po jedno ime ikone za svaki pasus iz \"story\", istim redosledom"],
   "solutionTitle": "naslov koji predstavlja proizvod kao resenje, do 55 znakova, sa jednom {{istaknutom frazom}}",
   "solutionLead": "2-3 recenice kako proizvod resava bas taj problem",
@@ -778,7 +779,16 @@ export function sanitizeLanding(raw: GeneratedLanding): GeneratedLanding {
    * Niz se odseca na broj pasusa: visak ne bi imao gde da se prikaze, a u JSON-u
    * bi ostao da visi i da zbuni sledeceg koji otvori admin panel.
    */
-  const pasusa = storyParagraphs(raw.story).length;
+  /*
+   * Iz price se SKIDAJU viticaste zagrade, a tekst u njima ostaje.
+   *
+   * U pasusima price isticanje nosi serifni font (^^fraza^^), ne boja: dve
+   * vrste isticanja u istom pasusu se bore za pogled. Prompt to trazi, ali
+   * prompt nije garancija - isti razlog zbog kog se ovde brisu i brojke.
+   */
+  const story = ocistiIsticanje(raw.story)?.replace(/\{\{([^{}]+)\}\}/g, '$1');
+
+  const pasusa = storyParagraphs(story).length;
   const storyIcons = (raw.storyIcons ?? [])
     .slice(0, pasusa)
     .map((ime) => (typeof ime === 'string' && jeLandingIkona(ime) ? ime : ''));
@@ -793,7 +803,7 @@ export function sanitizeLanding(raw: GeneratedLanding): GeneratedLanding {
     problemTitle: ocistiIsticanje(raw.problemTitle),
     problemCaption: ocistiIsticanje(raw.problemCaption),
     statsTitle: ocistiIsticanje(raw.statsTitle),
-    story: ocistiIsticanje(raw.story),
+    story,
     solutionTitle: ocistiIsticanje(raw.solutionTitle),
     solutionLead: ocistiIsticanje(raw.solutionLead),
     ctaTitle: ocistiIsticanje(raw.ctaTitle),

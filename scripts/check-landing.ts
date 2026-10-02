@@ -96,6 +96,23 @@ assert.deepStrictEqual(prazno.stats, []);
 assert.strictEqual(prazno.benefits?.length, 0);
 assert.strictEqual(prazno.objections?.length, 0);
 
+// 6b. U pricu ne ulazi isticanje bojom: zagrade se skidaju, tekst ostaje.
+//     U pasusima isticanje nosi serifni font, a dve vrste isticanja bi se borile
+//     za pogled. Prompt to trazi, ali prompt nije garancija.
+const i6b = sanitizeLanding({ story: 'pasus sa {{bojom}} i ^^serifom^^' });
+assert.strictEqual(i6b.story, 'pasus sa bojom i ^^serifom^^');
+// Naslovi i uvodne recenice zadrzavaju boju
+const i6c = sanitizeLanding({ heroTitle: 'naslov sa {{bojom}}', heroLead: 'uvod sa {{bojom}}' });
+assert.strictEqual(i6c.heroTitle, 'naslov sa {{bojom}}');
+assert.strictEqual(i6c.heroLead, 'uvod sa {{bojom}}');
+// Nesparena zagrada u prici ne ostavlja golu zagradu
+assert.strictEqual(sanitizeLanding({ story: 'pasus {{pokvareno' }).story, 'pasus pokvareno');
+// Brojanje pasusa za ikone radi i posle skidanja zagrada
+assert.deepStrictEqual(
+  sanitizeLanding({ story: 'a {{x}}\n\nb\n\nc', storyIcons: ['zap', 'home', 'leaf', 'star'] }).storyIcons,
+  ['zap', 'home', 'leaf']
+);
+
 // 7. Ikone uz pasuse: polozaj u nizu je veza sa pasusom, pa se pogresno ime
 //    zamenjuje praznim mestom - nikad se ne izbacuje, jer bi se sve posle njega
 //    pomerilo na pogresan pasus.
