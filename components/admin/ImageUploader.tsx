@@ -1,11 +1,23 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { uploadPresigned } from '@vercel/blob/client';
+import { NASTAVAK_PO_TIPU, uploadPutanja } from '@/lib/uploadPath';
 import { Upload, X, Star, ChevronLeft, ChevronRight, Link2, Loader2, AlertCircle } from 'lucide-react';
 import styles from '@/app/admin/admin.module.css';
 
 const ACCEPT = 'image/jpeg,image/png,image/webp,image/avif,image/gif';
-const MAX_BYTES = 4 * 1024 * 1024;
+
+/**
+ * Plafon je ovde zbog poruke korisniku; pravi plafon postavlja dozvola koju
+ * izdaje server (MAX_CLIENT_UPLOAD_BYTES u lib/mediaStore.ts). Dva broja se
+ * drze odvojeno jer mediaStore koristi `fs` i ne sme u klijentski paket.
+ *
+ * Bilo je 4 MB dok su bajtovi isli kroz nasu funkciju - Vercel tamo odbija telo
+ * zahteva vece od ~4.5 MB. Otkad se otprema pravo u Blob, taj plafon ne vazi, pa
+ * prolazi i GIF snimljen sa ekrana.
+ */
+const MAX_BYTES = 100 * 1024 * 1024;
 
 interface Pending {
   id: string;
@@ -42,29 +54,6 @@ export default function ImageUploader({ value, onChange, disabled }: Props) {
       const preview = URL.createObjectURL(file);
       previewUrls.current.add(preview);
 
-      if (file.size > MAX_BYTES) {
-        setPending((p) => [
-          ...p,
-          { id, name: file.name, preview, progress: 0, error: `Veće od ${MAX_BYTES / 1024 / 1024} MB` },
-        ]);
-        return;
-      }
-
-      setPending((p) => [...p, { id, name: file.name, preview, progress: 0 }]);
-
-      const body = new FormData();
-      body.append('files', file);
-
-      // XHR umesto fetch-a: fetch u browseru nema progres otpremanja
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', '/api/admin/upload');
-
-      xhr.upload.onprogress = (e) => {
-        if (!e.lengthComputable) return;
-        const progress = Math.round((e.loaded / e.total) * 100);
-        setPending((p) => p.map((it) => (it.id === id ? { ...it, progress } : it)));
-      };
-
       const settle = (error?: string) => {
         if (error) {
           setPending((p) => p.map((it) => (it.id === id ? { ...it, error, progress: 100 } : it)));
@@ -75,25 +64,53 @@ export default function ImageUploader({ value, onChange, disabled }: Props) {
         }
       };
 
-      xhr.onload = () => {
-        let json: { data?: { url: string }[]; error?: string; errors?: { reason: string }[] } = {};
-        try {
-          json = JSON.parse(xhr.responseText);
-        } catch {
-          /* ostavi prazno, tretira se kao greška ispod */
-        }
+      if (!NASTAVAK_PO_TIPU[file.type]) {
+        setPending((p) => [
+          ...p,
+          { id, name: file.name, preview, progress: 0, error: 'Dozvoljeni su JPG, PNG, WebP, AVIF i GIF' },
+        ]);
+        return;
+      }
 
-        const url = json.data?.[0]?.url;
-        if (xhr.status >= 200 && xhr.status < 300 && url) {
-          onChange((prev) => (prev.includes(url) ? prev : [...prev, url]));
+      if (file.size > MAX_BYTES) {
+        const mb = Math.round(file.size / 1024 / 1024);
+        setPending((p) => [
+          ...p,
+          {
+            id,
+            name: file.name,
+            preview,
+            progress: 0,
+            error: `Fajl je ${mb} MB, a najviše je ${MAX_BYTES / 1024 / 1024} MB`,
+          },
+        ]);
+        return;
+      }
+
+      setPending((p) => [...p, { id, name: file.name, preview, progress: 0 }]);
+
+      /*
+       * Fajl ide PRAVO u Blob; nasa ruta samo potpise dozvolu. Zato ovde nema
+       * ni Vercel-ovog limita od ~4.5 MB na telo zahteva, ni limita na trajanje
+       * funkcije - veliki GIF se ne provlaci kroz nas.
+       */
+      uploadPresigned(uploadPutanja(file.name, file.type), file, {
+        access: 'public',
+        handleUploadUrl: '/api/admin/upload/client',
+        contentType: file.type,
+        // Veliki fajl se deli na delove koji idu uporedo, uz ponavljanje palog dela.
+        multipart: file.size > 8 * 1024 * 1024,
+        onUploadProgress: ({ percentage }) => {
+          setPending((p) => p.map((it) => (it.id === id ? { ...it, progress: Math.round(percentage) } : it)));
+        },
+      })
+        .then((rezultat) => {
+          onChange((prev) => (prev.includes(rezultat.url) ? prev : [...prev, rezultat.url]));
           settle();
-        } else {
-          settle(json.errors?.[0]?.reason || json.error || `Otpremanje nije uspelo (${xhr.status})`);
-        }
-      };
-
-      xhr.onerror = () => settle('Mrežna greška pri otpremanju.');
-      xhr.send(body);
+        })
+        .catch((error: unknown) => {
+          settle(error instanceof Error ? error.message : 'Otpremanje nije uspelo.');
+        });
     },
     [onChange]
   );

@@ -3,6 +3,7 @@ import path from 'path';
 import { randomUUID } from 'crypto';
 import { put } from '@vercel/blob';
 import { slugify } from './slugify';
+import { BLOB_MEDIA_PREFIX } from './uploadPath';
 
 /**
  * Čuvanje slika proizvoda.
@@ -32,7 +33,6 @@ import { slugify } from './slugify';
 export class MediaError extends Error {}
 
 const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads');
-const BLOB_MEDIA_PREFIX = 'products';
 
 /**
  * Zaseban JAVNI store za slike. Ako nije podešen, koristi se glavni.
@@ -77,9 +77,23 @@ export function usesDedicatedMediaStore(): boolean {
   );
 }
 
-/** Ispod Vercel-ovog ~4.5 MB limita na telo zahteva. */
+/** Ispod Vercel-ovog ~4.5 MB limita na telo zahteva. Vazi za put KROZ nasu funkciju. */
 export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 export const MAX_FILES_PER_REQUEST = 10;
+
+/**
+ * Plafon za otpremanje PRAVO iz pretrazivaca u Blob (app/api/admin/upload/client).
+ *
+ * Tamo bajtovi ne prolaze kroz nasu funkciju, pa Vercel-ov limit na telo zahteva
+ * ne vazi i GIF od vise desetina megabajta prolazi. Broj je svejedno ogranicen:
+ * stranica koja vuce 100 MB slike se ne ucitava, ma koliko store primao.
+ */
+export const MAX_CLIENT_UPLOAD_BYTES = 100 * 1024 * 1024;
+
+/** Id medijskog (JAVNOG) store-a; bez njega se ne izdaje dozvola za direktno otpremanje. */
+export function mediaStoreId(): string | undefined {
+  return process.env.BLOB_MEDIA_STORE_ID?.trim() || process.env.BLOB_STORE_ID?.trim();
+}
 
 export interface StoredMedia {
   url: string;
@@ -99,6 +113,9 @@ const MIME_BY_KIND: Record<ImageKind, string> = {
 };
 
 export const ACCEPTED_MIME = Object.values(MIME_BY_KIND).join(',');
+
+/** Isti spisak, u obliku koji trazi dozvola za direktno otpremanje. */
+export const CLIENT_UPLOAD_MIME = Object.values(MIME_BY_KIND);
 
 function startsWith(bytes: Uint8Array, sig: number[], offset = 0): boolean {
   if (bytes.length < offset + sig.length) return false;

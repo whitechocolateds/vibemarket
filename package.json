@@ -23,7 +23,8 @@
     "check:sku": "npx tsx scripts/check-sku.ts",
     "telegram:test": "npx tsx scripts/test-telegram.ts",
     "check:contrast": "npx tsx scripts/check-contrast.ts",
-    "landing:migrate": "npx tsx scripts/migrate-landing-variant.ts"
+    "landing:migrate": "npx tsx scripts/migrate-landing-variant.ts",
+    "check:upload": "npx tsx scripts/check-upload.ts"
   },
   "dependencies": {
     "@tiptap/core": "^3.30.0",
