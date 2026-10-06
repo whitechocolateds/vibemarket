@@ -39,12 +39,90 @@ function jednaSlika(trenutna: string | undefined, primeni: (url: string) => void
   };
 }
 
+/**
+ * Polje sa redovima oblika "a | b": PRIKAZUJE sirov tekst, a roditelju salje
+ * parsirano.
+ *
+ * Ranije je polje bilo vezano pravo za parsiranje - `value={statsToStr(...)}`,
+ * `onChange={... parseStats(...)}` - pa je svaki otkucaj isao u krug
+ * tekst -> niz -> tekst i u polje se vracao REZULTAT tog kruga. Posto parser
+ * sece razmake, izbacuje prazne redove i odbacuje red bez opisa, tekst se umeo
+ * skratiti za ceo red odjednom (izmereno: 13 znakova kad se isprazni opis
+ * treceg reda). Kursor bi ostao na staroj brojcanoj poziciji, zavrsio izvan
+ * kraja teksta i pretrazivac bi ga spustio u prvi red - pa bi dalje brisanje
+ * jelo prvi red. Razmak se nije mogao otkucati, Enter nije pravio nov red.
+ *
+ * Sada se tekst drzi ovde kakav jeste, a parsira se usput za roditelja, bez
+ * vracanja u polje.
+ */
+function usePoljeRedova<T>(
+  spoljniNiz: T[] | undefined,
+  uTekst: (v?: T[]) => string,
+  uNiz: (s: string) => T[],
+  primeni: (v: T[]) => void
+): [string, (s: string) => void] {
+  const spoljniTekst = uTekst(spoljniNiz);
+  const [tekst, setTekst] = useState(spoljniTekst);
+  const [posledjiSpoljni, setPoslednjiSpoljni] = useState(spoljniTekst);
+
+  /*
+   * Osvezavanje kad podaci stignu SPOLJA: AI ponovo generise landing, otvori se
+   * drugi proizvod, vrati se nacrt. Bez ovoga bi polje pokazivalo stari tekst.
+   *
+   * Ali ne i kad je promena posledica mog kucanja - tada bi se sirov tekst
+   * prepisao normalizovanim i kursor bi opet skakao. Zato se poredi sa onim sto
+   * BI moj tekst dao kroz parser: ako je isto, promenu sam izazvao ja.
+   *
+   * Postavljanje stanja tokom iscrtavanja je obrazac koji React predvidja bas
+   * za uskladjivanje sa promenjenim propom - iscrtava ponovo odmah, bez treptaja.
+   */
+  if (spoljniTekst !== posledjiSpoljni) {
+    setPoslednjiSpoljni(spoljniTekst);
+    if (spoljniTekst !== uTekst(uNiz(tekst))) setTekst(spoljniTekst);
+  }
+
+  return [
+    tekst,
+    (s: string) => {
+      setTekst(s);
+      primeni(uNiz(s));
+    },
+  ];
+}
+
 export default function LandingEditor({ value, onChange, disabled, handle, context }: Props) {
   const lp = value ?? PRAZAN;
   const set = (patch: Partial<LandingPage>) => onChange({ ...lp, ...patch });
   const tema = landingTheme(lp.theme);
   const [ai, setAi] = useState(false);
   const [aiError, setAiError] = useState('');
+
+  const [benefitsStr, setBenefitsStr] = usePoljeRedova(lp.benefits, benefitsToStr, parseBenefits,
+    (v) => set({ benefits: v }));
+  const [statsStr, setStatsStr] = usePoljeRedova(lp.stats, statsToStr, parseStats,
+    (v) => set({ stats: v }));
+  const [objectionsStr, setObjectionsStr] = usePoljeRedova(lp.objections, objectionsToStr, parseObjections,
+    (v) => set({ objections: v }));
+
+  /*
+   * Isti krug je bio i ovde: zapeta i razmak su se gutali dok se kuca.
+   *
+   * Prazno mesto se ZADRZAVA, a ne izbacuje: ikona se vezuje za pasus
+   * POLOZAJEM u nizu. Sa izbacivanjem je "traffic, , sofa" davalo
+   * ["traffic","sofa"], pa bi ikona treceg pasusa prelazila na drugi - a to
+   * izgleda namerno i gore je od pasusa bez ikone. Odsecaju se samo prazna
+   * mesta na kraju, koja ionako nemaju pasus na koji bi se odnosila.
+   */
+  const [storyIconsStr, setStoryIconsStr] = usePoljeRedova<string>(
+    lp.storyIcons,
+    (v) => (v ?? []).join(', '),
+    (s) => {
+      const delovi = s.split(',').map((x) => x.trim());
+      while (delovi.length && !delovi[delovi.length - 1]) delovi.pop();
+      return delovi;
+    },
+    (v) => set({ storyIcons: v })
+  );
 
   /** Popunjava SAMO tekst; tema, boje i slike ostaju kako ih je korisnik postavio. */
   const generisi = async () => {
@@ -272,8 +350,8 @@ export default function LandingEditor({ value, onChange, disabled, handle, conte
 
             <div className="form-group">
               <label className="form-label" htmlFor="lpStoryIcons">Ikone uz pasuse</label>
-              <input id="lpStoryIcons" className="input" value={(lp.storyIcons ?? []).join(', ')} disabled={disabled}
-                onChange={(e) => set({ storyIcons: e.target.value.split(',').map((x) => x.trim()).filter(Boolean) })}
+              <input id="lpStoryIcons" className="input" value={storyIconsStr} disabled={disabled}
+                onChange={(e) => setStoryIconsStr(e.target.value)}
                 placeholder="Npr. traffic, dumbbell, sofa" />
               <span className={styles.fieldHint}>
                 Po jedno ime za svaki pasus, razdvojeno zapetom. Ista imena kao u karticama prednosti
@@ -311,8 +389,8 @@ export default function LandingEditor({ value, onChange, disabled, handle, conte
                 Kartice prednosti (ikona | naslov | podnaslov | opis | ✓ dodatak)
               </label>
               <textarea id="lpBenefits" className="textarea" rows={5}
-                value={benefitsToStr(lp.benefits)} disabled={disabled}
-                onChange={(e) => set({ benefits: parseBenefits(e.target.value) })}
+                value={benefitsStr} disabled={disabled}
+                onChange={(e) => setBenefitsStr(e.target.value)}
                 placeholder={'zap | Montaža za 5 minuta | Bez alata | Zakačite i gotovo, ne buši se zid. | Bez registracije i dozvole\nshield | Dve godine garancije | Sigurna kupovina | Zamena bez pitanja. | Plaćanje pouzećem'} />
               <span className={styles.fieldHint}>
                 Jedna kartica po liniji. Ikone: sparkles, zap, shield, check, clock, heart, home, leaf,
@@ -345,8 +423,8 @@ export default function LandingEditor({ value, onChange, disabled, handle, conte
             <div className={`form-group ${styles.formGridFull}`}>
               <label className="form-label" htmlFor="lpStats">Podaci koji grade poverenje (broj | opis)</label>
               <textarea id="lpStats" className="textarea" rows={3}
-                value={statsToStr(lp.stats)} disabled={disabled}
-                onChange={(e) => set({ stats: parseStats(e.target.value) })}
+                value={statsStr} disabled={disabled}
+                onChange={(e) => setStatsStr(e.target.value)}
                 placeholder={'500+ | Zadovoljnih kupaca u regionu\n5 | godina iskustva\n14 | dana za povraćaj'} />
               <span className={styles.fieldHint}>
                 <strong>Brojeve upisujete vi</strong> — AI predlaže samo kategoriju i ostavlja broj prazan,
@@ -359,8 +437,8 @@ export default function LandingEditor({ value, onChange, disabled, handle, conte
             <div className={`form-group ${styles.formGridFull}`}>
               <label className="form-label" htmlFor="lpObjections">Strahovi i prigovori (pitanje | odgovor)</label>
               <textarea id="lpObjections" className="textarea" rows={4}
-                value={objectionsToStr(lp.objections)} disabled={disabled}
-                onChange={(e) => set({ objections: parseObjections(e.target.value) })}
+                value={objectionsStr} disabled={disabled}
+                onChange={(e) => setObjectionsStr(e.target.value)}
                 placeholder={'A ako mi ne odgovara? | Vraćate ga u roku od 14 dana, bez objašnjenja.\nMoram li da platim unapred? | Ne, plaćate kuriru pri preuzimanju.'} />
             </div>
 
