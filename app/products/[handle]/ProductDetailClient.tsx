@@ -26,6 +26,8 @@ import ProductComparisonTable from '@/components/ProductComparisonTable';
 import ProductFAQ from '@/components/ProductFAQ';
 import ImageLightbox from '@/components/ImageLightbox';
 import BundlePicker from '@/components/BundlePicker';
+import FreeGiftBlock, { freeGiftBadge } from '@/components/FreeGiftBlock';
+import giftStyles from '@/components/FreeGiftBlock.module.css';
 import styles from './product.module.css';
 
 const OFFER_CYCLE_MS = 30 * 60 * 1000;
@@ -114,6 +116,7 @@ export default function ProductDetailClient({ product, related }: Props) {
   const reviewCount = stableReviewCount(product.id);
   const lowStock = typeof selectedVariant.quantityAvailable === 'number' && selectedVariant.quantityAvailable > 0 && selectedVariant.quantityAvailable < LOW_STOCK_THRESHOLD;
   const bundleTotal = bundleUnitPrice(price, quantity) * quantity;
+  const gratisBedz = freeGiftBadge(product.freeGift);
 
   useEffect(() => {
     recordRecentlyViewed({
@@ -300,6 +303,11 @@ export default function ProductDetailClient({ product, related }: Props) {
               {discountPercent && (
                 <span className={`badge badge-red ${styles.discountBadge}`}>−{discountPercent}%</span>
               )}
+              {gratisBedz && (
+                <span className={`${giftStyles.bedz} ${styles.giftBadge}`}>
+                  <Gift size={12} strokeWidth={2.6} /> {gratisBedz}
+                </span>
+              )}
               <div className={styles.galleryActions}>
                 <motion.button
                   type="button"
@@ -461,6 +469,8 @@ export default function ProductDetailClient({ product, related }: Props) {
                 </div>
               );
             })}
+
+            {product.freeGift && <FreeGiftBlock gift={product.freeGift} />}
 
             <div className={styles.bundleSection}>
               <BundlePicker

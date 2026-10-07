@@ -564,6 +564,13 @@
   }
 }
 
+/* Blok poklona: CTA sekcija je centrirana, a blok je red sa slikom pa tekstom. */
+.giftWrap {
+  max-width: 460px;
+  margin: 18px auto 0;
+  text-align: left;
+}
+
 /* ── Lepljiva traka sa cenom ─────────────────────────────────────────────── */
 
 /*

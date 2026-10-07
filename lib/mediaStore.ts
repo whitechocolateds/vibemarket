@@ -114,8 +114,13 @@ const MIME_BY_KIND: Record<ImageKind, string> = {
 
 export const ACCEPTED_MIME = Object.values(MIME_BY_KIND).join(',');
 
-/** Isti spisak, u obliku koji trazi dozvola za direktno otpremanje. */
-export const CLIENT_UPLOAD_MIME = Object.values(MIME_BY_KIND);
+/**
+ * Spisak za dozvolu kod direktnog otpremanja.
+ *
+ * Siri je od MIME_BY_KIND jer tim putem prolazi i video, koji serverski put
+ * (saveImage) ne podrzava - tamo se tip utvrdjuje po magic bytes samo za slike.
+ */
+export const CLIENT_UPLOAD_MIME = [...Object.values(MIME_BY_KIND), 'video/mp4', 'video/webm'];
 
 function startsWith(bytes: Uint8Array, sig: number[], offset = 0): boolean {
   if (bytes.length < offset + sig.length) return false;

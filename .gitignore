@@ -51,3 +51,6 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# Izvorni materijal za proizvode (veliki GIF-ovi/video); konvertovano ide u Blob
+media-izvor/

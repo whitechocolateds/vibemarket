@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { uploadPresigned } from '@vercel/blob/client';
-import { NASTAVAK_PO_TIPU, uploadPutanja } from '@/lib/uploadPath';
+import { NASTAVAK_PO_TIPU, jeVideo, uploadPutanja } from '@/lib/uploadPath';
 import { Upload, X, Star, ChevronLeft, ChevronRight, Link2, Loader2, AlertCircle } from 'lucide-react';
 import styles from '@/app/admin/admin.module.css';
 
-const ACCEPT = 'image/jpeg,image/png,image/webp,image/avif,image/gif';
+const ACCEPT = 'image/jpeg,image/png,image/webp,image/avif,image/gif,video/mp4,video/webm';
 
 /**
  * Plafon je ovde zbog poruke korisniku; pravi plafon postavlja dozvola koju
@@ -25,6 +25,8 @@ interface Pending {
   preview: string;
   progress: number;
   error?: string;
+  /** Pregled ide kroz <video>, ne <img>. */
+  video?: boolean;
 }
 
 interface Props {
@@ -67,7 +69,7 @@ export default function ImageUploader({ value, onChange, disabled }: Props) {
       if (!NASTAVAK_PO_TIPU[file.type]) {
         setPending((p) => [
           ...p,
-          { id, name: file.name, preview, progress: 0, error: 'Dozvoljeni su JPG, PNG, WebP, AVIF i GIF' },
+          { id, name: file.name, preview, video: jeVideo(file.type), progress: 0, error: 'Dozvoljeni su JPG, PNG, WebP, AVIF, GIF, MP4 i WebM' },
         ]);
         return;
       }
@@ -80,6 +82,7 @@ export default function ImageUploader({ value, onChange, disabled }: Props) {
             id,
             name: file.name,
             preview,
+            video: jeVideo(file.type),
             progress: 0,
             error: `Fajl je ${mb} MB, a najviše je ${MAX_BYTES / 1024 / 1024} MB`,
           },
@@ -87,7 +90,7 @@ export default function ImageUploader({ value, onChange, disabled }: Props) {
         return;
       }
 
-      setPending((p) => [...p, { id, name: file.name, preview, progress: 0 }]);
+      setPending((p) => [...p, { id, name: file.name, preview, video: jeVideo(file.type), progress: 0 }]);
 
       /*
        * Fajl ide PRAVO u Blob; nasa ruta samo potpise dozvolu. Zato ovde nema
@@ -119,7 +122,7 @@ export default function ImageUploader({ value, onChange, disabled }: Props) {
     (files: FileList | File[] | null) => {
       if (!files) return;
       for (const file of Array.from(files)) {
-        if (file.type && !file.type.startsWith('image/')) continue;
+        if (file.type && !NASTAVAK_PO_TIPU[file.type]) continue;
         uploadOne(file);
       }
     },
@@ -199,8 +202,13 @@ export default function ImageUploader({ value, onChange, disabled }: Props) {
         <div className={styles.uploaderGrid}>
           {value.map((url, i) => (
             <figure key={`${url}-${i}`} className={styles.uploaderItem}>
-              {/* eslint-disable-next-line @next/next/no-img-element -- pregled proizvoljnog URL-a van remotePatterns liste */}
-              <img src={url} alt={i === 0 ? 'Glavna slika' : `Slika ${i + 1}`} className={styles.uploaderThumb} />
+              {jeVideo(url) ? (
+                // Petlja se u panelu prikazuje kao sto ce se prikazati i na sajtu.
+                <video src={url} className={styles.uploaderThumb} muted loop playsInline autoPlay />
+              ) : (
+                /* eslint-disable-next-line @next/next/no-img-element -- pregled proizvoljnog URL-a van remotePatterns liste */
+                <img src={url} alt={i === 0 ? 'Glavna slika' : `Slika ${i + 1}`} className={styles.uploaderThumb} />
+              )}
 
               {i === 0 && <span className={styles.uploaderMainBadge}>Glavna</span>}
 
@@ -224,8 +232,12 @@ export default function ImageUploader({ value, onChange, disabled }: Props) {
 
           {pending.map((item) => (
             <figure key={item.id} className={`${styles.uploaderItem} ${item.error ? styles.uploaderItemError : ''}`}>
-              {/* eslint-disable-next-line @next/next/no-img-element -- lokalni objectURL pregled */}
-              <img src={item.preview} alt={item.name} className={styles.uploaderThumb} />
+              {item.video ? (
+                <video src={item.preview} className={styles.uploaderThumb} muted loop playsInline autoPlay />
+              ) : (
+                /* eslint-disable-next-line @next/next/no-img-element -- lokalni objectURL pregled */
+                <img src={item.preview} alt={item.name} className={styles.uploaderThumb} />
+              )}
 
               {item.error ? (
                 <>

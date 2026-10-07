@@ -1,5 +1,27 @@
 import type { LandingPage } from './landing';
 
+/**
+ * Poklon koji kupac dobija uz proizvod.
+ *
+ * Namerno se NE zove `gift`: to ime vec nosi "Poklon iznenadjenja" u korpi i
+ * porudzbini (Cart.gift, Order.gift), a to je druga stvar - naplativa stavka
+ * koju kupac bira na kasi. Ovo je obecanje vezano za sam proizvod.
+ *
+ * `media` moze biti slika ili video (mp4/webm); prikaz bira po nastavku.
+ */
+export interface FreeGift {
+  /** Naziv poklona, npr. "Spa gel rukavice za negu ruku". */
+  title: string;
+  /** Slika ili kratka petlja; prazno = prikazuje se samo tekst. */
+  media?: string;
+  /** Drugi izvor za video (webm uz mp4); prazno = koristi se samo `media`. */
+  mediaAlt?: string;
+  /** Prvi kadar, da video ne treperi dok se ucitava. */
+  poster?: string;
+  /** Kratak tekst bedza uz cenu; prazno = "+ GRATIS " + naziv. */
+  badge?: string;
+}
+
 export interface ProductImage {
   url: string;
   altText: string | null;
@@ -65,6 +87,8 @@ export interface Product {
   faqs?: ProductFaq[];
   /** Narativni landing format; kad nedostaje ili je enabled=false, vazi standardna stranica. */
   landing?: LandingPage;
+  /** Poklon uz kupovinu; kad nedostaje, stranica izgleda tacno kao i do sada. */
+  freeGift?: FreeGift;
   /** Poreklo sa Shopify-ja; postoji samo na uvezenim proizvodima. Bez njega se
    *  porudzbina ne moze vezati za pravi artikal nego ide kao slobodna stavka. */
   shopifyProductId?: number;
@@ -258,6 +282,7 @@ export interface ProductInput {
   comparisonPoints?: string[];
   faqs?: ProductFaq[];
   landing?: LandingPage;
+  freeGift?: FreeGift;
   shopifyProductId?: number;
   shopifyVariantId?: number;
 }

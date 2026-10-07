@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { FileText, Banknote, ImageIcon, Tags, ListChecks, HelpCircle, CheckCircle2, X } from 'lucide-react';
-import { Product, ProductInput, ProductFaq, ImportSourceMeta } from '@/lib/types';
+import { FileText, Banknote, ImageIcon, Tags, ListChecks, HelpCircle, CheckCircle2, Gift, X } from 'lucide-react';
+import { Product, ProductInput, ProductFaq, ImportSourceMeta, FreeGift } from '@/lib/types';
 import { slugify } from '@/lib/slugify';
 import RichTextEditor from '@/components/admin/RichTextEditor';
 import { htmlToPlainText, sanitizeProductHtml, escapeHtml } from '@/lib/sanitizeHtml';
@@ -84,6 +84,19 @@ function productToInput(p: Product): ProductInput {
   };
 }
 
+/**
+ * ImageUploader ocekuje setState potpis (funkcionalni update mu je nuzan jer se
+ * otpremanja zavrsavaju paralelno), a ovde se cuva jedna adresa kao string.
+ * Isti adapter postoji i u LandingEditor-u, za ista polja sa jednom slikom.
+ */
+function jednaStavka(trenutna: string | undefined, primeni: (url: string) => void) {
+  return (akcija: React.SetStateAction<string[]>) => {
+    const pre = trenutna ? [trenutna] : [];
+    const posle = typeof akcija === 'function' ? akcija(pre) : akcija;
+    primeni(posle[posle.length - 1] ?? '');
+  };
+}
+
 export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
   const [form, setForm] = useState<ProductInput>(initial ? productToInput(initial) : EMPTY);
   const [tagsStr, setTagsStr] = useState(initial?.tags.join(', ') ?? '');
@@ -94,6 +107,8 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
   );
   const [faqsStr, setFaqsStr] = useState(faqsToStr(initial?.faqs));
   const [landing, setLanding] = useState<LandingPage | undefined>(initial?.landing);
+  const [freeGift, setFreeGift] = useState<FreeGift>(initial?.freeGift ?? { title: '' });
+  const postaviPoklon = (patch: Partial<FreeGift>) => setFreeGift((prev) => ({ ...prev, ...patch }));
   // Stranica proizvoda prikazuje descriptionHtml, pa editor radi direktno nad NJIM -
   // inace admin menja jedno a u prodavnici se vidi drugo.
   const [descriptionHtmlDraft, setDescriptionHtmlDraft] = useState(
@@ -144,6 +159,8 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
         comparisonPoints: comparisonPointsStr.split('\n').map((p) => p.trim()).filter(Boolean),
         faqs: parseFaqs(faqsStr),
         landing,
+        // Bez naziva se polje ne salje, pa proizvod bez poklona ostaje nepromenjen.
+        freeGift: freeGift.title.trim() ? freeGift : undefined,
       };
       if (!data.title.trim()) throw new Error('Naziv je obavezan');
       if (!data.description.trim()) throw new Error('Opis je obavezan');
@@ -382,6 +399,71 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
             />
             <span className={styles.fieldHint}>
               Prikazuje se u tabeli poređenja na strani proizvoda - navedite ono što OVAJ proizvod čini boljim izborom od sličnih proizvoda. Ako ostavite prazno, prikazuje se opšti podrazumevani tekst.
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Poklon uz kupovinu - opciono; prazan naziv znaci da poklona nema. */}
+      <div className={styles.formSection}>
+        <div className={styles.formSectionTitle}>
+          <Gift size={14} strokeWidth={2} /> Gratis poklon uz kupovinu
+        </div>
+
+        <div className={styles.formGrid}>
+          <div className="form-group">
+            <label className="form-label" htmlFor="gratisNaziv">Naziv poklona</label>
+            <input id="gratisNaziv" className="input" value={freeGift.title} disabled={saving}
+              onChange={(e) => postaviPoklon({ title: e.target.value })}
+              placeholder="Npr. Spa gel rukavice za negu ruku" />
+            <span className={styles.fieldHint}>
+              Prazno = proizvod nema poklon i stranica izgleda kao i do sada.
+            </span>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="gratisBedz">Tekst bedža uz cenu</label>
+            <input id="gratisBedz" className="input" value={freeGift.badge ?? ''} disabled={saving}
+              onChange={(e) => postaviPoklon({ badge: e.target.value })}
+              placeholder={freeGift.title.trim() ? `+ GRATIS ${freeGift.title}` : 'Npr. + GRATIS rukavice'} />
+            <span className={styles.fieldHint}>
+              Prazno = koristi se &bdquo;+ GRATIS&ldquo; i naziv poklona. Kratko je bolje, stoji uz cenu.
+            </span>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Slika ili petlja poklona</label>
+            <ImageUploader
+              value={freeGift.media ? [freeGift.media] : []}
+              onChange={jednaStavka(freeGift.media, (url) => postaviPoklon({ media: url }))}
+              disabled={saving}
+            />
+            <span className={styles.fieldHint}>
+              Prima i MP4/WebM. Kratka petlja bez zvuka izgleda kao GIF, a desetak puta je lakša.
+            </span>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Drugi zapis videa (WebM)</label>
+            <ImageUploader
+              value={freeGift.mediaAlt ? [freeGift.mediaAlt] : []}
+              onChange={jednaStavka(freeGift.mediaAlt, (url) => postaviPoklon({ mediaAlt: url }))}
+              disabled={saving}
+            />
+            <span className={styles.fieldHint}>
+              Opciono. Pretraživač uzima prvi koji ume da pusti; WebM je obično manji od MP4.
+            </span>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Prvi kadar (poster)</label>
+            <ImageUploader
+              value={freeGift.poster ? [freeGift.poster] : []}
+              onChange={jednaStavka(freeGift.poster, (url) => postaviPoklon({ poster: url }))}
+              disabled={saving}
+            />
+            <span className={styles.fieldHint}>
+              Opciono, samo za video: stoji dok se petlja učitava, da ne treperi.
             </span>
           </div>
         </div>

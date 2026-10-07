@@ -1,0 +1,88 @@
+/*
+ * Blok poklona stoji neposredno iznad dugmadi za kupovinu, pa mora da se
+ * primeti a da ne nadjaca cenu: tanka granica u akcentu i blaga podloga,
+ * bez pune boje.
+ */
+.blok {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 16px 0;
+  padding: 12px 14px;
+  border: 1.5px solid color-mix(in srgb, var(--brand) 40%, transparent);
+  border-radius: var(--radius-lg, 14px);
+  background: color-mix(in srgb, var(--brand) 7%, transparent);
+}
+
+/* Fiksan okvir: petlja je uspravna (576x1024), pa bi bez ovoga razvukla red. */
+.medijOkvir {
+  flex-shrink: 0;
+  width: 72px;
+  height: 96px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--brand) 12%, transparent);
+}
+
+.medij {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tekst {
+  min-width: 0;
+}
+
+.oznaka {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--brand-dark, var(--brand));
+}
+
+.naziv {
+  margin: 4px 0 0;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+
+.napomena {
+  margin: 3px 0 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+/* Bedz uz cenu. */
+.bedz {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--brand) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--brand) 35%, transparent);
+  color: var(--brand-dark, var(--brand));
+  font-size: 0.76rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+@media (max-width: 420px) {
+  .medijOkvir {
+    width: 60px;
+    height: 80px;
+  }
+
+  .naziv {
+    font-size: 0.94rem;
+  }
+}
+

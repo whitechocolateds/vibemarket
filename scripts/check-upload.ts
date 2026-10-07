@@ -17,6 +17,7 @@ import {
   DOZVOLJENI_TIPOVI,
   NASTAVAK_PO_TIPU,
   jeUploadPutanja,
+  jeVideo,
   uploadPutanja,
 } from '../lib/uploadPath';
 
@@ -46,6 +47,20 @@ for (const ime of IMENA) {
     assert.ok(!p.includes('..'), `dve tacke u putanji: ${p}`);
     assert.strictEqual(p.split('/').length, 2, `vise nivoa u putanji: ${p}`);
   }
+}
+
+// 1b. Video tipovi prolaze isti put kao slike
+for (const [tip, nastavak] of [['video/mp4', 'mp4'], ['video/webm', 'webm']] as const) {
+  const p = uploadPutanja('Petlja poklona žđč.gif', tip);
+  assert.ok(jeUploadPutanja(p), `video putanja ne prolazi proveru: ${p}`);
+  assert.ok(p.endsWith(`.${nastavak}`), `pogresan nastavak za ${tip}: ${p}`);
+  assert.ok(jeVideo(tip), `${tip} mora da se prepozna kao video`);
+  assert.ok(jeVideo(`https://primer.test/a/b.${nastavak}`), `adresa .${nastavak} mora da se prepozna kao video`);
+  assert.ok(jeVideo(`https://primer.test/a/b.${nastavak}?v=2`), 'adresa sa upitom mora da se prepozna');
+}
+// Slika NIJE video - inace bi se iscrtavala kroz <video> i ostala prazna
+for (const slika of ['image/png', 'image/gif', 'https://primer.test/a.gif', 'https://primer.test/a.webp']) {
+  assert.ok(!jeVideo(slika), `${slika} ne sme da se prepozna kao video`);
 }
 
 // 2. Nastavak dolazi iz TIPA, ne iz imena - ime moze da laze

@@ -19,7 +19,15 @@ export const NASTAVAK_PO_TIPU: Record<string, string> = {
   'image/webp': 'webp',
   'image/avif': 'avif',
   'image/gif': 'gif',
+  // Kratke petlje: GIF od nekoliko megabajta kao mp4 ispadne 20 puta manji.
+  'video/mp4': 'mp4',
+  'video/webm': 'webm',
 };
+
+/** Da li se tip prikazuje kroz <video>, a ne kroz <img>. */
+export function jeVideo(urlIliTip: string): boolean {
+  return /(^video\/)|(\.(mp4|webm)(\?|$))/i.test(urlIliTip);
+}
 
 export const DOZVOLJENI_TIPOVI = Object.keys(NASTAVAK_PO_TIPU);
 

@@ -171,6 +171,8 @@
 }
 
 .discountBadge { position: absolute; top: var(--space-4); left: var(--space-4); z-index: 1; }
+/* Bedz poklona stoji ispod bedza popusta, u istoj koloni uz ivicu slike. */
+.giftBadge { position: absolute; top: calc(var(--space-4) + 34px); left: var(--space-4); z-index: 1; }
 
 .galleryActions {
   position: absolute;

@@ -9,6 +9,8 @@ import { useCartStore } from '@/lib/cart';
 import { formatPrice } from '@/lib/format';
 import { bundleUnitPrice } from '@/lib/bundlePricing';
 import BundlePicker from '@/components/BundlePicker';
+import { freeGiftBadge } from '@/components/FreeGiftBlock';
+import giftStyles from '@/components/FreeGiftBlock.module.css';
 import styles from './LandingPage.module.css';
 
 /**
@@ -70,6 +72,7 @@ export default function LandingBuy({ product }: { product: Product }) {
   };
 
   const dostupno = product.availableForSale && (variant?.availableForSale ?? false);
+  const gratisBedz = freeGiftBadge(product.freeGift);
 
   /*
    * Traka se pojavljuje kad korisnik prodje uvodni deo i sakriva kad glavni
@@ -144,6 +147,7 @@ export default function LandingBuy({ product }: { product: Product }) {
           <span className={styles.compare}>{formatPrice(compareAtPrice * quantity)}</span>
         )}
         {savings !== null && <span className={styles.save}>−{savings}%</span>}
+        {gratisBedz && <span className={giftStyles.bedz}>{gratisBedz}</span>}
       </div>
 
       <div className={styles.bundle}>

@@ -14,6 +14,7 @@ import LandingStats from './LandingStats';
 import OverlayFigure from './OverlayFigure';
 import StoryRow from './StoryRow';
 import LandingBuy from './LandingBuy';
+import FreeGiftBlock from '@/components/FreeGiftBlock';
 import styles from './LandingPage.module.css';
 
 /**
@@ -206,6 +207,14 @@ export default function LandingPage({ product, landing }: { product: Product; la
               <RichText text={landing.ctaTitle || 'Naručite danas'} />
             </h2>
             {landing.ctaLead && <p className={styles.ctaLead}>{landing.ctaLead}</p>}
+            {/* Poklon stoji neposredno iznad dugmadi, da se vidi pre porudzbine.
+                FreeGiftBlock se boji --brand tokenima, koje landingVars premapira
+                na temu proizvoda - pa se uklapa u svih pet tema bez izmena. */}
+            {product.freeGift && (
+              <div className={styles.giftWrap}>
+                <FreeGiftBlock gift={product.freeGift} />
+              </div>
+            )}
             <LandingBuy product={product} />
           </div>
         </div>

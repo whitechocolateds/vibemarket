@@ -177,6 +177,8 @@ function buildProduct(input: ProductInput, id?: string): Product {
     comparisonPoints: (input.comparisonPoints ?? []).map((p) => p.trim()).filter(Boolean),
     faqs: (input.faqs ?? []).filter((f) => f.question.trim() && f.answer.trim()),
     ...(input.landing ? { landing: input.landing } : {}),
+    // Bez naziva nema poklona - prazno polje se ne upisuje, pa proizvod ostaje kakav je bio.
+    ...(input.freeGift?.title?.trim() ? { freeGift: input.freeGift } : {}),
     ...(input.shopifyProductId ? { shopifyProductId: input.shopifyProductId } : {}),
   };
 }
