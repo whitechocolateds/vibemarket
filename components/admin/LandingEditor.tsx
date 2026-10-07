@@ -20,7 +20,15 @@ interface Props {
   handle?: string;
   /** Tekuci sadrzaj forme; AI pise landing iz njega, ne iz sacuvanog proizvoda. */
   context?: LandingContext;
-  onChange: (next: LandingPage) => void;
+  /**
+   * setState potpis, ne obicna funkcija.
+   *
+   * Nuzno je da bude funkcionalni oblik: otpremanja se zavrsavaju paralelno i
+   * minutima posle pokretanja, pa ono koje se zavrsi mora da se nadoveze na
+   * TEKUCE stanje. Sa `(next: LandingPage) => void` je svaki poziv nosio kopiju
+   * zamrznutu pri iscrtavanju i vracao ostala polja unazad.
+   */
+  onChange: React.Dispatch<React.SetStateAction<LandingPage | undefined>>;
   disabled?: boolean;
 }
 
@@ -92,7 +100,23 @@ function usePoljeRedova<T>(
 
 export default function LandingEditor({ value, onChange, disabled, handle, context }: Props) {
   const lp = value ?? PRAZAN;
-  const set = (patch: Partial<LandingPage>) => onChange({ ...lp, ...patch });
+
+  /*
+   * `set` se nadovezuje na TEKUCE stanje, ne na `lp` zamrznut pri iscrtavanju.
+   *
+   * Sa zamrznutom kopijom se gubio rad: otpremanje slike od nekoliko megabajta
+   * traje minutima i drzi `onChange` iz trenutka kad je pokrenuto. Kad se zavrsi,
+   * upise `{ ...lp_od_pre, novoPolje: url }` i time vrati SVA ostala polja na
+   * stanje od starta tog otpremanja.
+   *
+   * Izmereno na stvarnim podacima: GIF otpremljen u polje "slika uz problem"
+   * zavrsio je u store-u u 22:39:35, a sledece otpremanje (zavrseno u 22:42:19)
+   * je pokrenuto pre toga - pa je pri upisu prepisalo landing verzijom koja
+   * `problemImage` nije imala. Fajl je ostao u store-u kao sirociste, a polje
+   * prazno, bez ijedne poruke o gresci.
+   */
+  const set = (patch: Partial<LandingPage>) =>
+    onChange((prev) => ({ ...(prev ?? PRAZAN), ...patch }));
   const tema = landingTheme(lp.theme);
   const [ai, setAi] = useState(false);
   const [aiError, setAiError] = useState('');
@@ -140,7 +164,7 @@ export default function LandingEditor({ value, onChange, disabled, handle, conte
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Generisanje nije uspelo.');
-      onChange({ ...lp, ...json.data });
+      onChange((prev) => ({ ...(prev ?? PRAZAN), ...json.data }));
     } catch (err) {
       setAiError(err instanceof Error ? err.message : 'Generisanje nije uspelo.');
     } finally {
