@@ -188,6 +188,8 @@ function buildProduct(input: ProductInput, id?: string): Product {
           },
         }
       : {}),
+    // Upisuje se samo kad je ukljuceno; bez toga proizvod ostaje kakav je bio.
+    ...(input.hideOfferTimer ? { hideOfferTimer: true } : {}),
     ...(input.shopifyProductId ? { shopifyProductId: input.shopifyProductId } : {}),
   };
 }

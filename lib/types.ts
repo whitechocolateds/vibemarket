@@ -104,6 +104,14 @@ export interface Product {
   freeGift?: FreeGift;
   /** Kartica "sta proizvod radi"; kad nedostaje, stranica izgleda kao i do sada. */
   highlights?: ProductHighlights;
+  /**
+   * Skriva odbrojavanje "Ponuda istice za" na stranici proizvoda.
+   *
+   * Podrazumevano se NE skriva, pa proizvod bez ovog polja izgleda kao i do
+   * sada. Postoji za artikle kod kojih vremenski pritisak ne odgovara - skup
+   * komplet se ne kupuje u 30 minuta.
+   */
+  hideOfferTimer?: boolean;
   /** Poreklo sa Shopify-ja; postoji samo na uvezenim proizvodima. Bez njega se
    *  porudzbina ne moze vezati za pravi artikal nego ide kao slobodna stavka. */
   shopifyProductId?: number;
@@ -299,6 +307,7 @@ export interface ProductInput {
   landing?: LandingPage;
   freeGift?: FreeGift;
   highlights?: ProductHighlights;
+  hideOfferTimer?: boolean;
   shopifyProductId?: number;
   shopifyVariantId?: number;
 }

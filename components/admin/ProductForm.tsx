@@ -34,6 +34,7 @@ const EMPTY: ProductInput = {
   productType: 'Ostalo',
   quantity: 10,
   availableForSale: true,
+  hideOfferTimer: false,
   comparisonPoints: [],
   faqs: [],
 };
@@ -78,6 +79,7 @@ function productToInput(p: Product): ProductInput {
     productType: p.productType,
     quantity: v?.quantityAvailable ?? 0,
     availableForSale: p.availableForSale,
+    hideOfferTimer: p.hideOfferTimer ?? false,
     comparisonPoints: p.comparisonPoints ?? [],
     faqs: p.faqs ?? [],
     landing: p.landing,
@@ -546,6 +548,20 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
       </div>
 
       <div className={styles.formActions}>
+        <label className={styles.switch}>
+          <input
+            type="checkbox"
+            name="hideOfferTimer"
+            className={styles.switchInput}
+            checked={form.hideOfferTimer}
+            onChange={handleChange}
+          />
+          <span className={styles.switchTrack} />
+          <span className={styles.switchLabel}>
+            {form.hideOfferTimer ? 'Bez odbrojavanja ponude' : 'Odbrojavanje ponude uključeno'}
+          </span>
+        </label>
+
         <label className={styles.switch}>
           <input
             type="checkbox"

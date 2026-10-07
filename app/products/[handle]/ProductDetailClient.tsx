@@ -395,15 +395,17 @@ export default function ProductDetailClient({ product, related }: Props) {
               )}
             </div>
 
-            <div className={styles.offerTimerBadge}>
-              <div className={styles.offerLiveDot} />
-              <Flame size={15} className={styles.offerFlameIcon} />
-              <span className={styles.offerLabel}>Ponuda ističe za:</span>
-              <div className={styles.offerCountdownBox}>
-                <Clock size={13} />
-                <span>{offerCountdown}</span>
+            {!product.hideOfferTimer && (
+              <div className={styles.offerTimerBadge}>
+                <div className={styles.offerLiveDot} />
+                <Flame size={15} className={styles.offerFlameIcon} />
+                <span className={styles.offerLabel}>Ponuda ističe za:</span>
+                <div className={styles.offerCountdownBox}>
+                  <Clock size={13} />
+                  <span>{offerCountdown}</span>
+                </div>
               </div>
-            </div>
+            )}
 
             <div className={styles.stockRow}>
               {selectedVariant.availableForSale ? (
