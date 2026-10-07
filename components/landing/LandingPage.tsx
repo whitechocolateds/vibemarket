@@ -15,6 +15,7 @@ import OverlayFigure from './OverlayFigure';
 import StoryRow from './StoryRow';
 import LandingBuy from './LandingBuy';
 import FreeGiftBlock from '@/components/FreeGiftBlock';
+import ProductHighlights from '@/components/ProductHighlights';
 import styles from './LandingPage.module.css';
 
 /**
@@ -175,6 +176,15 @@ export default function LandingPage({ product, landing }: { product: Product; la
               </div>
             )}
             <LandingStats stats={stats} />
+          </div>
+        </section>
+      )}
+
+      {/* 6b. Kartica "sta proizvod radi" - posle brojki, pre pitanja. */}
+      {product.highlights && (
+        <section className={styles.sectionTight}>
+          <div className={`${styles.wrap} ${styles.narrow}`}>
+            <ProductHighlights data={product.highlights} />
           </div>
         </section>
       )}

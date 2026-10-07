@@ -1,0 +1,74 @@
+/*
+ * Roze je NAMERNO izvan brend palete prodavnice, koja je plava
+ * (--brand: #1652BE). Kartica je zasebna celina na stranici punoj plavog, pa je
+ * izdvaja boja a ne ram. Isti postupak vec postoji u projektu za zlatni
+ * gradijent (--gold-gradient).
+ *
+ * Ako se polje jednog dana popuni na proizvodu koji nema veze sa negom, roze ce
+ * delovati nasumicno - tada ovde dolazi izbor boje po proizvodu, a ne pre toga.
+ */
+/*
+ * Nijanse su IZMERENE, ne birane okom. Prvi pokusaj je isao od #FF6FA5, sto uz
+ * beo tekst daje 2.60:1 - daleko ispod WCAG praga 4.5:1 za obican tekst, iako
+ * na ekranu izgleda sasvim citljivo. Najsvetlija tacka ovog gradijenta nosi
+ * 4.67:1, a tamnije jos vise, pa prolazi na celoj povrsini.
+ */
+.kartica {
+  margin: 24px 0;
+  padding: 22px 24px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #D1357A 0%, #B8286A 55%, #9E1E5A 100%);
+  box-shadow: 0 14px 34px rgba(158, 30, 90, 0.26);
+  color: #fff;
+}
+
+.naslov {
+  margin: 0 0 14px;
+  font-size: clamp(1.1rem, 2.4vw, 1.35rem);
+  font-weight: 700;
+  line-height: 1.25;
+  /* Globalno pravilo za h1-h4 daje Prata i --text-primary; ovde tekst mora da bude beo. */
+  color: #fff;
+}
+
+.lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+/* Kvacica stoji u levoj margini, pa prelomljen red ostaje poravnat sa tekstom. */
+.stavka {
+  position: relative;
+  padding-left: 30px;
+  font-size: 0.97rem;
+  line-height: 1.5;
+  color: #fff;
+}
+
+.kvacica {
+  position: absolute;
+  left: 0;
+  top: 1px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+@media (max-width: 480px) {
+  .kartica {
+    padding: 18px 18px;
+    border-radius: 16px;
+  }
+
+  .stavka {
+    font-size: 0.92rem;
+    padding-left: 28px;
+  }
+}

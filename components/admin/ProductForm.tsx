@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { FileText, Banknote, ImageIcon, Tags, ListChecks, HelpCircle, CheckCircle2, Gift, X } from 'lucide-react';
+import { FileText, Banknote, ImageIcon, Tags, ListChecks, HelpCircle, CheckCircle2, Gift, Sparkles, X } from 'lucide-react';
 import { Product, ProductInput, ProductFaq, ImportSourceMeta, FreeGift } from '@/lib/types';
 import { slugify } from '@/lib/slugify';
 import RichTextEditor from '@/components/admin/RichTextEditor';
@@ -108,6 +108,12 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
   const [faqsStr, setFaqsStr] = useState(faqsToStr(initial?.faqs));
   const [landing, setLanding] = useState<LandingPage | undefined>(initial?.landing);
   const [freeGift, setFreeGift] = useState<FreeGift>(initial?.freeGift ?? { title: '' });
+  /*
+   * Sirov tekst, isto kao faqsStr i comparisonPointsStr: parsira se tek pri
+   * slanju. Bez toga bi se tekst prepisivao na svaki otkucaj i kursor bi skakao.
+   */
+  const [highlightsTitle, setHighlightsTitle] = useState(initial?.highlights?.title ?? '');
+  const [highlightsStr, setHighlightsStr] = useState((initial?.highlights?.items ?? []).join('\n'));
   const postaviPoklon = (patch: Partial<FreeGift>) => setFreeGift((prev) => ({ ...prev, ...patch }));
   // Stranica proizvoda prikazuje descriptionHtml, pa editor radi direktno nad NJIM -
   // inace admin menja jedno a u prodavnici se vidi drugo.
@@ -161,6 +167,10 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
         landing,
         // Bez naziva se polje ne salje, pa proizvod bez poklona ostaje nepromenjen.
         freeGift: freeGift.title.trim() ? freeGift : undefined,
+        highlights: {
+          title: highlightsTitle,
+          items: highlightsStr.split('\n').map((x) => x.trim()).filter(Boolean),
+        },
       };
       if (!data.title.trim()) throw new Error('Naziv je obavezan');
       if (!data.description.trim()) throw new Error('Opis je obavezan');
@@ -399,6 +409,36 @@ export default function ProductForm({ initial, onSubmit, submitLabel }: Props) {
             />
             <span className={styles.fieldHint}>
               Prikazuje se u tabeli poređenja na strani proizvoda - navedite ono što OVAJ proizvod čini boljim izborom od sličnih proizvoda. Ako ostavite prazno, prikazuje se opšti podrazumevani tekst.
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Kartica "sta proizvod radi" - opciono; bez stavki se ne prikazuje. */}
+      <div className={styles.formSection}>
+        <div className={styles.formSectionTitle}>
+          <Sparkles size={14} strokeWidth={2} /> Prednosti proizvoda
+        </div>
+
+        <div className={styles.formGrid}>
+          <div className="form-group">
+            <label className="form-label" htmlFor="prednostiNaslov">Naslov kartice</label>
+            <input id="prednostiNaslov" className="input" value={highlightsTitle} disabled={saving}
+              onChange={(e) => setHighlightsTitle(e.target.value)}
+              placeholder="Npr. 💖 Šta LED maska radi za vašu kožu" />
+            <span className={styles.fieldHint}>Prazno = piše samo &bdquo;Prednosti&ldquo;.</span>
+          </div>
+
+          <div className={`form-group ${styles.formGridFull}`}>
+            <label className="form-label" htmlFor="prednostiStavke">Stavke (jedna po redu)</label>
+            <textarea id="prednostiStavke" className="textarea" rows={5} value={highlightsStr} disabled={saving}
+              onChange={(e) => setHighlightsStr(e.target.value)}
+              placeholder={'Doprinosi svežijem i ujednačenijem izgledu tena\nPomaže da koža izgleda negovanije i glađe'} />
+            <span className={styles.fieldHint}>
+              Prikazuje se kao roze kartica sa kvačicama, na obe vrste stranice: posle opisa a pre
+              pitanja. Prazno = kartice nema i stranica izgleda kao i do sada.
+              Ovo NIJE isto što i &bdquo;Prednosti u odnosu na konkurenciju&ldquo; iznad &mdash; ovde se
+              ne poredi, nego se kaže čemu proizvod služi.
             </span>
           </div>
         </div>

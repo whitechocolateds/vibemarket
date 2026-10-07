@@ -27,6 +27,7 @@ import ProductFAQ from '@/components/ProductFAQ';
 import ImageLightbox from '@/components/ImageLightbox';
 import BundlePicker from '@/components/BundlePicker';
 import FreeGiftBlock, { freeGiftBadge } from '@/components/FreeGiftBlock';
+import ProductHighlights from '@/components/ProductHighlights';
 import giftStyles from '@/components/FreeGiftBlock.module.css';
 import styles from './product.module.css';
 
@@ -624,6 +625,13 @@ export default function ProductDetailClient({ product, related }: Props) {
             )}
           </div>
         </div>
+
+        {/* Posle opisa, pre pitanja - tu kupac trazi "cemu ovo sluzi". */}
+        {product.highlights && (
+          <Reveal>
+            <ProductHighlights data={product.highlights} />
+          </Reveal>
+        )}
 
         <section className={styles.infoSection}>
           <div className={styles.compareFaqGrid}>

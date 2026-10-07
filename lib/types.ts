@@ -1,6 +1,19 @@
 import type { LandingPage } from './landing';
 
 /**
+ * Kratka lista "sta proizvod radi", u zasebnoj kartici na stranici.
+ *
+ * Odvojeno od `comparisonPoints`, koji odgovara na drugo pitanje: zasto BAS ovaj
+ * proizvod a ne slican. Ovde nema poredjenja, samo cemu proizvod sluzi.
+ */
+export interface ProductHighlights {
+  /** Naslov kartice; prazno = neutralno "Prednosti". */
+  title?: string;
+  /** Jedna stavka po redu; prazna lista znaci da se kartica ne prikazuje. */
+  items: string[];
+}
+
+/**
  * Poklon koji kupac dobija uz proizvod.
  *
  * Namerno se NE zove `gift`: to ime vec nosi "Poklon iznenadjenja" u korpi i
@@ -89,6 +102,8 @@ export interface Product {
   landing?: LandingPage;
   /** Poklon uz kupovinu; kad nedostaje, stranica izgleda tacno kao i do sada. */
   freeGift?: FreeGift;
+  /** Kartica "sta proizvod radi"; kad nedostaje, stranica izgleda kao i do sada. */
+  highlights?: ProductHighlights;
   /** Poreklo sa Shopify-ja; postoji samo na uvezenim proizvodima. Bez njega se
    *  porudzbina ne moze vezati za pravi artikal nego ide kao slobodna stavka. */
   shopifyProductId?: number;
@@ -283,6 +298,7 @@ export interface ProductInput {
   faqs?: ProductFaq[];
   landing?: LandingPage;
   freeGift?: FreeGift;
+  highlights?: ProductHighlights;
   shopifyProductId?: number;
   shopifyVariantId?: number;
 }

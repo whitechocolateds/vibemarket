@@ -179,6 +179,15 @@ function buildProduct(input: ProductInput, id?: string): Product {
     ...(input.landing ? { landing: input.landing } : {}),
     // Bez naziva nema poklona - prazno polje se ne upisuje, pa proizvod ostaje kakav je bio.
     ...(input.freeGift?.title?.trim() ? { freeGift: input.freeGift } : {}),
+    // Isto vazi i za karticu prednosti: bez ijedne stavke se ne upisuje nista.
+    ...(input.highlights?.items?.some((x) => x.trim())
+      ? {
+          highlights: {
+            ...(input.highlights.title?.trim() ? { title: input.highlights.title.trim() } : {}),
+            items: input.highlights.items.map((x) => x.trim()).filter(Boolean),
+          },
+        }
+      : {}),
     ...(input.shopifyProductId ? { shopifyProductId: input.shopifyProductId } : {}),
   };
 }
