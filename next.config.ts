@@ -29,6 +29,28 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+
+  /**
+   * Preusmerenja sa starih adresa proizvoda.
+   *
+   * Handle je adresa stranice. Kad se promeni, svaki vec podeljen link i svaka
+   * reklama koja pokazuje na staru adresu padaju na 404 - a to se ne vidi dok
+   * neko ne prijavi. Zato se stara adresa ovde zadrzava.
+   *
+   * `permanent: true` salje 308: pretrazivaci prenose rangiranje na novu
+   * adresu i prestaju da traze staru.
+   */
+  async redirects() {
+    return [
+      {
+        // Proizvod je greskom bio zaveden kao poklon vaucer; zapravo je
+        // Snap-On Smile navlaka za zube.
+        source: '/products/vibemarket-digitalni-poklon-vaucer',
+        destination: '/products/snap-on-smile-navlaka-za-zube',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
