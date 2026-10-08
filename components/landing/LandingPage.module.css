@@ -532,6 +532,7 @@
   .storyRow {
     padding-left: 36px;
   }
+
 }
 
 @media (max-width: 860px) {
@@ -546,16 +547,21 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* Pasus stoji vidljiv; StoryRow ga u ovom slucaju i ne skriva. */
+  /* Sadrzaj stoji vidljiv; Reveal ga u ovom slucaju i ne skriva. */
   .reveal {
     transition: none;
     opacity: 1;
     transform: none;
   }
 
+  .docBtn,
   .buyBtn,
   .cartBtn {
     transition: none;
+  }
+
+  .docBtn:hover {
+    transform: none;
   }
 
   .buyBtn:hover:not(:disabled),
@@ -569,6 +575,115 @@
   max-width: 460px;
   margin: 18px auto 0;
   text-align: left;
+}
+
+/* ── Besplatni vodici ────────────────────────────────────────────────────── */
+
+/*
+ * Nijedna boja nije upisana rukom - sve ide kroz --lp-* promenljive, pa blok
+ * radi na svih pet tema bez ijedne izmene.
+ */
+.docs {
+  text-align: center;
+}
+
+.docsTitle {
+  margin: 14px 0 0;
+  font-size: clamp(1.7rem, 4.2vw, 2.6rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  color: var(--lp-ink);
+}
+
+.docsLead {
+  margin: 10px auto 0;
+  max-width: 460px;
+  font-size: clamp(0.98rem, 2vw, 1.08rem);
+  line-height: 1.6;
+  color: var(--lp-muted);
+}
+
+.docsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 26px;
+  text-align: left;
+}
+
+/*
+ * Media upit stoji TU, odmah ispod osnovnog pravila.
+ *
+ * Zajednicki @media (max-width: 700px) blok u ovom fajlu stoji iznad ove
+ * sekcije, pa bi ga osnovno pravilo pregazilo - iste su specificnosti i
+ * odlucuje redosled. Izmereno: kartice su ostajale 162px siroke na 390px.
+ */
+@media (max-width: 700px) {
+  .docsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.docCard {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 24px;
+  border-radius: 22px;
+  border: 1px solid var(--lp-border);
+  background: var(--lp-surface);
+}
+
+.docCardTitle {
+  margin: 14px 0 0;
+  font-size: 1.12rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--lp-ink);
+}
+
+.docMeta {
+  margin: 6px 0 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--lp-to);
+}
+
+/* `flex: 1` gura dugme na dno, pa obe kartice imaju dugme u istom redu. */
+.docText {
+  margin: 10px 0 20px;
+  flex: 1;
+  font-size: 0.96rem;
+  line-height: 1.6;
+  color: var(--lp-muted);
+}
+
+/*
+ * Visina 56px je iznad praga od 44px koji se na telefonu smatra najmanjom
+ * povrsinom za dodir; puna sirina kartice da se ne promasuje.
+ */
+.docBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 0 22px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--lp-from), var(--lp-to));
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.docBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--lp-to) 36%, transparent);
 }
 
 /* ── Lepljiva traka sa cenom ─────────────────────────────────────────────── */

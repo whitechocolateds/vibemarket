@@ -13,9 +13,11 @@ import RichText from './RichText';
 import LandingStats from './LandingStats';
 import OverlayFigure from './OverlayFigure';
 import StoryRow from './StoryRow';
+import LandingDocs from './LandingDocs';
 import LandingBuy from './LandingBuy';
 import FreeGiftBlock from '@/components/FreeGiftBlock';
 import ProductHighlights from '@/components/ProductHighlights';
+import { DOCS_PRODUCT_HANDLE } from '@/lib/productDocs';
 import styles from './LandingPage.module.css';
 
 /**
@@ -160,6 +162,21 @@ export default function LandingPage({ product, landing }: { product: Product; la
                 );
               })}
             </div>
+          </div>
+        </section>
+      )}
+
+      {/*
+          5b. Besplatni vodici - posle price i prednosti, pre brojki i kupovine.
+          Posetilac vidi vrednost pre nego sto stigne do cene.
+
+          Prikazuje se samo proizvodu koji vodice stvarno ima; svaki drugi
+          landing ostaje bez praznog bloka.
+      */}
+      {product.handle === DOCS_PRODUCT_HANDLE && (
+        <section className={styles.section}>
+          <div className={`${styles.wrap} ${styles.narrow}`}>
+            <LandingDocs ikone={IKONE} />
           </div>
         </section>
       )}
