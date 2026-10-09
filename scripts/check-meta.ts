@@ -90,8 +90,23 @@ async function main() {
 
   // ── Provera tokena ─────────────────────────────────────────────────────────
   if (!token || !serverId) {
-    console.log('\n  Bez tokena se salje samo klijentski Pixel. To radi, ali gubis');
-    console.log('  konverzije kupaca koji imaju ad-blocker ili iOS zastitu.\n');
+    /*
+     * Token bez ID-a nije isto sto i "nema tokena".
+     * Ranije je i taj slucaj dobijao poruku "bez tokena...", pa je izgledalo
+     * kao da server-side pracenje nije ni poceto - a zapravo je bilo pola
+     * podeseno i tiho iskljuceno.
+     */
+    if (token && !serverId) {
+      console.log('\n  TOKEN JE POSTAVLJEN, ALI META_PIXEL_ID NIJE.');
+      console.log('  Conversions API je zato iskljucen i nijedna kupovina ne stize do Mete');
+      console.log('  sa servera - ostaje samo klijentski Pixel, koji se gubi kad kupac');
+      console.log('  zatvori stranicu pre potvrde porudzbine.');
+      console.log('\n  Popravka: u .env.local (i na Vercelu, sva tri okruzenja) dodaj');
+      console.log(`       META_PIXEL_ID=${publicId ?? '<isti broj kao javni>'}\n`);
+    } else {
+      console.log('\n  Bez tokena se salje samo klijentski Pixel. To radi, ali gubis');
+      console.log('  konverzije kupaca koji imaju ad-blocker ili iOS zastitu.\n');
+    }
     process.exitCode = problems > 0 ? 1 : 0;
     return;
   }

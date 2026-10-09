@@ -139,15 +139,22 @@ export async function POST(req: NextRequest) {
       if (!poslato) console.log(`[telegram] porudzbina ${orderNumber} nije javljena`);
     });
 
-    // Server-side Purchase event (Conversions API) - backup kanal za Meta Ads, radi i kad browser blokira Pixel.
-    // Isti eventId kao klijentski Pixel Purchase event, radi deduplikacije u Meta Events Manageru.
-    sendCapiEvent({
-      eventName: 'Purchase',
-      eventId,
+    /*
+     * Server-side Purchase (Conversions API) - rezervni kanal za Meta Ads, radi
+     * i kad browser blokira Pixel. Isti `eventId` kao klijentski Purchase, pa
+     * ih Meta deduplicira.
+     *
+     * Ide kroz `after`, kao i Shopify. Ranije je stajao kao "obesena" promisa
+     * (`sendCapiEvent(...).catch(...)`) - platforma sme da zamrzne funkciju cim
+     * posalje odgovor, pa zahtev ka Meti cesto nije ni krenuo. To je, uz
+     * nepostavljen META_PIXEL_ID, razlog zasto je kupovina stizala u bazu a
+     * nije se pojavljivala u Events Manageru.
+     *
+     * Podaci iz zahteva se citaju OVDE, pre odgovora: `req` posle odgovora vise
+     * nije pouzdan izvor.
+     */
+    const capiPodaci = {
       eventSourceUrl: req.headers.get('referer') ?? undefined,
-      value: totalPrice,
-      currency: 'RSD',
-      contentIds: verifiedItems.map((i) => i.productId),
       // Bez IP-a Meta odbija event kao "nedovoljno podataka za povezivanje" i
       // Purchase se tiho gubi. x-forwarded-for nije svuda prisutan.
       clientIp:
@@ -158,7 +165,22 @@ export async function POST(req: NextRequest) {
       userAgent: req.headers.get('user-agent'),
       fbp: req.cookies.get('_fbp')?.value ?? null,
       fbc: req.cookies.get('_fbc')?.value ?? null,
-    }).catch((error) => console.error('CAPI Purchase event failed:', error));
+    };
+
+    after(async () => {
+      try {
+        await sendCapiEvent({
+          eventName: 'Purchase',
+          eventId,
+          value: totalPrice,
+          currency: 'RSD',
+          contentIds: verifiedItems.map((i) => i.productId),
+          ...capiPodaci,
+        });
+      } catch (error) {
+        console.error('CAPI Purchase event failed:', error);
+      }
+    });
 
     /*
      * Porudzbina u Shopify - PISE U ZIVI NALOG, zato iza zasebnog prekidaca.

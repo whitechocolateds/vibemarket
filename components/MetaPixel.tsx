@@ -20,8 +20,20 @@ function PixelRouteTracker() {
   return null;
 }
 
+/*
+ * Admin panel se NE meri.
+ *
+ * Komponenta stoji u korenom layout-u, pa je pixel do sada radio i na
+ * /admin stranicama - sopstvene posete vlasnika ulazile su u statistiku
+ * kampanja. Provera je ovde, a ne u layout-u, da bi ostala uz pixel.
+ *
+ * Posledica: posle povratka sa /admin na prodavnicu, prvi PageView se
+ * preskace (tracker se iznova montira). Kupci ne prolaze kroz admin, pa to
+ * ne utice na merenje reklama.
+ */
 export default function MetaPixel() {
-  if (!PIXEL_ID) return null;
+  const pathname = usePathname();
+  if (!PIXEL_ID || pathname?.startsWith('/admin')) return null;
 
   return (
     <>
