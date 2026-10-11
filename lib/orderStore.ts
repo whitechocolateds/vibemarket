@@ -15,9 +15,15 @@ async function loadOrders(): Promise<Order[]> {
   const res = await readJsonFileResult<Order[]>(FILE);
   if (res.status === 'ok') return Array.isArray(res.data) ? res.data : [];
   if (res.status === 'missing') return [];
+  /*
+   * `cause` se NE gubi: po njemu pozivalac raspoznaje prolaznu gresku skladista
+   * od prave. Bez toga je admin panel na svaku prolaznu smetnju dobijao obicnu
+   * gresku i prikazivao prazan spisak, kao da porudzbina nema.
+   */
   throw new Error(
     'Porudzbine nisu procitane iz skladista. ' +
-      `Uzrok: ${res.error instanceof Error ? res.error.message : String(res.error)}`
+      `Uzrok: ${res.error instanceof Error ? res.error.message : String(res.error)}`,
+    { cause: res.error }
   );
 }
 

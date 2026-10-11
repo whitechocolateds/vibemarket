@@ -15,6 +15,34 @@ type SortKey = 'newest' | 'oldest' | 'amountDesc' | 'amountAsc';
 
 const AUTO_REFRESH_SECONDS = 60;
 
+/**
+ * Promena statusa, sa tihim ponavljanjem na 503.
+ *
+ * 503 server vraca iskljucivo za prolaznu smetnju skladista - telo u Blob-u
+ * nakratko kasni za svojim ETag-om posle upisa. Takav pokusaj prolazi iz drugog
+ * ili treceg puta, pa nema razloga da se uopste javi korisniku; bas to
+ * iskakanje poruke, i prazan spisak za njim, bilo je ono sto je smetalo.
+ *
+ * Svaki drugi status i dalje odmah izbija do korisnika - prava greska ne sme
+ * da se krije iza ponavljanja.
+ */
+async function posaljiStatus(id: string, status: Order['status']): Promise<Order> {
+  for (let pokusaj = 0; ; pokusaj++) {
+    const res = await fetch('/api/admin/orders', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (res.ok) return json.data as Order;
+    if (res.status === 503 && pokusaj < 2) {
+      await new Promise((r) => setTimeout(r, 700 * (pokusaj + 1)));
+      continue;
+    }
+    throw new Error(json.error ?? 'Greška');
+  }
+}
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString('sr-RS', {
     day: '2-digit', month: '2-digit', year: 'numeric',
@@ -41,13 +69,41 @@ export default function AdminOrdersPage() {
   const [secondsLeft, setSecondsLeft] = useState(AUTO_REFRESH_SECONDS);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  /*
+   * Spisak koji je vec na ekranu, za odluku sta raditi kad osvezavanje padne.
+   * Ref, a ne `orders`: fetchOrders zove i tajmer napravljen jednom, pa bi iz
+   * njega `orders` zauvek bio prazan niz sa prvog rendera.
+   */
+  const ordersRef = useRef<Order[]>([]);
+
+  /*
+   * Neuspelo citanje NE prazni spisak.
+   *
+   * Ranije je stajalo `.then((r) => r.json()).then((json) => setOrders(json.data ?? []))`
+   * bez provere `r.ok`. Kad bi server vratio gresku (telo je tada `{ error }`,
+   * bez `data`), `?? []` bi upisao prazan niz i sve porudzbine bi nestale sa
+   * ekrana - a `catch` se ne bi ni okinuo, jer odgovor sa greskom je i dalje
+   * uspesno procitan JSON. Ispalo bi kao "nema porudzbina".
+   */
   const fetchOrders = (showLoading = true) => {
     if (showLoading) setLoading(true);
-    setError(false);
     fetch('/api/admin/orders')
-      .then((r) => r.json())
-      .then((json) => { setOrders(json.data ?? []); })
-      .catch(() => { setError(true); })
+      .then(async (r) => {
+        const json = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(json.error ?? 'Greška pri učitavanju porudžbina');
+        return json as { data?: Order[] };
+      })
+      .then((json) => {
+        ordersRef.current = json.data ?? [];
+        setOrders(ordersRef.current);
+        setError(false);
+      })
+      .catch((err) => {
+        // Prazan ekran samo ako ni nemamo sta da prikazemo; inace ostaje
+        // prethodni spisak uz obavestenje da je zastareo.
+        if (ordersRef.current.length === 0) setError(true);
+        else toast(err instanceof Error ? err.message : 'Osvežavanje nije uspelo', 'error');
+      })
       .finally(() => { setLoading(false); });
   };
 
@@ -80,17 +136,16 @@ export default function AdminOrdersPage() {
     setReloadKey((k) => k + 1);
   };
 
+  /** Jedno mesto za upis izmenjene porudzbine - spisak na ekranu i ref ostaju u koraku. */
+  const primeni = (azurirana: Order) => {
+    ordersRef.current = ordersRef.current.map((o) => (o.id === azurirana.id ? azurirana : o));
+    setOrders(ordersRef.current);
+  };
+
   const updateStatus = async (id: string, status: Order['status']) => {
     setUpdating(id);
     try {
-      const res = await fetch('/api/admin/orders', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? 'Greška');
-      setOrders((prev) => prev.map((o) => (o.id === id ? json.data : o)));
+      primeni(await posaljiStatus(id, status));
       toast(`Status promenjen u „${STATUS_LABELS[status]}"`);
     } catch (err) {
       toast(err instanceof Error ? err.message : 'Greška pri promeni statusa', 'error');
@@ -102,22 +157,20 @@ export default function AdminOrdersPage() {
   const handleBulkUpdate = async () => {
     if (selected.size === 0) return;
     setBulkUpdating(true);
+    const ukupno = selected.size;
     let successCount = 0;
     for (const id of Array.from(selected)) {
       try {
-        const res = await fetch('/api/admin/orders', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, status: bulkStatus }),
-        });
-        const json = await res.json();
-        if (res.ok) {
-          setOrders((prev) => prev.map((o) => (o.id === id ? json.data : o)));
-          successCount++;
-        }
+        primeni(await posaljiStatus(id, bulkStatus));
+        successCount++;
       } catch { /* continue */ }
     }
-    toast(`${successCount} porudžbina promenjena u „${STATUS_LABELS[bulkStatus]}"`);
+    toast(
+      successCount === ukupno
+        ? `${successCount} porudžbina promenjena u „${STATUS_LABELS[bulkStatus]}"`
+        : `${successCount} od ${ukupno} promenjeno u „${STATUS_LABELS[bulkStatus]}" — ostale pokušaj ponovo`,
+      successCount === ukupno ? undefined : 'error'
+    );
     setSelected(new Set());
     setBulkUpdating(false);
   };

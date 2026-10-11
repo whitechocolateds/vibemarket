@@ -27,7 +27,8 @@
     "check:upload": "npx tsx scripts/check-upload.ts",
     "check:highlights": "npx tsx scripts/check-highlights.ts",
     "orders:prune": "npx tsx scripts/prune-orders.ts",
-    "check:capi": "npx tsx scripts/check-capi.ts"
+    "check:capi": "npx tsx scripts/check-capi.ts",
+    "check:orders-greske": "npx tsx scripts/check-orders-greske.ts"
   },
   "dependencies": {
     "@tiptap/core": "^3.30.0",
