@@ -9,6 +9,7 @@ import { STATUS_LABELS } from '@/components/admin/StatusBadge';
 import ShopifySyncBadge from '@/components/admin/ShopifySyncBadge';
 import { toast } from '@/components/admin/Toaster';
 import { downloadXls, XlsColumn } from '@/lib/exportOrders';
+import { spisakIzOdgovora, porudzbinaIzOdgovora } from '@/lib/orderList';
 import styles from '../../admin.module.css';
 
 type SortKey = 'newest' | 'oldest' | 'amountDesc' | 'amountAsc';
@@ -33,13 +34,18 @@ async function posaljiStatus(id: string, status: Order['status']): Promise<Order
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, status }),
     });
-    const json = await res.json().catch(() => ({}));
-    if (res.ok) return json.data as Order;
+    const json: unknown = await res.json().catch(() => null);
+    if (res.ok) {
+      // Odgovor koji ne nosi BAS tu porudzbinu ne sme da udje u spisak.
+      const azurirana = porudzbinaIzOdgovora(json, id);
+      if (azurirana) return azurirana;
+      throw new Error('Neočekivan odgovor servera pri promeni statusa');
+    }
     if (res.status === 503 && pokusaj < 2) {
       await new Promise((r) => setTimeout(r, 700 * (pokusaj + 1)));
       continue;
     }
-    throw new Error(json.error ?? 'Greška');
+    throw new Error((json as { error?: string } | null)?.error ?? 'Greška');
   }
 }
 
@@ -77,25 +83,33 @@ export default function AdminOrdersPage() {
   const ordersRef = useRef<Order[]>([]);
 
   /*
-   * Neuspelo citanje NE prazni spisak.
+   * Spisak se zamenjuje SAMO potvrdjenim, kompletnim spiskom.
    *
-   * Ranije je stajalo `.then((r) => r.json()).then((json) => setOrders(json.data ?? []))`
-   * bez provere `r.ok`. Kad bi server vratio gresku (telo je tada `{ error }`,
-   * bez `data`), `?? []` bi upisao prazan niz i sve porudzbine bi nestale sa
-   * ekrana - a `catch` se ne bi ni okinuo, jer odgovor sa greskom je i dalje
-   * uspesno procitan JSON. Ispalo bi kao "nema porudzbina".
+   * Prva verzija je bila `setOrders(json.data ?? [])` - sve sto stigne, i prazan
+   * niz na kraju. Druga je dodala proveru `res.ok`, ali to i dalje propusta
+   * odgovor sa statusom 200 ciji oblik nije ocekivan (telo bez `data`, telo koje
+   * se ne raspakuje kao JSON): tada `?? []` i dalje obrise ceo spisak sa ekrana.
+   * Izmereno u reprodukciji: 4 reda -> 0 redova i poruka "Jos nema porudzbina",
+   * bez ijedne greske.
+   *
+   * Sada o zameni odlucuje `spisakIzOdgovora`: sve sto nije niz porudzbina je
+   * neuspeh, a kod neuspeha stari spisak ostaje na ekranu.
    */
   const fetchOrders = (showLoading = true) => {
     if (showLoading) setLoading(true);
     fetch('/api/admin/orders')
       .then(async (r) => {
-        const json = await r.json().catch(() => ({}));
-        if (!r.ok) throw new Error(json.error ?? 'Greška pri učitavanju porudžbina');
-        return json as { data?: Order[] };
+        const json: unknown = await r.json().catch(() => null);
+        if (!r.ok) {
+          throw new Error((json as { error?: string } | null)?.error ?? 'Greška pri učitavanju porudžbina');
+        }
+        const spisak = spisakIzOdgovora(json);
+        if (!spisak) throw new Error('Neočekivan odgovor servera — spisak nije osvežen');
+        return spisak;
       })
-      .then((json) => {
-        ordersRef.current = json.data ?? [];
-        setOrders(ordersRef.current);
+      .then((spisak) => {
+        ordersRef.current = spisak;
+        setOrders(spisak);
         setError(false);
       })
       .catch((err) => {
