@@ -67,122 +67,13 @@
   .layout { grid-template-columns: 1fr; gap: var(--space-10); }
 }
 
-.gallery { position: sticky; top: calc(var(--header-height) + var(--space-6)); }
-
-@media (max-width: 900px) {
-  .gallery { position: static; }
-}
-
-.mainImage {
-  aspect-ratio: 3/4;
-  overflow: hidden;
-  border-radius: var(--radius-xl);
-  background: var(--blue-wash);
-  position: relative;
-  margin-bottom: var(--space-4);
-  box-shadow: var(--shadow-md);
-  cursor: zoom-in;
-}
-
-.mainImage::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  border: 1px solid var(--border-subtle);
-  pointer-events: none;
-}
-
-.mainImgWrap {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-/**
- * Ranije je ovde stajalo object-fit: cover, pa je uspravni 3:4 ram sekao svaku
- * sliku drugog odnosa - baneri i široke fotografije su gubili ivice.
- * Sada `contain` prikazuje CELU sliku, a zamućena kopija popunjava ostatak rama
- * da ne stoje prazne trake.
- */
-.mainImg {
-  position: relative;
-  z-index: 1;
-  max-width: 100%;
-  max-height: 100%;
-  width: auto;
-  height: auto;
-  object-fit: contain;
-}
-
-.mainImgBackdrop {
-  position: absolute;
-  inset: -8%;
-  background-size: cover;
-  background-position: center;
-  filter: blur(26px) saturate(1.15);
-  opacity: 0.5;
-  transform: scale(1.08);
-  pointer-events: none;
-}
-
-.zoomHint {
-  position: absolute;
-  left: 50%;
-  bottom: var(--space-4);
-  transform: translateX(-50%) translateY(6px);
-  z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  border-radius: var(--radius-full);
-  background: rgba(6, 20, 48, 0.72);
-  backdrop-filter: blur(6px);
-  color: #ffffff;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-  opacity: 0;
-  transition: opacity var(--transition-fast), transform var(--transition-fast);
-}
-
-.mainImage:hover .zoomHint,
-.mainImage:focus-visible .zoomHint {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
-@media (hover: none) {
-  .zoomHint { opacity: 1; transform: translateX(-50%) translateY(0); }
-}
-
-.noImage {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  font-size: 3rem;
-  opacity: 0.15;
-}
+/* Galerija je preseljena u components/ProductGallery.module.css. Ovde ostaje
+   samo ono sto stranica sama ubacuje preko slike. */
 
 .discountBadge { position: absolute; top: var(--space-4); left: var(--space-4); z-index: 1; }
 /* Bedz poklona stoji ispod bedza popusta, u istoj koloni uz ivicu slike. */
 .giftBadge { position: absolute; top: calc(var(--space-4) + 34px); left: var(--space-4); z-index: 1; }
 
-.galleryActions {
-  position: absolute;
-  top: var(--space-4);
-  right: var(--space-4);
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
 
 .iconRoundBtn {
   width: 38px;
@@ -204,25 +95,6 @@
 
 .iconRoundBtnActive { color: var(--color-error); }
 .iconRoundBtnActive:hover { color: var(--color-error); }
-
-.thumbnails { display: flex; gap: var(--space-3); }
-
-.thumb {
-  position: relative;
-  width: 76px;
-  height: 92px;
-  overflow: hidden;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-subtle);
-  cursor: pointer;
-  background: none;
-  padding: 0;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-}
-
-.thumb:hover, .thumbActive { border-color: var(--brand); box-shadow: 0 0 0 2px rgba(var(--brand-rgb), 0.35); }
-
-.thumbImg { width: 100%; height: 100%; object-fit: cover; }
 
 .info { display: flex; flex-direction: column; gap: var(--space-6); padding-top: var(--space-4); }
 
@@ -1059,7 +931,6 @@
   .priceBlock { justify-content: center; text-align: center; width: 100%; }
   .offerTimerBadge { margin: 0 auto; }
   .stock { justify-content: center; width: 100%; text-align: center; }
-  .thumbnails { justify-content: center; }
   .tags { justify-content: center; }
   .infoSectionHeader {
     text-align: center;

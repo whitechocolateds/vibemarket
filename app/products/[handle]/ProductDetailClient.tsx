@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useInView } from 'framer-motion';
-import { Truck, Wallet, ShieldCheck, Check, Heart, Share2, Star, Flame, Eye, Clock, MessageCircleHeart, HelpCircle, ListChecks, Home, ChevronRight, Zap, ShoppingCart, CheckCircle2, Tag, Sparkles, Maximize2, Gift, FileDown } from 'lucide-react';
+import { Truck, Wallet, ShieldCheck, Check, Heart, Share2, Star, Flame, Eye, Clock, MessageCircleHeart, HelpCircle, ListChecks, Home, ChevronRight, Zap, ShoppingCart, CheckCircle2, Tag, Sparkles, Gift, FileDown } from 'lucide-react';
 import { Product, ProductVariant } from '@/lib/types';
 import { useCartStore } from '@/lib/cart';
 import { GIFT_PRICE, GIFT_TITLE } from '@/lib/gift';
@@ -24,11 +24,11 @@ import RecentlyViewed from '@/components/RecentlyViewed';
 import TestimonialsCarousel from '@/components/TestimonialsCarousel';
 import ProductComparisonTable from '@/components/ProductComparisonTable';
 import ProductFAQ from '@/components/ProductFAQ';
-import ImageLightbox from '@/components/ImageLightbox';
 import BundlePicker from '@/components/BundlePicker';
 import FreeGiftBlock, { freeGiftBadge } from '@/components/FreeGiftBlock';
 import ProductHighlights from '@/components/ProductHighlights';
 import giftStyles from '@/components/FreeGiftBlock.module.css';
+import ProductGallery from '@/components/ProductGallery';
 import styles from './product.module.css';
 
 const OFFER_CYCLE_MS = 30 * 60 * 1000;
@@ -81,19 +81,6 @@ export default function ProductDetailClient({ product, related }: Props) {
   const { addItem, closeCart, gift, setGift } = useCartStore();
   const { isWished, toggle: toggleWishlist } = useWishlist(product.id);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(product.variants[0]);
-  const [selectedImage, setSelectedImage] = useState(0);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  // Ram se prilagođava odnosu stranica slike, ali ostaje u razumnim granicama
-  // da vrlo široka ili vrlo uska slika ne razvuče stranicu.
-  const [frameRatio, setFrameRatio] = useState<number | null>(null);
-
-  const applyFrameRatio = (el: HTMLImageElement) => {
-    const { naturalWidth: w, naturalHeight: h } = el;
-    if (!w || !h) return;
-    // od 3:4 (uspravno) do 4:3 (položeno)
-    const ratio = Math.min(4 / 3, Math.max(3 / 4, w / h));
-    setFrameRatio((prev) => (prev !== null && Math.abs(prev - ratio) < 0.01 ? prev : ratio));
-  };
   const [quantity, setQuantity] = useState(1);
   const [copied, setCopied] = useState(false);
   const ctaRef = useRef<HTMLDivElement>(null);
@@ -231,15 +218,6 @@ export default function ProductDetailClient({ product, related }: Props) {
 
   return (
     <div className={styles.page}>
-      {lightboxOpen && images.length > 0 && (
-        <ImageLightbox
-          images={images}
-          index={selectedImage}
-          onIndexChange={setSelectedImage}
-          onClose={() => setLightboxOpen(false)}
-        />
-      )}
-
       <div className="container">
         <nav className={styles.breadcrumb} aria-label="Putanja">
           <Link href="/" className={styles.crumb}>
@@ -252,64 +230,23 @@ export default function ProductDetailClient({ product, related }: Props) {
         </nav>
 
         <div className={styles.layout}>
-          <div className={styles.gallery}>
-            <motion.div
-              className={styles.mainImage}
-              style={frameRatio ? { aspectRatio: String(frameRatio) } : undefined}
-              transition={{ duration: 0.4 }}
-              role="button"
-              tabIndex={0}
-              aria-label="Otvori sliku preko celog ekrana"
-              onClick={() => images[selectedImage] && setLightboxOpen(true)}
-              onKeyDown={(e) => {
-                if ((e.key === 'Enter' || e.key === ' ') && images[selectedImage]) {
-                  e.preventDefault();
-                  setLightboxOpen(true);
-                }
-              }}
-            >
-              <AnimatePresence mode="wait">
-                {images[selectedImage] ? (
-                  <motion.div
-                    key={selectedImage}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.25 }}
-                    className={styles.mainImgWrap}
-                  >
-                    {/* Zamućena kopija popunjava ram - inače bi oko slike stajale prazne trake */}
-                    <span
-                      className={styles.mainImgBackdrop}
-                      style={{ backgroundImage: `url(${JSON.stringify(images[selectedImage].url)})` }}
-                      aria-hidden="true"
-                    />
-                    <img
-                      src={images[selectedImage].url}
-                      alt={images[selectedImage].altText ?? product.title}
-                      className={styles.mainImg}
-                      onLoad={(e) => applyFrameRatio(e.currentTarget)}
-                      // Kad je slika već u kešu, onLoad ne opali - ref hvata taj slučaj
-                      ref={(el) => { if (el?.complete) applyFrameRatio(el); }}
-                    />
-                  </motion.div>
-                ) : (
-                  <div className={styles.noImage}>◇</div>
+          <ProductGallery
+            images={images}
+            title={product.title}
+            badges={
+              <>
+                {discountPercent && (
+                  <span className={`badge badge-red ${styles.discountBadge}`}>−{discountPercent}%</span>
                 )}
-              </AnimatePresence>
-
-              <span className={styles.zoomHint}>
-                <Maximize2 size={13} /> Klikni za uvećanje
-              </span>
-              {discountPercent && (
-                <span className={`badge badge-red ${styles.discountBadge}`}>−{discountPercent}%</span>
-              )}
-              {gratisBedz && (
-                <span className={`${giftStyles.bedz} ${styles.giftBadge}`}>
-                  <Gift size={12} strokeWidth={2.6} /> {gratisBedz}
-                </span>
-              )}
-              <div className={styles.galleryActions}>
+                {gratisBedz && (
+                  <span className={`${giftStyles.bedz} ${styles.giftBadge}`}>
+                    <Gift size={12} strokeWidth={2.6} /> {gratisBedz}
+                  </span>
+                )}
+              </>
+            }
+            actions={
+              <>
                 <motion.button
                   type="button"
                   whileTap={{ scale: 0.9 }}
@@ -339,28 +276,9 @@ export default function ProductDetailClient({ product, related }: Props) {
                     </motion.span>
                   </AnimatePresence>
                 </motion.button>
-              </div>
-            </motion.div>
-            {images.length > 1 && (
-              <div className={styles.thumbnails}>
-                {images.map((img, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    className={`${styles.thumb} ${selectedImage === i ? styles.thumbActive : ''}`}
-                    onClick={() => setSelectedImage(i)}
-                    aria-label={`Prikaži sliku ${i + 1}`}
-                  >
-                    <img
-                      src={img.url}
-                      alt=""
-                      className={styles.thumbImg}
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+              </>
+            }
+          />
 
           <div className={styles.info}>
             <span className={styles.vendor}>{product.vendor}</span>
