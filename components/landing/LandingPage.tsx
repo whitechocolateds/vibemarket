@@ -121,7 +121,7 @@ export default function LandingPage({ product, landing }: { product: Product; la
       {/* 4. Proizvod kao rešenje */}
       {(landing.solutionTitle || solutionImage) && (
         <section className={styles.section}>
-          <div className={styles.wrap}>
+          <div className={`${styles.wrap} ${styles.wrapWide}`}>
             <div className={styles.solution}>
               <div>
                 <span className={styles.pill}>Rešenje</span>
